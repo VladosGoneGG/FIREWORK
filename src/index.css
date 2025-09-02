@@ -1,0 +1,87 @@
+@import 'tailwindcss';
+
+/* Шрифты */
+@font-face {
+	font-family: 'BaronNeue';
+	src: url('./assets/fonts/BaronNeue.woff') format('woff');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Calibri';
+	src: url('./assets/fonts/Calibri.woff') format('woff');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* === ТЕМА (Tailwind v4) === */
+@theme {
+	/* Цвета */
+	--color-firework-red: #c054eb; /* основной фирменный */
+	--color-firework-blue: #1d0353; /* тёмный фирменный */
+
+	/* Цвета для состояний кнопки */
+	--color-firework-hover: #bd52e9; /* hover */
+	--color-firework-active: #efebe6; /* active */
+
+	/* Градиент */
+	--background-image-firework-radial: radial-gradient(
+		142.27% 173.76% at -13.16% 0%,
+		#1d0353 0%,
+		#c054eb 100%
+	);
+
+	/* Шрифты */
+	--font-baron: 'BaronNeue', sans-serif;
+	--font-calibri: 'Calibri', sans-serif;
+	--font-inter: 'Inter', sans-serif;
+}
+
+/* База */
+@layer base {
+	html {
+		background-color: #efebe6;
+	}
+	body {
+		line-height: 1.5;
+		color: #333;
+		margin: 0;
+		padding: 0;
+	}
+
+	.baron-text {
+		font-family: var(--font-baron);
+	}
+	.calibri-text {
+		font-family: var(--font-calibri);
+	}
+}
+
+/* Утилита под твой градиент (если хочешь писать класс явно) */
+.bg-firework-radial {
+	background-image: radial-gradient(
+		142.27% 173.76% at -13.16% 0%,
+		#1d0353 0%,
+		#c054eb 100%
+	);
+}
+
+/* === КОМПОНЕНТ КНОПКИ ===
+   По умолчанию — градиент
+   :hover — сплошной #bd52e9
+   :active — сплошной #efebe6
+*/
+@layer components {
+	.btn-firework {
+		@apply text-white uppercase rounded-[10px] w-[220px] h-[50px]
+      bg-firework-radial transition-colors duration-200 cursor-pointer;
+	}
+	.btn-firework:hover {
+		@apply bg-none bg-firework-hover;
+	}
+	.btn-firework:active {
+		@apply bg-none bg-firework-active;
+	}
+}
