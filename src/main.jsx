@@ -1,11 +1,18 @@
-import { createRoot } from 'react-dom/client'
+import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import App from './App.jsx'
+import ProductDetails from './components/ProductDetails/ProductDetails'
 import './index.css'
 import { store } from './store/store.js'
 
-createRoot(document.getElementById('root')).render(
+const router = createBrowserRouter([
+	{ path: '/', element: <App /> },
+	{ path: '/product/:id', element: <ProductDetails /> },
+])
+
+ReactDOM.createRoot(document.getElementById('root')).render(
 	<Provider store={store}>
-		<App />
+		<RouterProvider router={router} />
 	</Provider>
 )

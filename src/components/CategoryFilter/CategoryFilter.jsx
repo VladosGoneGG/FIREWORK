@@ -1,80 +1,96 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import minBlock from '../../assets/SVG/min-block.svg'
 import {
 	fetchCategories,
 	setCategory,
 } from '../../store/slices/categoriesSlice'
+import PressableButton from '../PressableButton/PressableButton'
 
 const CategoryFilter = () => {
 	const dispatch = useDispatch()
 	const { list, selectedCategory, status } = useSelector(s => s.categories)
-	const [expanded, setExpanded] = useState({}) // { [id]: boolean }
+	const [expandedId, setExpandedId] = useState(null)
 
 	useEffect(() => {
 		if (status === 'idle') dispatch(fetchCategories())
 	}, [status, dispatch])
 
-	const toggle = id => setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
-	const selectName = name => dispatch(setCategory(name.toLowerCase()))
+	const hasSubs = useMemo(() => {
+		const m = new Map()
+		for (const c of list) m.set(c.id, (c.subcategories?.length || 0) > 0)
+		return m
+	}, [list])
 
-	if (status === 'loading') {
-		return <aside className='w-[240px]'>Загрузка категорий...</aside>
+	const norm = name => (name === 'Все' ? 'all' : name.toLowerCase())
+
+	const onCategoryClick = cat => {
+		const key = norm(cat.name)
+		dispatch(setCategory(key))
+		// аккордеон только если есть подкатегории
+		if (hasSubs.get(cat.id) && key !== 'all') {
+			setExpandedId(prev => (prev === cat.id ? null : cat.id))
+		} else {
+			setExpandedId(null) // «Все» и плоские категории — закрыть всё
+		}
 	}
 
+	const onSubClick = name => {
+		dispatch(setCategory(name.toLowerCase()))
+	}
+
+	if (status === 'loading')
+		return <aside className='w-[240px]'>Загрузка категорий...</aside>
+
 	return (
-		<aside className='w-[240px] bg-white rounded-[20px] p-4 shadow'>
-			<h3 className='font-semibold mb-3 text-lg'>Категории</h3>
+		<aside className='w-[240px] bg-white rounded-[20px] p-2.5 shadow font-baron'>
 			<ul className='space-y-1'>
 				{list.map(cat => {
-					const isOpen = expanded[cat.id]
-					const isActive =
-						(selectedCategory || 'all') ===
-						(cat.name === 'Все' ? 'all' : cat.name.toLowerCase())
+					const key = norm(cat.name)
+					const isActiveCat = (selectedCategory || 'all') === key
+					const isOpen = expandedId === cat.id && hasSubs.get(cat.id)
 
 					return (
 						<li key={cat.id}>
-							<button
-								className={`
-                  flex items-center gap-2 w-full
-                  px-3 py-2 rounded-[12px] text-left transition
-                  hover:bg-[#efebe6]
+							<PressableButton
+								className={`flex items-center gap-4 my-[5px] w-[220px] h-[30px] text-[12px] rounded-[12px] text-left
                   ${
-										isActive
-											? 'bg-firework-red text-white font-medium'
-											: 'text-[#333]'
-									}
-                `}
-								onClick={() => {
-									toggle(cat.id)
-									selectName(cat.name)
-								}}
+										isActiveCat
+											? 'text-firework-red font-medium'
+											: 'text-[#333] hover:text-firework-red'
+									}`}
+								onClick={() => onCategoryClick(cat)}
+								aria-expanded={isOpen}
 							>
-								<img src={minBlock} alt='' className='w-5 h-5 opacity-80' />
-								<span>{cat.name}</span>
-							</button>
+								<img
+									src={minBlock}
+									alt=''
+									className={`w-[30px] h-[30px] ${
+										isActiveCat ? 'opacity-100' : 'opacity-80'
+									}`}
+								/>
+								<span className='truncate'>{cat.name}</span>
+							</PressableButton>
 
-							{cat.subcategories?.length > 0 && isOpen && (
+							{isOpen && (
 								<ul className='pl-9 mt-1 space-y-1'>
 									{cat.subcategories.map(sub => {
-										const sname = sub.name.toLowerCase()
-										const activeSub = (selectedCategory || '') === sname
+										const subKey = sub.name.toLowerCase()
+										const isActiveSub = (selectedCategory || '') === subKey
 										return (
 											<li key={sub.id}>
-												<button
-													className={`
-                            w-full text-left px-3 py-1.5 rounded-[8px] text-sm transition
-                            hover:bg-[#efebe6]
+												<PressableButton
+													className={`w-[190px] h-[30px] text-left rounded-[8px] text-[12px]
                             ${
-															activeSub
-																? 'bg-firework-red text-white font-medium'
-																: 'text-gray-700'
-														}
-                          `}
-													onClick={() => selectName(sub.name)}
+															isActiveSub
+																? 'text-firework-red font-medium'
+																: 'text-gray-700 hover:text-firework-red'
+														}`}
+													onClick={() => onSubClick(sub.name)}
+													aria-current={isActiveSub ? 'true' : 'false'}
 												>
 													{sub.name}
-												</button>
+												</PressableButton>
 											</li>
 										)
 									})}

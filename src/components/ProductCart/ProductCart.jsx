@@ -1,72 +1,117 @@
 import { useDispatch, useSelector } from 'react-redux'
-import {
-	clearCart,
-	removeItem,
-	updateQuantity,
-} from '../../store/slices/cartSlice'
+import { removeItem, updateQuantity } from '../../store/slices/cartSlice'
+
+const formatPrice = n => new Intl.NumberFormat('ru-RU').format(n) + '₽'
+
+const Qty = ({ value, onDec, onInc }) => (
+	<div className='inline-flex items-center gap-2 h-7 px-2 rounded-full bg-[#f2f0ed]'>
+		<button
+			onClick={onDec}
+			className='w-6 h-6 grid place-items-center rounded-full hover:bg-black/10'
+		>
+			–
+		</button>
+		<span className='min-w-4 text-sm'>{value}</span>
+		<button
+			onClick={onInc}
+			className='w-6 h-6 grid place-items-center rounded-full hover:bg-black/10'
+		>
+			+
+		</button>
+	</div>
+)
 
 const ProductCart = () => {
 	const dispatch = useDispatch()
 	const { items, total } = useSelector(s => s.cart)
 
-	const changeQty = (id, qty) => {
-		const q = Math.max(1, Number(qty) || 1)
-		dispatch(updateQuantity({ id, quantity: q }))
-	}
+	const inc = (id, v) => dispatch(updateQuantity({ id, quantity: v + 1 }))
+	const dec = (id, v) =>
+		dispatch(updateQuantity({ id, quantity: Math.max(1, v - 1) }))
 
 	return (
-		<div className='bg-white rounded-xl p-3 shadow sticky top-[84px]'>
-			<h3 className='font-semibold mb-3'>Корзина</h3>
+		<aside
+			className='
+        bg-white rounded-[20px] w-[295px] h-[834px]
+        shadow-[0_0_15px_rgba(0,0,0,0.15)]
+        flex flex-col overflow-hidden
+      '
+		>
+			{/* Header */}
+			<div className='px-4 pt-4 pb-3'>
+				<h3 className='text-[18px] font-semibold tracking-wide'>КОРЗИНА</h3>
+			</div>
 
-			{items.length === 0 ? (
-				<div className='opacity-60 text-sm'>Пусто</div>
-			) : (
-				<div className='space-y-2'>
-					{items.map(it => (
-						<div
-							key={it.id}
-							className='flex items-center justify-between gap-2'
-						>
-							<div className='min-w-0'>
-								<div className='font-medium truncate max-w-[160px]'>
-									{it.name}
-								</div>
-								<div className='text-xs opacity-60'>{it.price} ₽</div>
+			{/* Разделительная линия */}
+			<div className='h-px bg-[#efebe6]' />
+
+			{/* Список — СКРОЛЛИТСЯ */}
+			<div className='flex-1 overflow-y-auto px-4 py-3 space-y-3 scroll-hidden'>
+				{items.length === 0 ? (
+					<div className='opacity-60 text-sm'>Пусто</div>
+				) : (
+					items.map(it => (
+						<div key={it.id} className='flex items-center gap-3'>
+							{/* Фото товара (если есть) */}
+							<div className='w-[72px] h-[56px] rounded-[10px] overflow-hidden bg-[#f6f4f2] flex-shrink-0'>
+								{it.images?.[0] ? (
+									<img
+										src={it.images[0]}
+										alt={it.name}
+										className='w-full h-full object-cover'
+									/>
+								) : null}
 							</div>
 
-							<input
-								type='number'
-								min={1}
-								value={it.quantity}
-								onChange={e => changeQty(it.id, e.target.value)}
-								className='w-16 px-2 py-1 rounded border'
-							/>
+							{/* Инфо */}
+							<div className='flex-1 min-w-0'>
+								<div className='font-semibold leading-tight truncate'>
+									{it.name}
+								</div>
+								<div className='text-[11px] opacity-60 uppercase'>
+									{it.manufacturer || ''}
+								</div>
 
+								<div className='mt-1 flex items-center justify-between'>
+									<Qty
+										value={it.quantity}
+										onDec={() => dec(it.id, it.quantity)}
+										onInc={() => inc(it.id, it.quantity)}
+									/>
+									<div className='text-right'>
+										<div className='font-semibold'>{formatPrice(it.price)}</div>
+									</div>
+								</div>
+							</div>
+
+							{/* Удалить */}
 							<button
-								className='p-2 rounded hover:bg-red-500/10'
+								className='self-start p-2 rounded hover:bg-red-500/10'
 								onClick={() => dispatch(removeItem(it.id))}
 								title='Удалить'
-							></button>
+								aria-label='Удалить'
+							>
+								×
+							</button>
 						</div>
-					))}
+					))
+				)}
+			</div>
 
-					<div className='pt-2 border-t flex items-center justify-between'>
-						<div className='font-semibold'>Итого:</div>
-						<div className='font-semibold'>{total} ₽</div>
-					</div>
-
-					<div className='flex gap-2'>
-						<button className='btn-firework flex-1'>Оформить</button>
-						<button
-							className='flex-1 rounded-[10px] h-[50px] uppercase border hover:bg-black/5 transition'
-							onClick={() => dispatch(clearCart())}
-						>
-							очистить
-						</button>
-					</div>
+			{/* Footer — фиксированно внизу */}
+			<div className='mt-auto px-4 pb-4 pt-3 bg-white'>
+				<div className='text-center text-[11px] uppercase opacity-60'>
+					итого
 				</div>
-			)}
-		</div>
+				<div className='text-center text-[20px] font-extrabold tracking-wide'>
+					{formatPrice(total)}
+				</div>
+
+				<button className='btn-firework w-full mt-3 h-[44px] rounded-[12px]'>
+					ПРОДОЛЖИТЬ
+				</button>
+			</div>
+		</aside>
 	)
 }
 

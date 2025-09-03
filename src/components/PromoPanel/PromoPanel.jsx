@@ -1,4 +1,5 @@
 import promoLeft from '../../assets/SVG/Banner-left.svg'
+import PressableButton from '../PressableButton/PressableButton'
 
 const PromoPanel = () => {
 	return (
@@ -8,9 +9,9 @@ const PromoPanel = () => {
 				alt='Промо'
 				className='w-[220px] mt-[10px] h-[331px]'
 			/>
-			<button className='btn-firework text-[15px] mt-2'>
+			<PressableButton className='btn-firework w-[220px] h-[50px] text-[15px] font-calibri tracking-wider  mt-2'>
 				рассчитать стоимость
-			</button>
+			</PressableButton>
 		</div>
 	)
 }

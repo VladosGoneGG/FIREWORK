@@ -1,36 +1,36 @@
 import { useEffect, useMemo, useState } from 'react'
-import ProductCard from '../ProductCard/ProductCard'
+import ProductCardMini from '../ProductCardMini/ProductCardMini'
 
 const ProductSection = ({ title, products }) => {
 	const [visibleCount, setVisibleCount] = useState(5)
-
-	// Сброс при изменении входных данных
 	useEffect(() => {
 		setVisibleCount(5)
 	}, [products])
-
 	const visible = useMemo(
 		() => products.slice(0, visibleCount),
 		[products, visibleCount]
 	)
+	const canMore = products.length > visibleCount
 
 	return (
-		<section className='space-y-3'>
-			<h3 className='text-lg font-semibold'>{title}</h3>
-			<div className='grid grid-cols-1 gap-3'>
-				{visible.map(p => (
-					<ProductCard key={p.id} product={p} />
-				))}
+		<section className='space-y-3 p-2.5'>
+			<div className='flex items-center justify-between'>
+				<h3 className='text-lg font-semibold'>{title}</h3>
+				{canMore && (
+					<button
+						className='text-[12px] px-3 h-[28px] rounded-[14px] border hover:bg-black/5 transition'
+						onClick={() => setVisibleCount(c => c + 5)}
+					>
+						посмотреть ещё
+					</button>
+				)}
 			</div>
 
-			{products.length > visibleCount && (
-				<button
-					className='btn-firework w-full'
-					onClick={() => setVisibleCount(c => c + 5)}
-				>
-					посмотреть ещё
-				</button>
-			)}
+			<div className='grid grid-cols-5 gap-3 max-[1200px]:grid-cols-4 max-[900px]:grid-cols-3 max-[640px]:grid-cols-2'>
+				{visible.map(p => (
+					<ProductCardMini key={p.id} product={p} />
+				))}
+			</div>
 		</section>
 	)
 }
