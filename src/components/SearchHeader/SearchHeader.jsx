@@ -31,8 +31,7 @@ const SearchHeader = () => {
 			className='
         relative group flex items-center
         border border-[#efebe6] rounded-[20px]
-        w-[665px] h-[50px] bg-white
-      '
+        w-[665px] h-[50px] bg-white'
 		>
 			{/* Лупа слева */}
 			<img
@@ -48,8 +47,7 @@ const SearchHeader = () => {
 				aria-label='Поиск по товарам'
 				className='
           outline-none bg-transparent w-full h-full
-          pl-12 pr-4 /* место под лупу слева и немного справа */
-        '
+          pl-12 pr-4 rounded-[20px] hover:bg-[#efebe6]'
 			/>
 
 			{/* SVG-плейсхолдер */}

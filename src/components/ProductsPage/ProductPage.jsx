@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { fetchCategories } from '../../store/slices/categoriesSlice'
 import {
 	fetchProducts,
+	selectDiscountedProducts,
 	selectFilteredProducts,
 } from '../../store/slices/productsSlice'
 import ProductSection from '../ProductSection/ProductSection'
@@ -11,7 +12,28 @@ const ProductsPage = () => {
 	const dispatch = useDispatch()
 	const status = useSelector(s => s.products.status)
 	const selected = useSelector(s => s.categories.selectedCategory || 'all')
+
+	// твой общий отфильтрованный список по поиску/категории
 	const filtered = useSelector(selectFilteredProducts)
+
+	// все акционные (без фильтров)
+	const discountedAll = useSelector(selectDiscountedProducts)
+
+	// акционные C учётом текущих фильтров/поиска
+	const discountedSet = useMemo(
+		() => new Set(discountedAll.map(p => p.id)),
+		[discountedAll]
+	)
+	const discounted = useMemo(
+		() => filtered.filter(p => discountedSet.has(p.id)),
+		[filtered, discountedSet]
+	)
+
+	// чтобы не дублировать — убираем акционные из «обычных»
+	const nonDiscounted = useMemo(
+		() => filtered.filter(p => !discountedSet.has(p.id)),
+		[filtered, discountedSet]
+	)
 
 	useEffect(() => {
 		if (status === 'idle') {
@@ -20,20 +42,38 @@ const ProductsPage = () => {
 		}
 	}, [status, dispatch])
 
+	// формируем секции (если выбрано all — можно показывать обе)
 	const sections = useMemo(() => {
-		const sel = (selected || 'all').toLowerCase()
-		if (sel !== 'all') {
-			return [{ title: sel[0].toUpperCase() + sel.slice(1), items: filtered }]
+		const res = []
+
+		// 1) Акции (если есть хоть один товар со скидкой)
+		if (discounted.length > 0) {
+			res.push({ title: 'Акции', items: discounted })
 		}
-		// группировка по родительской категории
-		const map = new Map()
-		for (const p of filtered) {
-			const key = p.category || 'Без категории'
-			if (!map.has(key)) map.set(key, [])
-			map.get(key).push(p)
+
+		// 2) Остальные — сгруппировать по категории или просто одной секцией,
+		//    в зависимости от твоей текущей логики.
+		if ((selected || 'all').toLowerCase() !== 'all') {
+			// если выбрана конкретная категория/подкатегория — одна секция
+			res.push({
+				title: selected[0].toUpperCase() + selected.slice(1),
+				items: nonDiscounted,
+			})
+		} else {
+			// если "Все" — секции по категориям
+			const map = new Map()
+			for (const p of nonDiscounted) {
+				const key = p.category || 'Без категории'
+				if (!map.has(key)) map.set(key, [])
+				map.get(key).push(p)
+			}
+			for (const [title, items] of map) {
+				res.push({ title, items })
+			}
 		}
-		return Array.from(map.entries()).map(([title, items]) => ({ title, items }))
-	}, [filtered, selected])
+
+		return res
+	}, [discounted, nonDiscounted, selected])
 
 	if (status === 'loading')
 		return (

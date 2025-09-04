@@ -1,26 +1,33 @@
 // src/components/ProductCardMini/ProductCardMini.jsx
 import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import caliberImg from '../../assets/SVG/radius.svg'
+import shotsImg from '../../assets/SVG/rocket.svg'
+import effectsImg from '../../assets/SVG/star.svg'
+import timeImg from '../../assets/SVG/time.svg'
 import { addItem } from '../../store/slices/cartSlice'
+import Param from '../Param/Param'
 
-// если у тебя есть свои SVG-иконки — подставь их вместо 🧨 🔘 ⏱ ⭐
-const Param = ({ icon, children }) => (
-	<div className='flex items-center gap-1 text-[12px] text-[#6b6b6b]'>
-		<span aria-hidden>{icon}</span>
-		<span className='font-medium text-[#4a4a4a]'>{children}</span>
-	</div>
-)
+const fmtSecFull = s =>
+	typeof s === 'number'
+		? s >= 60
+			? `${Math.floor(s / 60)}м ${s % 60}с`
+			: `${s}с`
+		: '—'
 
-const fmtSec = s => (s >= 60 ? `${Math.floor(s / 60)}м ${s % 60}с` : `${s}с`)
-const fmtPrice = n => new Intl.NumberFormat('ru-RU').format(n) + ' ₽'
+const fmtSecCompact = s =>
+	typeof s === 'number'
+		? s >= 60
+			? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+			: `${s}с`
+		: '—'
+
+const fmtPrice = n =>
+	typeof n === 'number' ? new Intl.NumberFormat('ru-RU').format(n) + '' : '—'
 
 const ProductCardMini = ({ product }) => {
 	const navigate = useNavigate()
 	const dispatch = useDispatch()
-	const add = e => {
-		e.stopPropagation()
-		dispatch(addItem(product))
-	}
 
 	const {
 		id,
@@ -33,81 +40,125 @@ const ProductCardMini = ({ product }) => {
 		effectsCount,
 		price,
 		discountPrice,
+		stock,
 	} = product
 
 	const img = images[0]
+	const outOfStock = Number(stock) === 0
+
+	const goToDetails = () => navigate(`/product/${id}`)
+	const onKey = e => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault()
+			goToDetails()
+		}
+	}
+	const add = e => {
+		e.stopPropagation()
+		if (!outOfStock) dispatch(addItem(product))
+	}
 
 	return (
 		<article
 			role='button'
 			tabIndex={0}
-			onClick={() => navigate(`/product/${id}`)}
-			onKeyDown={e =>
-				(e.key === 'Enter' || e.key === ' ') && navigate(`/product/${id}`)
-			}
-			className='
-        bg-white rounded-[16px] p-3 shadow
-        hover:shadow-md transition cursor-pointer
-        select-none
-      '
+			aria-label={`Открыть товар: ${name}`}
+			onClick={goToDetails}
+			onKeyDown={onKey}
 			title={name}
+			className='w-[120px] h-[206px] bg-white'
 		>
-			{/* фото */}
-			<div className='relative aspect-[4/3] rounded-[12px] overflow-hidden bg-[#f6f4f2]'>
-				{img ? (
-					<img src={img} alt={name} className='w-full h-full object-contain' />
-				) : (
-					<div className='grid place-items-center w-full h-full text-xs opacity-60'>
-						Нет фото
-					</div>
-				)}
-			</div>
-
-			{/* название + производитель */}
-			<div className='mt-2'>
-				<div className='text-[12px] uppercase opacity-60'>
-					{manufacturer || '—'}
-				</div>
-				<h4 className='font-semibold leading-tight'>{name}</h4>
-			</div>
-
-			{/* параметры */}
-			<div className='mt-2 grid grid-cols-2 gap-y-1'>
-				<Param icon='🧨'>{shots ?? '—'}</Param>
-				<Param icon='🔘'>{caliber ?? '—'}</Param>
-				<Param icon='⏱'>{durationSec ? fmtSec(durationSec) : '—'}</Param>
-				<Param icon='⭐'>{effectsCount ?? '—'}</Param>
-			</div>
-
-			{/* цена + кнопка “+” */}
-			<div className='mt-3 flex items-end justify-between'>
-				<div>
-					{discountPrice ? (
-						<>
-							<div className='text-[12px] line-through opacity-60'>
-								{fmtPrice(price)}
-							</div>
-							<div className='text-[16px] font-semibold'>
-								{fmtPrice(discountPrice)}
-							</div>
-						</>
+			<div className='h-full w-full flex flex-col font-inter'>
+				{/* Фото 100×100 */}
+				<div className='mx-auto w-[120px] h-[100px] rounded-[12px] overflow-hidden relative'>
+					{img ? (
+						<img
+							src={img}
+							alt={name}
+							loading='lazy'
+							className='w-full h-full object-contain cursor-pointer'
+						/>
 					) : (
-						<div className='text-[16px] font-semibold'>{fmtPrice(price)}</div>
+						<div className='grid place-items-center w-full h-full text-xs opacity-60'>
+							Нет фото
+						</div>
+					)}
+					{outOfStock && (
+						<div className='absolute left-1 top-1 px-1.5 py-[1px] rounded-[6px] text-[9px] bg-black/60 text-white'>
+							Нет в наличии
+						</div>
 					)}
 				</div>
 
-				<button
-					onClick={add}
-					className='
-            w-9 h-9 rounded-full bg-[#cbb7ff]
-            grid place-items-center text-[20px] leading-none
-            hover:brightness-110 active:scale-95 transition
-          '
-					aria-label='Добавить в корзину'
-					title='Добавить в корзину'
-				>
-					+
-				</button>
+				{/* Название + производитель */}
+				<div className='text-center'>
+					<h4 className='font-semibold leading-tight break-words line-clamp-1 text-[12px]'>
+						{name}
+					</h4>
+					<div className='text-[8px] font-bold uppercase '>
+						{manufacturer || '—'}
+					</div>
+				</div>
+
+				{/* Параметры */}
+				<div className='flex text-[12px] justify-evenly'>
+					<div className='flex flex-col'>
+						<Param icon={shotsImg}>{shots ?? '—'}</Param>
+						<Param icon={timeImg} title={fmtSecFull(durationSec)}>
+							{fmtSecCompact(durationSec)}
+						</Param>
+					</div>
+					<div className='flex flex-col '>
+						<Param icon={caliberImg}>{caliber ?? '—'}</Param>
+						<Param icon={effectsImg}>{effectsCount ?? '—'}</Param>
+					</div>
+				</div>
+
+				{/* Цена + кнопка */}
+				<div className='mt-auto flex items-end justify-between'>
+					<div className='ml-3'>
+						{typeof discountPrice === 'number' ? (
+							<>
+								<div className='text-[8px] line-through text-[#BD52E9] font-bold'>
+									{fmtPrice(price)}
+								</div>
+								<div className='text-[12px] font-semibold'>
+									{fmtPrice(discountPrice)}{' '}
+									<span className='text-[8px] font-inter relative top-0.5'>
+										РУБ.
+									</span>
+								</div>
+							</>
+						) : (
+							<div className='text-[12px] font-semibold'>
+								{fmtPrice(price)}{' '}
+								<span className='text-[8px] font-inter relative top-0.5'>
+									РУБ.
+								</span>
+							</div>
+						)}
+					</div>
+
+					<button
+						type='button'
+						onClick={add}
+						disabled={outOfStock}
+						aria-disabled={outOfStock}
+						className={`
+              w-[40px] h-[25px] rounded-[10px] grid place-items-center text-[20px] leading-none transition cursor-pointer
+              ${
+								outOfStock
+									? 'bg-[#e5e2de] text-[#9c9c9c] cursor-not-allowed'
+									: 'bg-[#cbb7ff] hover:brightness-110 active:scale-95'
+							}
+            `}
+						title={outOfStock ? 'Нет в наличии' : 'Добавить в корзину'}
+						aria-label={outOfStock ? 'Нет в наличии' : 'Добавить в корзину'}
+						onMouseDown={e => e.stopPropagation()}
+					>
+						+
+					</button>
+				</div>
 			</div>
 		</article>
 	)

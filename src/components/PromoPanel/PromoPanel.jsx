@@ -3,7 +3,7 @@ import PressableButton from '../PressableButton/PressableButton'
 
 const PromoPanel = () => {
 	return (
-		<div className='bg-white flex flex-col items-center mt-[20px] w-[240px] h-[413px] rounded-xl shadow'>
+		<div className='bg-white flex flex-col items-center mt-[20px] w-[240px] h-[413px] rounded-xl shadow-[0_0_10px_0_rgba(0,0,0,0.2)]'>
 			<img
 				src={promoLeft}
 				alt='Промо'

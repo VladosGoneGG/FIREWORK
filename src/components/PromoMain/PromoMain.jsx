@@ -2,7 +2,7 @@ import promoMain from '../../assets/SVG/bannerMain.svg'
 
 const PromoMain = () => {
 	return (
-		<div className='mt-2.5'>
+		<div>
 			<img src={promoMain} alt='Промо главная' />
 		</div>
 	)

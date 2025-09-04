@@ -43,7 +43,7 @@ const CategoryFilter = () => {
 		return <aside className='w-[240px]'>Загрузка категорий...</aside>
 
 	return (
-		<aside className='w-[240px] bg-white rounded-[20px] p-2.5 shadow font-baron'>
+		<aside className='w-[240px] bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] font-baron'>
 			<ul className='space-y-1'>
 				{list.map(cat => {
 					const key = norm(cat.name)
@@ -83,7 +83,7 @@ const CategoryFilter = () => {
 													className={`w-[190px] h-[30px] text-left rounded-[8px] text-[12px]
                             ${
 															isActiveSub
-																? 'text-firework-red font-medium'
+																? 'text-[#997DF5] font-medium'
 																: 'text-gray-700 hover:text-firework-red'
 														}`}
 													onClick={() => onSubClick(sub.name)}

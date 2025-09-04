@@ -40,6 +40,11 @@ const productsSlice = createSlice({
 
 export const { setSearchQuery } = productsSlice.actions
 
+export const selectDiscountedProducts = createSelector(
+	[state => state.products.items],
+	items => items.filter(p => typeof p.discountPrice === 'number')
+)
+
 // Существующий фильтр оставляем — он уже учитывает category/subcategory/search
 export const selectFilteredProducts = createSelector(
 	[
