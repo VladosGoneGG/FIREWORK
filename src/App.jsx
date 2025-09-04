@@ -1,39 +1,82 @@
+import { useMemo, useState } from 'react'
+import { useSelector } from 'react-redux'
 import CategoryFilter from './components/CategoryFilter/CategoryFilter'
-import FooterSection from './components/FooterSection/FooterSection '
+import FooterSection from './components/FooterSection/FooterSection'
 import Header from './components/Header/Header'
 import ProductCart from './components/ProductCart/ProductCart'
+import ProductDetails from './components/ProductDetails/ProductDetails'
 import ProductsPage from './components/ProductsPage/ProductPage'
 import PromoMain from './components/PromoMain/PromoMain'
 import PromoPanel from './components/PromoPanel/PromoPanel'
 
 const HEADER_H = 140
-const CENTER_W = 665 // твоя ширина по макету
+const CENTER_W = 665
+const DETAILS_W = 925
+const DETAILS_H = 834
 
 function App() {
+	const [selectedProduct, setSelectedProduct] = useState(null)
+
+	const allItems = useSelector(s => s.products.items)
+	const related = useMemo(() => {
+		if (!selectedProduct) return []
+		return allItems
+			.filter(
+				p =>
+					p.id !== selectedProduct.id &&
+					// логика подбора — по той же категории (можешь расширить по подкатегории)
+
+					(p.subcategory || '').toLowerCase() ===
+						(selectedProduct.subcategory || '').toLowerCase()
+			)
+			.slice(0, 10)
+	}, [allItems, selectedProduct])
+
 	return (
 		<div className='flex flex-col items-center h-screen overflow-hidden'>
 			<Header />
 
 			<div className='flex mt-[20px] w-full justify-center'>
 				<main className='flex w-[1240px] justify-center gap-5'>
-					<div className='sticky' style={{ top: HEADER_H }}>
+					<div
+						className={`sticky  ${selectedProduct ? 'hidden' : ''}`}
+						style={{ top: HEADER_H }}
+					>
 						<CategoryFilter />
 						<PromoPanel />
 					</div>
 
 					{/* центральная колонка скроллится, футер внутри */}
 					<div
-						className='overflow-y-auto scroll-hidden bg-transparent shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px]'
-						style={{ width: CENTER_W, height: `calc(100vh - ${HEADER_H}px)` }}
+						className='scroll-hidden bg-transparent shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px] overflow-y-auto flex flex-col'
+						style={{
+							width: selectedProduct ? DETAILS_W : CENTER_W,
+							height: selectedProduct
+								? DETAILS_H
+								: `calc(100vh - ${HEADER_H}px)`,
+						}}
 					>
 						{/* секция с баннером/товарами */}
-						<div className='bg-white rounded-[20px] p-3 '>
-							<PromoMain />
-							<ProductsPage />
-						</div>
+						{!selectedProduct ? (
+							<div className='bg-white rounded-[20px] p-3'>
+								<PromoMain />
+								<ProductsPage onSelectProduct={setSelectedProduct} />
+							</div>
+						) : (
+							<div className='w-full h-full flex justify-center items-start overflow-hidden'>
+								<ProductDetails
+									related={related}
+									product={selectedProduct}
+									onBack={() => setSelectedProduct(null)}
+								/>
+							</div>
+						)}
 
-						{/* футер как отдельная «секция» */}
-						<FooterSection />
+						{!selectedProduct && (
+							<div className='mt-3'>
+								<FooterSection />
+							</div>
+						)}
 					</div>
 
 					<aside className='w-80 sticky' style={{ top: HEADER_H }}>

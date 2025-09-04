@@ -1,6 +1,4 @@
-// src/components/ProductCardMini/ProductCardMini.jsx
 import { useDispatch } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
 import caliberImg from '../../assets/SVG/radius.svg'
 import shotsImg from '../../assets/SVG/rocket.svg'
 import effectsImg from '../../assets/SVG/star.svg'
@@ -25,8 +23,7 @@ const fmtSecCompact = s =>
 const fmtPrice = n =>
 	typeof n === 'number' ? new Intl.NumberFormat('ru-RU').format(n) + '' : '—'
 
-const ProductCardMini = ({ product }) => {
-	const navigate = useNavigate()
+const ProductCardMini = ({ product, onSelect }) => {
 	const dispatch = useDispatch()
 
 	const {
@@ -46,11 +43,10 @@ const ProductCardMini = ({ product }) => {
 	const img = images[0]
 	const outOfStock = Number(stock) === 0
 
-	const goToDetails = () => navigate(`/product/${id}`)
 	const onKey = e => {
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault()
-			goToDetails()
+			onSelect?.(product)
 		}
 	}
 	const add = e => {
@@ -63,7 +59,7 @@ const ProductCardMini = ({ product }) => {
 			role='button'
 			tabIndex={0}
 			aria-label={`Открыть товар: ${name}`}
-			onClick={goToDetails}
+			onClick={() => onSelect?.(product)}
 			onKeyDown={onKey}
 			title={name}
 			className='w-[120px] h-[206px] bg-white'

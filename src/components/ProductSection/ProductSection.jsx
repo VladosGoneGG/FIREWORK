@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 
-const ProductSection = ({ title, products }) => {
+const ProductSection = ({ title, products, onSelectProduct }) => {
 	const [visibleCount, setVisibleCount] = useState(5)
 	useEffect(() => {
 		setVisibleCount(5)
@@ -28,7 +28,7 @@ const ProductSection = ({ title, products }) => {
 
 			<div className='grid grid-cols-5 gap-[11px] max-[1200px]:grid-cols-4 max-[900px]:grid-cols-3 max-[640px]:grid-cols-2'>
 				{visible.map(p => (
-					<ProductCardMini key={p.id} product={p} />
+					<ProductCardMini key={p.id} product={p} onSelect={onSelectProduct} />
 				))}
 			</div>
 		</section>

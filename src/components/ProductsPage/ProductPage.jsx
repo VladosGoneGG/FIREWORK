@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchCategories } from '../../store/slices/categoriesSlice'
 import {
@@ -6,12 +6,26 @@ import {
 	selectDiscountedProducts,
 	selectFilteredProducts,
 } from '../../store/slices/productsSlice'
+import ProductDetails from '../ProductDetails/ProductDetails'
 import ProductSection from '../ProductSection/ProductSection'
 
-const ProductsPage = () => {
+const ProductsPage = ({ onSelectProduct }) => {
 	const dispatch = useDispatch()
 	const status = useSelector(s => s.products.status)
 	const selected = useSelector(s => s.categories.selectedCategory || 'all')
+
+	const [selectedProduct, setSelectedProduct] = useState(null)
+	const allItems = useSelector(s => s.products.items)
+
+	const related = useMemo(() => {
+		if (!selectedProduct) return []
+		return allItems
+			.filter(
+				p =>
+					p.category === selectedProduct.category && p.id !== selectedProduct.id
+			)
+			.slice(0, 10)
+	}, [allItems, selectedProduct])
 
 	// твой общий отфильтрованный список по поиску/категории
 	const filtered = useSelector(selectFilteredProducts)
@@ -82,6 +96,16 @@ const ProductsPage = () => {
 	if (status === 'failed')
 		return <div className='bg-white rounded-xl p-4 shadow'>Ошибка загрузки</div>
 
+	if (selectedProduct) {
+		return (
+			<ProductDetails
+				product={selectedProduct}
+				related={related}
+				onBack={() => setSelectedProduct(null)}
+			/>
+		)
+	}
+
 	return (
 		<div className='space-y-6'>
 			{sections.map(sec => (
@@ -89,6 +113,7 @@ const ProductsPage = () => {
 					key={sec.title}
 					title={sec.title}
 					products={sec.items}
+					onSelectProduct={onSelectProduct}
 				/>
 			))}
 		</div>
