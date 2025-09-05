@@ -43,8 +43,8 @@ const CategoryFilter = () => {
 		return <aside className='w-[240px]'>Загрузка категорий...</aside>
 
 	return (
-		<aside className='w-[240px] bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] font-baron'>
-			<ul className='space-y-1'>
+		<aside className='w-[240px] bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] font-baron lowercase font-bold'>
+			<ul className='space-y-1 '>
 				{list.map(cat => {
 					const key = norm(cat.name)
 					const isActiveCat = (selectedCategory || 'all') === key
@@ -53,7 +53,7 @@ const CategoryFilter = () => {
 					return (
 						<li key={cat.id}>
 							<PressableButton
-								className={`flex items-center gap-4 my-[5px] w-[220px] h-[30px] text-[12px] rounded-[12px] text-left
+								className={`flex items-center gap-4 my-[5px] w-[220px] h-[30px] text-[12px]  rounded-[12px] text-left
                   ${
 										isActiveCat
 											? 'text-firework-red font-medium'
@@ -69,11 +69,11 @@ const CategoryFilter = () => {
 										isActiveCat ? 'opacity-100' : 'opacity-80'
 									}`}
 								/>
-								<span className='truncate'>{cat.name}</span>
+								<span className='truncate '>{cat.name}</span>
 							</PressableButton>
 
 							{isOpen && (
-								<ul className='pl-9 mt-1 space-y-1'>
+								<ul className='pl-9 mt-1 space-y-1 '>
 									{cat.subcategories.map(sub => {
 										const subKey = sub.name.toLowerCase()
 										const isActiveSub = (selectedCategory || '') === subKey

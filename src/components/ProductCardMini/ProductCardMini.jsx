@@ -5,20 +5,37 @@ import effectsImg from '../../assets/SVG/star.svg'
 import timeImg from '../../assets/SVG/time.svg'
 import { addItem } from '../../store/slices/cartSlice'
 import Param from '../Param/Param'
+import { PlusSvg } from '../PlusSvg/PlusSvg'
 
 const fmtSecFull = s =>
 	typeof s === 'number'
 		? s >= 60
-			? `${Math.floor(s / 60)}м ${s % 60}с`
-			: `${s}с`
+			? `${Math.floor(s / 60)}м ${s % 60}с.`
+			: `${s}с.`
 		: '—'
 
-const fmtSecCompact = s =>
-	typeof s === 'number'
-		? s >= 60
-			? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-			: `${s}с`
-		: '—'
+const renderSec = s => {
+	if (typeof s !== 'number') return '—'
+
+	if (s >= 60) {
+		const m = Math.floor(s / 60)
+		const sec = s % 60
+		return (
+			<>
+				{m}
+				<span className='text-[8px]'>м</span> {sec}
+				<span className='text-[8px]'>с.</span>
+			</>
+		)
+	}
+
+	return (
+		<>
+			{s}
+			<span className='text-[8px]'>с.</span>
+		</>
+	)
+}
 
 const fmtPrice = n =>
 	typeof n === 'number' ? new Intl.NumberFormat('ru-RU').format(n) + '' : '—'
@@ -64,7 +81,7 @@ const ProductCardMini = ({ product, onSelect }) => {
 			title={name}
 			className='w-[120px] h-[206px] bg-white'
 		>
-			<div className='h-full w-full flex flex-col font-inter'>
+			<div className='h-full w-full flex flex-col lowercase font-baron'>
 				{/* Фото 100×100 */}
 				<div className='mx-auto w-[120px] h-[100px] rounded-[12px] overflow-hidden relative'>
 					{img ? (
@@ -91,7 +108,7 @@ const ProductCardMini = ({ product, onSelect }) => {
 					<h4 className='font-semibold leading-tight break-words line-clamp-1 text-[12px]'>
 						{name}
 					</h4>
-					<div className='text-[8px] font-bold uppercase '>
+					<div className='text-[8px] text-[#625a51] font-bold lowercase '>
 						{manufacturer || '—'}
 					</div>
 				</div>
@@ -101,7 +118,7 @@ const ProductCardMini = ({ product, onSelect }) => {
 					<div className='flex flex-col'>
 						<Param icon={shotsImg}>{shots ?? '—'}</Param>
 						<Param icon={timeImg} title={fmtSecFull(durationSec)}>
-							{fmtSecCompact(durationSec)}
+							{renderSec(durationSec)}
 						</Param>
 					</div>
 					<div className='flex flex-col '>
@@ -118,18 +135,18 @@ const ProductCardMini = ({ product, onSelect }) => {
 								<div className='text-[8px] line-through text-[#BD52E9] font-bold'>
 									{fmtPrice(price)}
 								</div>
-								<div className='text-[12px] font-semibold'>
+								<div className='text-[12px] font-bold'>
 									{fmtPrice(discountPrice)}{' '}
-									<span className='text-[8px] font-inter relative top-0.5'>
+									<span className='text-[8px] font-baron lowercase relative top-0.5 right-1'>
 										РУБ.
 									</span>
 								</div>
 							</>
 						) : (
-							<div className='text-[12px] font-semibold'>
-								{fmtPrice(price)}{' '}
-								<span className='text-[8px] font-inter relative top-0.5'>
-									РУБ.
+							<div className='text-[12px] font-bold'>
+								{fmtPrice(price)}
+								<span className='text-[8px] font-baron lowercase relative top-0.5'>
+									руб.
 								</span>
 							</div>
 						)}
@@ -152,7 +169,7 @@ const ProductCardMini = ({ product, onSelect }) => {
 						aria-label={outOfStock ? 'Нет в наличии' : 'Добавить в корзину'}
 						onMouseDown={e => e.stopPropagation()}
 					>
-						+
+						<PlusSvg />
 					</button>
 				</div>
 			</div>

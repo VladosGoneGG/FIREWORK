@@ -9,7 +9,7 @@ const PromoPanel = () => {
 				alt='Промо'
 				className='w-[220px] mt-[10px] h-[331px]'
 			/>
-			<PressableButton className='btn-firework w-[220px] h-[50px] text-[15px] font-calibri tracking-wider  mt-2'>
+			<PressableButton className='btn-firework w-[220px] h-[50px] text-[15px] font-baron tracking-wide  mt-2'>
 				рассчитать стоимость
 			</PressableButton>
 		</div>

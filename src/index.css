@@ -3,18 +3,28 @@
 /* Шрифты */
 @font-face {
 	font-family: 'BaronNeue';
-	src: url('./assets/fonts/BaronNeue.woff') format('woff');
-	font-weight: 400;
+	src: url('./assets/fonts/BaronNeue.woff2') format('woff2');
+	font-weight: 400; /* regular */
 	font-style: normal;
 	font-display: swap;
 }
+
 @font-face {
-	font-family: 'BaronNeue2';
-	src: url('./assets/fonts/BaronNeue2.otf') format('opentype');
-	font-weight: 400;
+	font-family: 'BaronNeue';
+	src: url('./assets/fonts/BaronNeueBold.woff2') format('woff2');
+	font-weight: 700; /* bold */
 	font-style: normal;
 	font-display: swap;
 }
+
+@font-face {
+	font-family: 'BaronNeue';
+	src: url('./assets/fonts/BaronNeueBlack.woff2') format('woff2');
+	font-weight: 900; /* black */
+	font-style: normal;
+	font-display: swap;
+}
+
 @font-face {
 	font-family: 'Calibri';
 	src: url('./assets/fonts/Calibri.woff') format('woff');
@@ -42,7 +52,6 @@
 
 	/* Шрифты */
 	--font-baron: 'BaronNeue', sans-serif;
-	--font-baron2: 'BaronNeue2', sans-serif;
 	--font-calibri: 'Calibri', sans-serif;
 	--font-inter: 'Inter', sans-serif;
 }
@@ -62,6 +71,7 @@
 	.baron-text {
 		font-family: var(--font-baron);
 	}
+
 	.calibri-text {
 		font-family: var(--font-calibri);
 	}
@@ -91,7 +101,7 @@
 */
 @layer components {
 	.btn-firework {
-		@apply text-white uppercase  rounded-[10px] w-[220px] h-[50px]
+		@apply text-white   rounded-[10px] w-[220px] h-[50px]
       bg-firework-radial transition-colors duration-200 cursor-pointer;
 	}
 	.btn-firework:hover {

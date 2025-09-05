@@ -1,5 +1,4 @@
 import Logo from '../../assets/SVG/LOGO.svg'
-import NovgorodSvg from '../../assets/SVG/nn.svg'
 import SearchHeader from '../SearchHeader/SearchHeader'
 
 const Header = () => {
@@ -9,19 +8,21 @@ const Header = () => {
 				{/* верхняя полоса */}
 				<div className='flex items-center justify-between select-none'>
 					<div>
-						<img src={NovgorodSvg} alt='Нижний Новгород' className='ml-14' />
+						<p className='font-baron ml-14 text-[18px] text-[#625a51]'>
+							Нижний Новгород
+						</p>
 					</div>
-					<div className='font-inter uppercase font-bold text-[#bf53eb] text-xl tracking-wide'>
+					<h2 className='font-baron  text-[#bf53eb] text-xl tracking-wide'>
 						крупнейший магазин пиротехники
-					</div>
-					<div className='uppercase text-[18px] mr-14 font-inter font-bold text-[#625a51]'>
+					</h2>
+					<div className='text-[18px] mr-14 font-baron  text-[#625a51]'>
 						ип федяков и.в.
 					</div>
 				</div>
 				<div className='w-[1200px] h-[2px] my-[20px] rounded-[20px] bg-[#efebe6]' />
 				<div className='mt-3 flex items-center gap-20'>
 					<a href='/'>
-						<img src={Logo} alt='Логотип' className='ml-20' />
+						<img src={Logo} alt='Логотип' className='ml-[64px]' />
 					</a>
 					<SearchHeader />
 				</div>

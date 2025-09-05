@@ -15,10 +15,10 @@ const ProductSection = ({ title, products, onSelectProduct }) => {
 	return (
 		<section className='space-y-3 p-2.5'>
 			<div className='flex items-center justify-between'>
-				<h3 className='uppercase font-inter font-bold text-[18px]'>{title}</h3>
+				<h3 className='font-baron lowercase font-bold text-[18px]'>{title}</h3>
 				{canMore && (
 					<button
-						className='font-inter font-bold uppercase text-[10px] px-3 h-[28px] text-[#625A51] hover:text-firework-red transition'
+						className='font-baron font-bold lowercase text-[10px] px-3 h-[28px] text-[#625A51] hover:text-firework-red transition'
 						onClick={() => setVisibleCount(c => c + 5)}
 					>
 						посмотреть еще
