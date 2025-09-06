@@ -158,18 +158,28 @@ const ProductCardMini = ({ product, onSelect }) => {
 						disabled={outOfStock}
 						aria-disabled={outOfStock}
 						className={`
-              w-[40px] h-[25px] rounded-[10px] grid place-items-center text-[20px] leading-none transition cursor-pointer
-              ${
-								outOfStock
-									? 'bg-[#e5e2de] text-[#9c9c9c] cursor-not-allowed'
-									: 'bg-[#cbb7ff] hover:brightness-110 active:scale-95'
-							}
-            `}
+    w-[40px] h-[25px] rounded-[10px] grid place-items-center
+    text-[20px] leading-none transition cursor-pointer
+    ${
+			outOfStock
+				? 'bg-[#e5e2de] text-[#9c9c9c] cursor-not-allowed'
+				: 'bg-[#cbb7ff] hover:bg-purple-500 active:bg-stone-200 active:scale-95 group'
+		}
+  `}
 						title={outOfStock ? 'Нет в наличии' : 'Добавить в корзину'}
 						aria-label={outOfStock ? 'Нет в наличии' : 'Добавить в корзину'}
 						onMouseDown={e => e.stopPropagation()}
 					>
-						<PlusSvg />
+						<PlusSvg
+							className={`
+      w-3 h-3 transition-colors
+      ${
+				outOfStock
+					? 'text-[#9c9c9c]'
+					: 'text-black group-hover:text-white group-active:text-stone-600'
+			}
+    `}
+						/>
 					</button>
 				</div>
 			</div>

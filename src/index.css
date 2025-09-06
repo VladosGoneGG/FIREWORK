@@ -56,6 +56,25 @@
 	--font-inter: 'Inter', sans-serif;
 }
 
+@layer utilities {
+	@keyframes wiggle-subtle {
+		0% {
+			transform: translate3d(0, 0, 0);
+		}
+		40% {
+			transform: translate3d(0, -1px, 0);
+		}
+		70% {
+			transform: translate3d(0, 0.5px, 0);
+		}
+		100% {
+			transform: translate3d(0, 0, 0);
+		}
+	}
+	.animate-wiggle-subtle {
+		animation: wiggle-subtle 180ms ease-out both;
+	}
+}
 /* База */
 @layer base {
 	html {
