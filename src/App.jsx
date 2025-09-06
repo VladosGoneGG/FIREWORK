@@ -1,34 +1,25 @@
-import { useMemo, useState } from 'react'
+// src/App.jsx
+import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import CategoryFilter from './components/CategoryFilter/CategoryFilter'
 import FooterSection from './components/FooterSection/FooterSection'
 import Header from './components/Header/Header'
 import ProductCart from './components/ProductCart/ProductCart'
-import ProductDetails from './components/ProductDetails/ProductDetails'
 import ProductsPage from './components/ProductsPage/ProductPage'
-import PromoMain from './components/PromoMain/PromoMain'
 import PromoPanel from './components/PromoPanel/PromoPanel'
+import SubcategoryOverlay from './components/SubcategoryOverlay/SubcategoryOverlay'
 
 const HEADER_H = 140
-const CENTER_W = 750
-const DETAILS_W = 1000
+const CENTER_W = 665
+const DETAILS_W = 925
 const DETAILS_H = 834
 
 function App() {
-	const [selectedProduct, setSelectedProduct] = useState(null)
+	const [detailsMode, setDetailsMode] = useState(false)
+	const [filtersOpen, setFiltersOpen] = useState(false)
 
-	const allItems = useSelector(s => s.products.items)
-	const related = useMemo(() => {
-		if (!selectedProduct) return []
-		return allItems
-			.filter(
-				p =>
-					p.id !== selectedProduct.id &&
-					(p.subcategory || '').toLowerCase() ===
-						(selectedProduct.subcategory || '').toLowerCase()
-			)
-			.slice(0, 10)
-	}, [allItems, selectedProduct])
+	const resultsCount = useSelector(s => s.products.items.length)
+	const allItems = useSelector(s => s.products.items) // если нужно для счётчиков
 
 	return (
 		<div className='flex flex-col items-center h-screen overflow-hidden'>
@@ -36,56 +27,51 @@ function App() {
 
 			<div className='flex mt-[20px] w-full justify-center'>
 				<main className='flex w-[1240px] justify-center gap-5'>
-					{/* Левая колонка (прячем при деталях) */}
+					{/* ЛЕВАЯ КОЛОНКА: скрываем в деталях */}
 					<div
-						className={`sticky ${selectedProduct ? 'hidden' : ''}`}
+						className={`sticky ${detailsMode ? 'hidden' : 'block'}`}
 						style={{ top: HEADER_H }}
 					>
-						<CategoryFilter />
-						<PromoPanel />
+						<div className='relative w-[240px] h-[834px]'>
+							{!filtersOpen && (
+								<>
+									<CategoryFilter />
+									<PromoPanel />
+								</>
+							)}
+							<SubcategoryOverlay
+								isOpen={filtersOpen}
+								onApply={() => setFiltersOpen(false)}
+								onReset={() => {}}
+								onClose={() => setFiltersOpen(false)}
+								resultsCount={resultsCount}
+							/>
+						</div>
 					</div>
 
-					{/* Центр-колонка: ТОЛЬКО скролл и центрирование контента */}
+					{/* ЦЕНТР */}
 					<div
-						className='
-              scroll-hidden overflow-y-auto
-              bg-transparent rounded-[20px]
-              shadow-[0_0_10px_0_rgba(0,0,0,0.2)]
-              flex flex-col items-center
-            '
+						className='scroll-hidden bg-transparent shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px] overflow-y-auto flex flex-col'
 						style={{
-							width: selectedProduct ? DETAILS_W : CENTER_W,
-							height: selectedProduct
-								? DETAILS_H
-								: `calc(100vh - ${HEADER_H}px)`,
+							width: detailsMode ? DETAILS_W : CENTER_W,
+							height: detailsMode ? DETAILS_H : `calc(100vh - ${HEADER_H}px)`,
 						}}
 					>
-						{/* Листинг товаров */}
-						{!selectedProduct ? (
-							<div className='bg-white rounded-[20px] p-3 w-full'>
-								<PromoMain />
-								<ProductsPage onSelectProduct={setSelectedProduct} />
-							</div>
-						) : (
-							// Детали товара — СЕКЦИЯ САМА РОВНО 925px
-							<div className='w-full flex justify-center items-start'>
-								<ProductDetails
-									related={related}
-									product={selectedProduct}
-									onBack={() => setSelectedProduct(null)}
-								/>
-							</div>
-						)}
+						{/* ВАЖНО: ProductsPage теперь сам рисует белую карточку и PromoMain в списковом режиме */}
+						<ProductsPage
+							onToggleFilters={() => setFiltersOpen(v => !v)}
+							onDetailsModeChange={setDetailsMode}
+						/>
 
-						{/* Футер в режиме листинга */}
-						{!selectedProduct && (
-							<div className='mt-3 w-full'>
+						{/* футер только когда НЕ в деталях */}
+						{!detailsMode && (
+							<div className='mt-3'>
 								<FooterSection />
 							</div>
 						)}
 					</div>
 
-					{/* Правая колонка (корзина) */}
+					{/* ПРАВАЯ КОЛОНКА */}
 					<aside className='w-80 sticky' style={{ top: HEADER_H }}>
 						<ProductCart />
 					</aside>
@@ -94,4 +80,5 @@ function App() {
 		</div>
 	)
 }
+
 export default App

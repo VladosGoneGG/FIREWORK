@@ -1,34 +1,60 @@
+// src/components/ProductSection/ProductSection.jsx
 import { useEffect, useMemo, useState } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 
-const ProductSection = ({ title, products, onSelectProduct }) => {
+const ProductSection = ({
+	title,
+	products = [],
+	onSelectProduct,
+	onOpenSubcategory,
+}) => {
 	const [visibleCount, setVisibleCount] = useState(5)
+
 	useEffect(() => {
+		// при смене данных показываем снова первые 5
 		setVisibleCount(5)
 	}, [products])
+
 	const visible = useMemo(
 		() => products.slice(0, visibleCount),
 		[products, visibleCount]
 	)
-	const canMore = products.length > visibleCount
+
+	const handleOpenMore = () => {
+		if (onOpenSubcategory) {
+			// пробрасываем наверх, открываем SubcategoryPanel как отдельный экран
+			onOpenSubcategory({ title, products })
+		} else {
+			// fallback, если вдруг не передали
+			setVisibleCount(c => c + 5)
+		}
+	}
 
 	return (
-		<section className='space-y-3 p-2.5'>
+		<section className='space-y-3'>
 			<div className='flex items-center justify-between'>
-				<h3 className='font-baron lowercase font-bold text-[18px]'>{title}</h3>
-				{canMore && (
+				<h3 className='text-lg font-semibold'>{title}</h3>
+
+				{/* маленькая кнопка “посмотреть ещё” справа */}
+				{products.length > 5 && (
 					<button
-						className='font-baron font-bold lowercase text-[10px] px-3 h-[28px] text-[#625A51] hover:text-firework-red transition'
-						onClick={() => setVisibleCount(c => c + 5)}
+						type='button'
+						onClick={handleOpenMore}
+						className='text-[12px] opacity-70 hover:opacity-100'
 					>
-						посмотреть еще
+						Посмотреть ещё
 					</button>
 				)}
 			</div>
 
-			<div className='grid grid-cols-5 gap-[11px] max-[1200px]:grid-cols-4 max-[900px]:grid-cols-3 max-[640px]:grid-cols-2'>
+			{/* сетка мини-карточек строго по 5 в ряд */}
+			<div className='grid grid-cols-5 gap-3'>
 				{visible.map(p => (
-					<ProductCardMini key={p.id} product={p} onSelect={onSelectProduct} />
+					<ProductCardMini
+						key={p.id}
+						product={p}
+						onSelect={onSelectProduct} // ← клик по карточке ведёт в ProductDetails
+					/>
 				))}
 			</div>
 		</section>
