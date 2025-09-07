@@ -1,17 +1,17 @@
-// src/components/ProductSection/ProductSection.jsx
 import { useEffect, useMemo, useState } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
+import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSkeleton'
 
 const ProductSection = ({
 	title,
 	products = [],
 	onSelectProduct,
 	onOpenSubcategory,
+	loading = false, // ← новое
 }) => {
 	const [visibleCount, setVisibleCount] = useState(5)
 
 	useEffect(() => {
-		// при смене данных показываем снова первые 5
 		setVisibleCount(5)
 	}, [products])
 
@@ -21,22 +21,15 @@ const ProductSection = ({
 	)
 
 	const handleOpenMore = () => {
-		if (onOpenSubcategory) {
-			// пробрасываем наверх, открываем SubcategoryPanel как отдельный экран
-			onOpenSubcategory({ title, products })
-		} else {
-			// fallback, если вдруг не передали
-			setVisibleCount(c => c + 5)
-		}
+		if (onOpenSubcategory) onOpenSubcategory({ title, products })
+		else setVisibleCount(c => c + 5)
 	}
 
 	return (
 		<section className='space-y-3'>
 			<div className='flex items-center justify-between'>
 				<h3 className='text-lg font-semibold'>{title}</h3>
-
-				{/* маленькая кнопка “посмотреть ещё” справа */}
-				{products.length > 5 && (
+				{!loading && products.length > 5 && (
 					<button
 						type='button'
 						onClick={handleOpenMore}
@@ -47,15 +40,18 @@ const ProductSection = ({
 				)}
 			</div>
 
-			{/* сетка мини-карточек строго по 5 в ряд */}
 			<div className='grid grid-cols-5 gap-3'>
-				{visible.map(p => (
-					<ProductCardMini
-						key={p.id}
-						product={p}
-						onSelect={onSelectProduct} // ← клик по карточке ведёт в ProductDetails
-					/>
-				))}
+				{loading
+					? Array.from({ length: 10 }).map((_, i) => (
+							<ProductCardMiniSkeleton key={i} />
+					  ))
+					: visible.map(p => (
+							<ProductCardMini
+								key={p.id}
+								product={p}
+								onSelect={onSelectProduct}
+							/>
+					  ))}
 			</div>
 		</section>
 	)

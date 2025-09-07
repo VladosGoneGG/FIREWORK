@@ -1,71 +1,49 @@
 // src/components/ProductsPage/ProductsPage.jsx
-import { useEffect, useMemo, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { fetchCategories } from '../../store/slices/categoriesSlice'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSelector } from 'react-redux'
+
+import useProductsBoot from '../../hooks/useProductsBoot'
+import useRelated from '../../hooks/useRelated'
+import useSections from '../../hooks/useSections'
+
 import {
-	fetchProducts,
 	selectDiscountedProducts,
 	selectFilteredProducts,
 } from '../../store/slices/productsSlice'
+
+import { applySort, SORT_KEYS } from '../../utils/sort'
 
 import ProductDetails from '../ProductDetails/ProductDetails'
 import ProductSection from '../ProductSection/ProductSection'
 import PromoMain from '../PromoMain/PromoMain'
 import SubcategoryPanel from '../SubcategoryPanel/SubcategoryPanel'
 
-const sortFns = {
-	cheap: arr =>
-		[...arr].sort(
-			(a, b) => (a.discountPrice ?? a.price) - (b.discountPrice ?? b.price)
-		),
-	exp: arr =>
-		[...arr].sort(
-			(a, b) => (b.discountPrice ?? b.price) - (a.discountPrice ?? a.price)
-		),
-	new: arr => [...arr], // заглушка
-	pop: arr => [...arr], // заглушка
-}
-
 const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
-	const dispatch = useDispatch()
+	// загрузка данных при необходимости
+	useProductsBoot()
+
 	const status = useSelector(s => s.products.status)
 	const selected = useSelector(s => s.categories.selectedCategory || 'all')
 	const allItems = useSelector(s => s.products.items)
-
-	// режим: details или subcategory или обычный список
-	const [selectedProduct, setSelectedProduct] = useState(null)
-	const [activeSub, setActiveSub] = useState(null)
-	const [sortKey, setSortKey] = useState('cheap')
-
-	const openDetails = p => {
-		setSelectedProduct(p)
-		onDetailsModeChange?.(true)
-	}
-	const closeDetails = () => {
-		setSelectedProduct(null)
-		onDetailsModeChange?.(false)
-	}
-
-	useEffect(() => {
-		if (status === 'idle') {
-			dispatch(fetchProducts())
-			dispatch(fetchCategories())
-		}
-	}, [status, dispatch])
-
-	// related для деталей
-	const related = useMemo(() => {
-		if (!selectedProduct) return []
-		return allItems
-			.filter(
-				p =>
-					p.category === selectedProduct.category && p.id !== selectedProduct.id
-			)
-			.slice(0, 10)
-	}, [allItems, selectedProduct])
-
 	const filtered = useSelector(selectFilteredProducts)
 	const discountedAll = useSelector(selectDiscountedProducts)
+
+	// экраны
+	const [selectedProduct, setSelectedProduct] = useState(null)
+	const [activeSub, setActiveSub] = useState(null)
+	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
+
+	// при смене выбранной категории — закрываем вложенные экраны
+	useEffect(() => {
+		setSelectedProduct(null)
+		setActiveSub(null)
+		onDetailsModeChange?.(false)
+	}, [selected, onDetailsModeChange])
+
+	// related для деталей
+	const related = useRelated(allItems, selectedProduct, 10)
+
+	// разбиение на акционные/обычные
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
 		[discountedAll]
@@ -79,57 +57,83 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 		[filtered, discountedSet]
 	)
 
-	const sections = useMemo(() => {
-		const res = []
-		if (discounted.length > 0) res.push({ title: 'Акции', items: discounted })
+	// секции списка
+	const sections = useSections(discounted, nonDiscounted, selected)
 
-		if ((selected || 'all').toLowerCase() !== 'all') {
-			res.push({
-				title: selected[0].toUpperCase() + selected.slice(1),
-				items: nonDiscounted,
-			})
-		} else {
-			const map = new Map()
-			for (const p of nonDiscounted) {
-				const key = p.category || 'Без категории'
-				if (!map.has(key)) map.set(key, [])
-				map.get(key).push(p)
+	// ================== коллбэки ==================
+	const openDetails = useCallback(
+		p => {
+			setSelectedProduct(p)
+			onDetailsModeChange?.(true)
+		},
+		[onDetailsModeChange]
+	)
+
+	const closeDetails = useCallback(() => {
+		setSelectedProduct(null)
+		onDetailsModeChange?.(false)
+	}, [onDetailsModeChange])
+
+	// Нормализация payload подкатегории:
+	// - строка => ищем по category
+	// - объект без products => подбираем из allItems по title/category
+	// - объект с products => используем как есть
+	const openSubcategory = useCallback(
+		payload => {
+			let title = ''
+			let products = []
+
+			if (typeof payload === 'string') {
+				title = payload
+			} else if (payload && typeof payload === 'object') {
+				title = payload.title || payload.category || ''
+				if (Array.isArray(payload.products)) {
+					products = payload.products
+				}
 			}
-			for (const [title, items] of map) res.push({ title, items })
-		}
-		return res
-	}, [discounted, nonDiscounted, selected])
 
-	// ==================
-	// РЕНДЕР
-	// ==================
+			if (!products.length && title) {
+				const t = String(title).toLowerCase()
+				products = allItems.filter(p => (p.category || '').toLowerCase() === t)
+			}
 
-	if (status === 'loading')
-		return (
-			<div className='bg-white rounded-[20px] p-3'>Загрузка товаров...</div>
-		)
-	if (status === 'failed')
-		return <div className='bg-white rounded-[20px] p-3'>Ошибка загрузки</div>
+			setActiveSub({ title, products })
+		},
+		[allItems]
+	)
 
+	const closeSubcategory = useCallback(() => {
+		setActiveSub(null)
+	}, [])
+
+	// ================== РЕНДЕР ==================
+
+	// 1) Детали
 	if (selectedProduct) {
 		return (
 			<ProductDetails
 				product={selectedProduct}
 				related={related}
 				onBack={closeDetails}
+				onOpenSubcategory={payload => {
+					// закрыть детали → открыть подкатегорию
+					closeDetails()
+					// сюда может прилететь { title, products } ИЛИ просто title
+					openSubcategory(payload?.title || selectedProduct.category)
+				}}
 			/>
 		)
 	}
 
+	// 2) Подкатегория
 	if (activeSub) {
-		const sorter = sortFns[sortKey] ?? (a => a)
-		const sorted = sorter(activeSub.products)
-
+		const list = Array.isArray(activeSub.products) ? activeSub.products : []
+		const sorted = applySort(list, sortKey)
 		return (
 			<SubcategoryPanel
 				title={activeSub.title}
 				products={sorted}
-				onClose={() => setActiveSub(null)}
+				onClose={closeSubcategory}
 				onSelectProduct={openDetails}
 				onOpenFilters={onToggleFilters}
 				sort={sortKey}
@@ -138,7 +142,7 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 		)
 	}
 
-	// Обычный список: белая карточка + PromoMain + секции
+	// 3) Обычный список: PromoMain + секции
 	return (
 		<div className='bg-white rounded-[20px] p-3'>
 			<PromoMain />
@@ -149,7 +153,12 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 						title={sec.title}
 						products={sec.items}
 						onSelectProduct={openDetails}
-						onOpenSubcategory={payload => setActiveSub(payload)}
+						onOpenSubcategory={payload =>
+							openSubcategory(
+								payload ?? { title: sec.title, products: sec.items }
+							)
+						}
+						loading={status === 'loading'}
 					/>
 				))}
 			</div>

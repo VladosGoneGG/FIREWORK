@@ -1,50 +1,16 @@
+import { memo, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
-import caliberImg from '../../assets/SVG/radius.svg'
-import shotsImg from '../../assets/SVG/rocket.svg'
-import effectsImg from '../../assets/SVG/star.svg'
-import timeImg from '../../assets/SVG/time.svg'
 import { addItem } from '../../store/slices/cartSlice'
-import Param from '../Param/Param'
-import { PlusSvg } from '../PlusSvg/PlusSvg'
+import { fmtPrice, fmtSecFull, renderSec } from '../../utils/format'
+import AddToCartButton from './parts/AddToCartButton'
+import PriceBlock from './parts/PriceBlock'
+import ProductMeta from './parts/ProductMeta'
+import ProductThumb from './parts/ProductThumb'
 
-const fmtSecFull = s =>
-	typeof s === 'number'
-		? s >= 60
-			? `${Math.floor(s / 60)}м ${s % 60}с.`
-			: `${s}с.`
-		: '—'
-
-const renderSec = s => {
-	if (typeof s !== 'number') return '—'
-
-	if (s >= 60) {
-		const m = Math.floor(s / 60)
-		const sec = s % 60
-		return (
-			<>
-				{m}
-				<span className='text-[8px]'>м</span> {sec}
-				<span className='text-[8px]'>с.</span>
-			</>
-		)
-	}
-
-	return (
-		<>
-			{s}
-			<span className='text-[8px]'>с.</span>
-		</>
-	)
-}
-
-const fmtPrice = n =>
-	typeof n === 'number' ? new Intl.NumberFormat('ru-RU').format(n) + '' : '—'
-
-const ProductCardMini = ({ product, onSelect }) => {
+function ProductCardMini({ product, onSelect }) {
 	const dispatch = useDispatch()
 
 	const {
-		id,
 		name,
 		manufacturer,
 		images = [],
@@ -60,131 +26,78 @@ const ProductCardMini = ({ product, onSelect }) => {
 	const img = images[0]
 	const outOfStock = Number(stock) === 0
 
-	const onKey = e => {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault()
-			onSelect?.(product)
-		}
-	}
-	const add = e => {
-		e.stopPropagation()
-		if (!outOfStock) dispatch(addItem(product))
-	}
+	const handleSelect = useCallback(() => {
+		onSelect?.(product)
+	}, [onSelect, product])
+
+	const onKey = useCallback(
+		e => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault()
+				onSelect?.(product)
+			}
+		},
+		[onSelect, product]
+	)
+
+	const add = useCallback(
+		e => {
+			e.stopPropagation()
+			if (!outOfStock) dispatch(addItem(product))
+		},
+		[dispatch, outOfStock, product]
+	)
 
 	return (
 		<article
 			role='button'
 			tabIndex={0}
 			aria-label={`Открыть товар: ${name}`}
-			onClick={() => onSelect?.(product)}
+			onClick={handleSelect}
 			onKeyDown={onKey}
 			title={name}
 			className='w-[120px] h-[206px] bg-white'
 		>
 			<div className='h-full w-full flex flex-col lowercase font-baron'>
 				{/* Фото 100×100 */}
-				<div className='mx-auto w-[120px] h-[100px] rounded-[12px] overflow-hidden relative'>
-					{img ? (
-						<img
-							src={img}
-							alt={name}
-							loading='lazy'
-							className='w-full h-full object-contain cursor-pointer'
-						/>
-					) : (
-						<div className='grid place-items-center w-full h-full text-xs opacity-60'>
-							Нет фото
-						</div>
-					)}
-					{outOfStock && (
-						<div className='absolute left-1 top-1 px-1.5 py-[1px] rounded-[6px] text-[9px] bg-black/60 text-white'>
-							Нет в наличии
-						</div>
-					)}
-				</div>
+				<ProductThumb
+					src={img}
+					alt={name}
+					outOfStock={outOfStock}
+					badgeText='Нет в наличии'
+				/>
 
 				{/* Название + производитель */}
-				<div className='text-center'>
-					<h4 className='font-semibold leading-tight break-words line-clamp-1 text-[12px]'>
-						{name}
-					</h4>
-					<div className='text-[8px] text-[#625a51] font-bold lowercase '>
-						{manufacturer || '—'}
-					</div>
-				</div>
+				<ProductMeta name={name} manufacturer={manufacturer} />
 
 				{/* Параметры */}
 				<div className='flex text-[12px] justify-evenly'>
 					<div className='flex flex-col'>
-						<Param icon={shotsImg}>{shots ?? '—'}</Param>
-						<Param icon={timeImg} title={fmtSecFull(durationSec)}>
+						<PriceBlock.Param icon='shots'>{shots ?? '—'}</PriceBlock.Param>
+						<PriceBlock.Param icon='time' title={fmtSecFull(durationSec)}>
 							{renderSec(durationSec)}
-						</Param>
+						</PriceBlock.Param>
 					</div>
 					<div className='flex flex-col '>
-						<Param icon={caliberImg}>{caliber ?? '—'}</Param>
-						<Param icon={effectsImg}>{effectsCount ?? '—'}</Param>
+						<PriceBlock.Param icon='caliber'>{caliber ?? '—'}</PriceBlock.Param>
+						<PriceBlock.Param icon='effects'>
+							{effectsCount ?? '—'}
+						</PriceBlock.Param>
 					</div>
 				</div>
 
 				{/* Цена + кнопка */}
 				<div className='mt-auto flex items-end justify-between'>
-					<div className='ml-3'>
-						{typeof discountPrice === 'number' ? (
-							<>
-								<div className='text-[8px] line-through text-[#BD52E9] font-bold'>
-									{fmtPrice(price)}
-								</div>
-								<div className='text-[12px] font-bold'>
-									{fmtPrice(discountPrice)}{' '}
-									<span className='text-[8px] font-baron lowercase relative top-0.5 right-1'>
-										РУБ.
-									</span>
-								</div>
-							</>
-						) : (
-							<div className='text-[12px] font-bold'>
-								{fmtPrice(price)}
-								<span className='text-[8px] font-baron lowercase relative top-0.5'>
-									руб.
-								</span>
-							</div>
-						)}
-					</div>
-
-					<button
-						type='button'
-						onClick={add}
-						disabled={outOfStock}
-						aria-disabled={outOfStock}
-						className={`
-    w-[40px] h-[25px] rounded-[10px] grid place-items-center
-    text-[20px] leading-none transition cursor-pointer
-    ${
-			outOfStock
-				? 'bg-[#e5e2de] text-[#9c9c9c] cursor-not-allowed'
-				: 'bg-[#cbb7ff] hover:bg-purple-500 active:bg-stone-200 active:scale-95 group'
-		}
-  `}
-						title={outOfStock ? 'Нет в наличии' : 'Добавить в корзину'}
-						aria-label={outOfStock ? 'Нет в наличии' : 'Добавить в корзину'}
-						onMouseDown={e => e.stopPropagation()}
-					>
-						<PlusSvg
-							className={`
-      w-3 h-3 transition-colors
-      ${
-				outOfStock
-					? 'text-[#9c9c9c]'
-					: 'text-black group-hover:text-white group-active:text-stone-600'
-			}
-    `}
-						/>
-					</button>
+					<PriceBlock
+						price={price}
+						discountPrice={discountPrice}
+						fmtPrice={fmtPrice}
+					/>
+					<AddToCartButton disabled={outOfStock} onClick={add} />
 				</div>
 			</div>
 		</article>
 	)
 }
 
-export default ProductCardMini
+export default memo(ProductCardMini)

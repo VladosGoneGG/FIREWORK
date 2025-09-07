@@ -8,7 +8,7 @@ export default function SubcategoryPanel({
 	onOpenFilters,
 }) {
 	return (
-		<div className='w-full h-full flex flex-col'>
+		<div className='w-full h-full flex flex-col rounded-b-[20px] bg-white'>
 			{/* Header */}
 			<div className='flex items-center gap-2 mb-3'>
 				<button
@@ -32,7 +32,7 @@ export default function SubcategoryPanel({
 			</div>
 
 			{/* Grid */}
-			<div className='grid grid-cols-5 gap-3 overflow-y-auto'>
+			<div className='grid grid-cols-5 p-2.5 gap-2.5 overflow-y-auto'>
 				{products.map(p => (
 					<ProductCardMini key={p.id} product={p} onSelect={onSelectProduct} />
 				))}

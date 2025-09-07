@@ -57,6 +57,28 @@
 }
 
 @layer utilities {
+	.skeleton {
+		@apply relative overflow-hidden bg-stone-200;
+	}
+	.skeleton::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		transform: translateX(-100%);
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0) 0%,
+			rgba(255, 255, 255, 0.6) 50%,
+			rgba(255, 255, 255, 0) 100%
+		);
+		animation: skeleton-shimmer 1.2s infinite;
+	}
+	@keyframes skeleton-shimmer {
+		100% {
+			transform: translateX(100%);
+		}
+	}
+
 	@keyframes wiggle-subtle {
 		0% {
 			transform: translate3d(0, 0, 0);
@@ -77,6 +99,17 @@
 }
 /* База */
 @layer base {
+	html,
+	body {
+		-ms-overflow-style: none; /* IE и Edge */
+		scrollbar-width: none; /* Firefox */
+	}
+
+	html::-webkit-scrollbar,
+	body::-webkit-scrollbar {
+		display: none; /* Chrome, Safari, Opera */
+	}
+
 	html {
 		background-color: #efebe6;
 	}

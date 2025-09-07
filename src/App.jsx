@@ -10,8 +10,8 @@ import PromoPanel from './components/PromoPanel/PromoPanel'
 import SubcategoryOverlay from './components/SubcategoryOverlay/SubcategoryOverlay'
 
 const HEADER_H = 140
-const CENTER_W = 665
-const DETAILS_W = 925
+const CENTER_W = 720
+const DETAILS_W = 1010
 const DETAILS_H = 834
 
 function App() {
