@@ -11,6 +11,7 @@ const ProductDetails = ({
 	onBack,
 	onOpenSubcategory,
 	onOpenProductDetail,
+	onSelectProduct,
 }) => {
 	if (!product) return null
 
@@ -32,11 +33,7 @@ const ProductDetails = ({
 				<RelatedBlock
 					related={related}
 					currentCategory={product.category}
-					onSelectProduct={p => {
-						// закрываем текущие детали и открываем новые
-						onBack?.()
-						onOpenProductDetail?.(p)
-					}}
+					onSelectProduct={onSelectProduct}
 					onOpenSubcategory={onOpenSubcategory}
 				/>
 			</div>

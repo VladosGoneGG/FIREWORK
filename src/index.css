@@ -99,17 +99,6 @@
 }
 /* База */
 @layer base {
-	html,
-	body {
-		-ms-overflow-style: none; /* IE и Edge */
-		scrollbar-width: none; /* Firefox */
-	}
-
-	html::-webkit-scrollbar,
-	body::-webkit-scrollbar {
-		display: none; /* Chrome, Safari, Opera */
-	}
-
 	html {
 		background-color: #efebe6;
 	}

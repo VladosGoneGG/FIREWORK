@@ -1,21 +1,20 @@
 // src/components/ProductsPage/ProductsPage.jsx
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
-
+import promoMain from '../../assets/SVG/bannerMain2.svg'
 import useProductsBoot from '../../hooks/useProductsBoot'
 import useRelated from '../../hooks/useRelated'
 import useSections from '../../hooks/useSections'
-
 import {
 	selectDiscountedProducts,
 	selectFilteredProducts,
 } from '../../store/slices/productsSlice'
-
 import { applySort, SORT_KEYS } from '../../utils/sort'
+import PromoDetails from '../PromoDetails/PromoDetails'
+import PromoMain from '../PromoMain/PromoMain'
 
 import ProductDetails from '../ProductDetails/ProductDetails'
 import ProductSection from '../ProductSection/ProductSection'
-import PromoMain from '../PromoMain/PromoMain'
 import SubcategoryPanel from '../SubcategoryPanel/SubcategoryPanel'
 
 const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
@@ -32,9 +31,10 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 	const [selectedProduct, setSelectedProduct] = useState(null)
 	const [activeSub, setActiveSub] = useState(null)
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
-
+	const [promoOpen, setPromoOpen] = useState(false)
 	// при смене выбранной категории — закрываем вложенные экраны
 	useEffect(() => {
+		setPromoOpen(false)
 		setSelectedProduct(null)
 		setActiveSub(null)
 		onDetailsModeChange?.(false)
@@ -42,6 +42,13 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 
 	// related для деталей
 	const related = useRelated(allItems, selectedProduct, 10)
+
+	// related для промо (просто отдай, например, список акционных или любые 7 из filtered)
+	const promoRelated = useMemo(() => {
+		// можно показывать скидочные, а если их нет — первые из отфильтрованных
+		const list = discountedAll.length ? discountedAll : filtered
+		return list.slice(0, 14) // с запасом, внизу режем до 7
+	}, [discountedAll, filtered])
 
 	// разбиение на акционные/обычные
 	const discountedSet = useMemo(
@@ -108,6 +115,41 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 
 	// ================== РЕНДЕР ==================
 
+	if (promoOpen) {
+		onDetailsModeChange?.(true) // расширим центр и скроем левую колонку
+		return (
+			<PromoDetails
+				banner={promoMain}
+				titleLines={[
+					'закажи выступление артистов-пиротехников',
+					'и получи салют в подарок',
+				]}
+				description={
+					'Опиши условия акции: даты проведения, контактные данные, что входит в предложение и т.д.'
+				}
+				related={promoRelated}
+				onBack={() => {
+					setPromoOpen(false)
+					onDetailsModeChange?.(false)
+				}}
+				onSelectProduct={p => {
+					// клик по карточке внизу промо — открываем детали товара
+					setPromoOpen(false)
+					setSelectedProduct(p)
+					onDetailsModeChange?.(true)
+				}}
+				onOpenSubcategory={payload => {
+					// «посмотреть ещё» — закрываем промо и открываем подкатегорию
+					setPromoOpen(false)
+					setActiveSub(
+						payload?.title ? { title: payload.title, products: filtered } : null
+					)
+					onDetailsModeChange?.(false)
+				}}
+			/>
+		)
+	}
+
 	// 1) Детали
 	if (selectedProduct) {
 		return (
@@ -121,6 +163,7 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 					// сюда может прилететь { title, products } ИЛИ просто title
 					openSubcategory(payload?.title || selectedProduct.category)
 				}}
+				onSelectProduct={openDetails}
 			/>
 		)
 	}
@@ -145,7 +188,7 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 	// 3) Обычный список: PromoMain + секции
 	return (
 		<div className='bg-white rounded-[20px] p-3'>
-			<PromoMain />
+			<PromoMain onOpen={() => setPromoOpen(true)} />
 			<div className='space-y-6'>
 				{sections.map(sec => (
 					<ProductSection

@@ -32,7 +32,7 @@ export default function SubcategoryPanel({
 			</div>
 
 			{/* Grid */}
-			<div className='grid grid-cols-5 p-2.5 gap-2.5 overflow-y-auto'>
+			<div className='grid grid-cols-5 p-2.5 gap-2.5 overflow-y-auto scroll-hidden'>
 				{products.map(p => (
 					<ProductCardMini key={p.id} product={p} onSelect={onSelectProduct} />
 				))}
