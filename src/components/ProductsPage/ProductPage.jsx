@@ -1,24 +1,29 @@
 // src/components/ProductsPage/ProductsPage.jsx
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
-import promoMain from '../../assets/SVG/bannerMain2.svg'
+
 import useProductsBoot from '../../hooks/useProductsBoot'
 import useRelated from '../../hooks/useRelated'
 import useSections from '../../hooks/useSections'
+
 import {
 	selectDiscountedProducts,
 	selectFilteredProducts,
 } from '../../store/slices/productsSlice'
+
 import { applySort, SORT_KEYS } from '../../utils/sort'
-import PromoDetails from '../PromoDetails/PromoDetails'
-import PromoMain from '../PromoMain/PromoMain'
 
 import ProductDetails from '../ProductDetails/ProductDetails'
 import ProductSection from '../ProductSection/ProductSection'
+import PromoMain from '../PromoMain/PromoMain'
 import SubcategoryPanel from '../SubcategoryPanel/SubcategoryPanel'
 
-const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
-	// загрузка данных при необходимости
+const ProductsPage = ({
+	onToggleFilters,
+	onDetailsModeChange,
+	externalSelectedProduct, // ← из App
+	onConsumeExternalSelected, // ← из App
+}) => {
 	useProductsBoot()
 
 	const status = useSelector(s => s.products.status)
@@ -26,31 +31,40 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 	const allItems = useSelector(s => s.products.items)
 	const filtered = useSelector(selectFilteredProducts)
 	const discountedAll = useSelector(selectDiscountedProducts)
+	const search = useSelector(s => s.products.searchQuery || '')
 
-	// экраны
 	const [selectedProduct, setSelectedProduct] = useState(null)
 	const [activeSub, setActiveSub] = useState(null)
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
-	const [promoOpen, setPromoOpen] = useState(false)
-	// при смене выбранной категории — закрываем вложенные экраны
+
+	// При смене категории — закрыть вложенные экраны
 	useEffect(() => {
-		setPromoOpen(false)
 		setSelectedProduct(null)
 		setActiveSub(null)
 		onDetailsModeChange?.(false)
 	}, [selected, onDetailsModeChange])
 
-	// related для деталей
+	// Если пришёл товар из модалки — открыть детали
+	useEffect(() => {
+		if (externalSelectedProduct) {
+			setActiveSub(null)
+			setSelectedProduct(externalSelectedProduct)
+			onDetailsModeChange?.(true)
+			onConsumeExternalSelected?.()
+		}
+	}, [externalSelectedProduct, onConsumeExternalSelected, onDetailsModeChange])
+
+	// Если введён поиск — показываем список (закрываем детали/подкатегорию)
+	useEffect(() => {
+		if (search.trim()) {
+			setSelectedProduct(null)
+			setActiveSub(null)
+			onDetailsModeChange?.(false)
+		}
+	}, [search, onDetailsModeChange])
+
 	const related = useRelated(allItems, selectedProduct, 10)
 
-	// related для промо (просто отдай, например, список акционных или любые 7 из filtered)
-	const promoRelated = useMemo(() => {
-		// можно показывать скидочные, а если их нет — первые из отфильтрованных
-		const list = discountedAll.length ? discountedAll : filtered
-		return list.slice(0, 14) // с запасом, внизу режем до 7
-	}, [discountedAll, filtered])
-
-	// разбиение на акционные/обычные
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
 		[discountedAll]
@@ -64,10 +78,8 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 		[filtered, discountedSet]
 	)
 
-	// секции списка
 	const sections = useSections(discounted, nonDiscounted, selected)
 
-	// ================== коллбэки ==================
 	const openDetails = useCallback(
 		p => {
 			setSelectedProduct(p)
@@ -75,80 +87,31 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 		},
 		[onDetailsModeChange]
 	)
-
 	const closeDetails = useCallback(() => {
 		setSelectedProduct(null)
 		onDetailsModeChange?.(false)
 	}, [onDetailsModeChange])
 
-	// Нормализация payload подкатегории:
-	// - строка => ищем по category
-	// - объект без products => подбираем из allItems по title/category
-	// - объект с products => используем как есть
 	const openSubcategory = useCallback(
 		payload => {
+			// payload: { title, products } | string
 			let title = ''
 			let products = []
-
-			if (typeof payload === 'string') {
-				title = payload
-			} else if (payload && typeof payload === 'object') {
+			if (typeof payload === 'string') title = payload
+			else if (payload && typeof payload === 'object') {
 				title = payload.title || payload.category || ''
-				if (Array.isArray(payload.products)) {
-					products = payload.products
-				}
+				if (Array.isArray(payload.products)) products = payload.products
 			}
-
 			if (!products.length && title) {
 				const t = String(title).toLowerCase()
 				products = allItems.filter(p => (p.category || '').toLowerCase() === t)
 			}
-
 			setActiveSub({ title, products })
 		},
 		[allItems]
 	)
 
-	const closeSubcategory = useCallback(() => {
-		setActiveSub(null)
-	}, [])
-
-	// ================== РЕНДЕР ==================
-
-	if (promoOpen) {
-		onDetailsModeChange?.(true) // расширим центр и скроем левую колонку
-		return (
-			<PromoDetails
-				banner={promoMain}
-				titleLines={[
-					'закажи выступление артистов-пиротехников',
-					'и получи салют в подарок',
-				]}
-				description={
-					'Опиши условия акции: даты проведения, контактные данные, что входит в предложение и т.д.'
-				}
-				related={promoRelated}
-				onBack={() => {
-					setPromoOpen(false)
-					onDetailsModeChange?.(false)
-				}}
-				onSelectProduct={p => {
-					// клик по карточке внизу промо — открываем детали товара
-					setPromoOpen(false)
-					setSelectedProduct(p)
-					onDetailsModeChange?.(true)
-				}}
-				onOpenSubcategory={payload => {
-					// «посмотреть ещё» — закрываем промо и открываем подкатегорию
-					setPromoOpen(false)
-					setActiveSub(
-						payload?.title ? { title: payload.title, products: filtered } : null
-					)
-					onDetailsModeChange?.(false)
-				}}
-			/>
-		)
-	}
+	const closeSubcategory = useCallback(() => setActiveSub(null), [])
 
 	// 1) Детали
 	if (selectedProduct) {
@@ -158,9 +121,7 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 				related={related}
 				onBack={closeDetails}
 				onOpenSubcategory={payload => {
-					// закрыть детали → открыть подкатегорию
 					closeDetails()
-					// сюда может прилететь { title, products } ИЛИ просто title
 					openSubcategory(payload?.title || selectedProduct.category)
 				}}
 				onSelectProduct={openDetails}
@@ -185,10 +146,10 @@ const ProductsPage = ({ onToggleFilters, onDetailsModeChange }) => {
 		)
 	}
 
-	// 3) Обычный список: PromoMain + секции
+	// 3) Список + баннер
 	return (
 		<div className='bg-white rounded-[20px] p-3'>
-			<PromoMain onOpen={() => setPromoOpen(true)} />
+			<PromoMain />
 			<div className='space-y-6'>
 				{sections.map(sec => (
 					<ProductSection

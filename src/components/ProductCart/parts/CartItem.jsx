@@ -26,7 +26,7 @@ const CartItem = ({ item, onDec, onInc }) => {
 					<Qty value={item.quantity} onDec={onDec} onInc={onInc} />
 					<div className='text-[18px] font-bold'>
 						{priceText}
-						<span className='text-[8px] font-baron lowercase relative top-0.5 ml-1'>
+						<span className='text-[8px] font-baron lowercase relative top-0.5 right-1.5'>
 							руб.
 						</span>
 					</div>

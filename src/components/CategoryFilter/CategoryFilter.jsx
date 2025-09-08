@@ -4,6 +4,7 @@ import {
 	fetchCategories,
 	setCategory,
 } from '../../store/slices/categoriesSlice'
+import { clearSearchQuery } from '../../store/slices/productsSlice'
 import CategoryRow from '../CategoryRow/CategoryRow'
 import SubcategoryRow from '../SubcategoryRow/SubcategoryRow'
 import CategoryFilterSkeleton from './CategoryFilterSkeleton'
@@ -29,6 +30,7 @@ const CategoryFilter = () => {
 		cat => {
 			const key = norm(cat.name)
 			dispatch(setCategory(key))
+			dispatch(clearSearchQuery())
 			if (hasSubsById.get(cat.id) && key !== 'all') {
 				setExpandedId(prev => (prev === cat.id ? null : cat.id))
 			} else {
@@ -41,6 +43,7 @@ const CategoryFilter = () => {
 	const handleSubClick = useCallback(
 		name => {
 			dispatch(setCategory(norm(name)))
+			dispatch(clearSearchQuery())
 		},
 		[dispatch]
 	)

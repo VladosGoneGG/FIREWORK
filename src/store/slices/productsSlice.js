@@ -21,6 +21,9 @@ const productsSlice = createSlice({
 		setSearchQuery: (state, action) => {
 			state.searchQuery = action.payload
 		},
+		clearSearchQuery(state) {
+			state.searchQuery = ''
+		},
 	},
 	extraReducers: builder => {
 		builder
@@ -38,7 +41,7 @@ const productsSlice = createSlice({
 	},
 })
 
-export const { setSearchQuery } = productsSlice.actions
+export const { setSearchQuery, clearSearchQuery } = productsSlice.actions
 
 export const selectDiscountedProducts = createSelector(
 	[state => state.products.items],

@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import CategoryFilter from './components/CategoryFilter/CategoryFilter'
 import FooterSection from './components/FooterSection/FooterSection'
@@ -7,6 +7,8 @@ import Header from './components/Header/Header'
 import ProductCart from './components/ProductCart/ProductCart'
 import ProductsPage from './components/ProductsPage/ProductPage'
 import PromoPanel from './components/PromoPanel/PromoPanel'
+import SearchBar from './components/Search/SearchBar'
+import SearchModal from './components/Search/SearchModal'
 import SubcategoryOverlay from './components/SubcategoryOverlay/SubcategoryOverlay'
 
 const HEADER_H = 140
@@ -19,15 +21,31 @@ function App() {
 	const [filtersOpen, setFiltersOpen] = useState(false)
 
 	const resultsCount = useSelector(s => s.products.items.length)
-	const allItems = useSelector(s => s.products.items) // если нужно для счётчиков
+
+	// глобальный поиск (модалка)
+	const [searchOpen, setSearchOpen] = useState(false)
+	const [externalSelectedProduct, setExternalSelectedProduct] = useState(null)
+
+	useEffect(() => {
+		const onKey = e => {
+			if (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey)) {
+				e.preventDefault()
+				setSearchOpen(v => !v)
+			}
+		}
+		window.addEventListener('keydown', onKey)
+		return () => window.removeEventListener('keydown', onKey)
+	}, [])
 
 	return (
 		<div className='flex flex-col items-center h-screen overflow-hidden'>
-			<Header />
+			<Header
+				rightSlot={<SearchBar onOpenModal={() => setSearchOpen(true)} />}
+			/>
 
 			<div className='flex mt-[20px] w-full justify-center'>
 				<main className='flex w-[1240px] justify-center gap-5'>
-					{/* ЛЕВАЯ КОЛОНКА: скрываем в деталях */}
+					{/* ЛЕВАЯ КОЛОНКА */}
 					<div
 						className={`sticky ${detailsMode ? 'hidden' : 'block'}`}
 						style={{ top: HEADER_H }}
@@ -57,13 +75,13 @@ function App() {
 							height: detailsMode ? DETAILS_H : `calc(100vh - ${HEADER_H}px)`,
 						}}
 					>
-						{/* ВАЖНО: ProductsPage теперь сам рисует белую карточку и PromoMain в списковом режиме */}
 						<ProductsPage
 							onToggleFilters={() => setFiltersOpen(v => !v)}
 							onDetailsModeChange={setDetailsMode}
+							externalSelectedProduct={externalSelectedProduct} // ← сюда
+							onConsumeExternalSelected={() => setExternalSelectedProduct(null)}
 						/>
 
-						{/* футер только когда НЕ в деталях */}
 						{!detailsMode && (
 							<div className='mt-3'>
 								<FooterSection />
@@ -77,6 +95,16 @@ function App() {
 					</aside>
 				</main>
 			</div>
+
+			<SearchModal
+				isOpen={searchOpen}
+				onClose={() => setSearchOpen(false)}
+				onSelectProduct={p => {
+					// открыть карточку из любой точки
+					setExternalSelectedProduct(p)
+					setSearchOpen(false)
+				}}
+			/>
 		</div>
 	)
 }

@@ -29,19 +29,19 @@ function PriceBlock({ price, discountPrice, fmtPrice }) {
 		<div className='ml-3'>
 			{hasDiscount ? (
 				<>
-					<div className='text-[8px] line-through text-[#BD52E9] font-bold'>
+					<div className='text-[8px] font-baron lowercase line-through text-[#BD52E9] font-bold'>
 						{fmtPrice(price)}
 					</div>
 					<div className='text-[12px] font-bold'>
-						{fmtPrice(discountPrice)}{' '}
-						<span className='text-[8px] font-baron lowercase relative top-0.5 right-1'>
+						{fmtPrice(discountPrice)}
+						<span className='text-[8px] font-baron lowercase relative top-0.5 right-0.5'>
 							руб.
 						</span>
 					</div>
 				</>
 			) : (
 				<div className='text-[12px] font-bold'>
-					{fmtPrice(price)}{' '}
+					{fmtPrice(price)}
 					<span className='text-[8px] font-baron lowercase relative top-0.5'>
 						руб.
 					</span>
