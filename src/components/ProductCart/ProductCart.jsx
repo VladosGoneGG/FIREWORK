@@ -1,6 +1,7 @@
+// src/components/ProductCart/ProductCart.jsx
 import { memo, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { updateQuantity } from '../../store/slices/cartSlice'
+import { removeItem, updateQuantity } from '../../store/slices/cartSlice'
 import CartFooter from './parts/CartFooter'
 import CartHeader from './parts/CartHeader'
 import CartItem from './parts/CartItem'
@@ -11,16 +12,21 @@ const selectCart = s => s.cart
 const ProductCart = ({ loading = false }) => {
 	const dispatch = useDispatch()
 	const { items, total } = useSelector(selectCart)
-
-	// Если нужно — можно автоматически показывать скелет, когда items отсутствуют
-	const isLoading = loading || items === undefined || items === null
+	const isLoading = loading || items == null
 
 	const inc = useCallback(
 		(id, v) => dispatch(updateQuantity({ id, quantity: v + 1 })),
 		[dispatch]
 	)
+
 	const dec = useCallback(
-		(id, v) => dispatch(updateQuantity({ id, quantity: Math.max(1, v - 1) })),
+		(id, v) => {
+			if (v <= 1) {
+				dispatch(removeItem(id))
+			} else {
+				dispatch(updateQuantity({ id, quantity: v - 1 }))
+			}
+		},
 		[dispatch]
 	)
 

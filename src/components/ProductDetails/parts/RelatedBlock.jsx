@@ -1,18 +1,20 @@
-// src/components/ProductDetails/parts/RelatedBlock.jsx
 import { memo } from 'react'
 import ProductCardMini from '../../ProductCardMini/ProductCardMini'
 
+/**
+ * Props:
+ * - related: Product[]
+ * - currentCategory: string
+ * - onSelectProduct: (product) => void
+ * - onOpenSubcategory: (categoryString) => void
+ */
 const RelatedBlock = ({
 	related = [],
 	currentCategory,
-	onSelectProduct, // (product) => void
-	onOpenSubcategory, // (payloadOrCategory) => void
+	onSelectProduct,
+	onOpenSubcategory,
 }) => {
 	if (!related.length) return null
-
-	const openMore = () => {
-		onOpenSubcategory?.({ title: currentCategory })
-	}
 
 	return (
 		<>
@@ -20,8 +22,8 @@ const RelatedBlock = ({
 				<div className='font-semibold'>добавь в набор</div>
 				<button
 					type='button'
-					onClick={openMore}
-					className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer'
+					onClick={() => onOpenSubcategory?.(currentCategory)} // ← только строка
+					className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5]'
 				>
 					посмотреть ещё
 				</button>
@@ -32,7 +34,7 @@ const RelatedBlock = ({
 					<ProductCardMini
 						key={p.id}
 						product={p}
-						onSelect={() => onSelectProduct?.(p)} // ← открыть этот товар в деталях
+						onSelect={() => onSelectProduct?.(p)}
 					/>
 				))}
 			</div>

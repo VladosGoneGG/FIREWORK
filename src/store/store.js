@@ -1,5 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
-import cartReducer from './slices/cartSlice'
+import throttle from 'lodash.throttle'
+import { loadCart, saveCart } from '../utils/persistCart'
+import cartReducer, { setCart } from './slices/cartSlice'
 import categoriesReducer from './slices/categoriesSlice'
 import productsReducer from './slices/productsSlice'
 
@@ -10,3 +12,15 @@ export const store = configureStore({
 		categories: categoriesReducer,
 	},
 })
+
+const persistedCart = loadCart()
+if (persistedCart) {
+	store.dispatch(setCart(persistedCart))
+}
+
+store.subscribe(
+	throttle(() => {
+		const state = store.getState()
+		saveCart(state.cart)
+	}, 500)
+)

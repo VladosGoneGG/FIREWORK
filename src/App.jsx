@@ -1,6 +1,5 @@
 // src/App.jsx
 import { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
 import CategoryFilter from './components/CategoryFilter/CategoryFilter'
 import FooterSection from './components/FooterSection/FooterSection'
 import Header from './components/Header/Header'
@@ -11,6 +10,8 @@ import SearchBar from './components/Search/SearchBar'
 import SearchModal from './components/Search/SearchModal'
 import SubcategoryOverlay from './components/SubcategoryOverlay/SubcategoryOverlay'
 
+import useOverlayFilters from './hooks/useOverlayFilters'
+
 const HEADER_H = 140
 const CENTER_W = 720
 const DETAILS_W = 1010
@@ -19,13 +20,27 @@ const DETAILS_H = 834
 function App() {
 	const [detailsMode, setDetailsMode] = useState(false)
 	const [filtersOpen, setFiltersOpen] = useState(false)
-
-	const resultsCount = useSelector(s => s.products.items.length)
-
-	// глобальный поиск (модалка)
 	const [searchOpen, setSearchOpen] = useState(false)
-	const [externalSelectedProduct, setExternalSelectedProduct] = useState(null)
 
+	// --- состояние формы фильтров (живое) ---
+	const { form, setField, reset: resetForm, normalized } = useOverlayFilters()
+
+	// --- ПРИМЕНЁННЫЕ фильтры, по которым реально фильтруем SubcategoryPanel ---
+	const [appliedFilters, setAppliedFilters] = useState({}) // пустой = нет фильтров
+	const [overlayCount, setOverlayCount] = useState(0)
+
+	// применить (кнопка "показать")
+	const applyOverlay = () => {
+		setAppliedFilters(normalized) // применяем то, что ввели в форме
+	}
+
+	// сбросить (кнопка "сбросить все")
+	const clearOverlay = () => {
+		resetForm()
+		setAppliedFilters({}) // полностью убираем фильтры → вернётся весь список
+	}
+
+	// --- хоткей ctrl+k для глобального поиска ---
 	useEffect(() => {
 		const onKey = e => {
 			if (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey)) {
@@ -57,12 +72,18 @@ function App() {
 									<PromoPanel />
 								</>
 							)}
+
 							<SubcategoryOverlay
 								isOpen={filtersOpen}
-								onApply={() => setFiltersOpen(false)}
-								onReset={() => {}}
 								onClose={() => setFiltersOpen(false)}
-								resultsCount={resultsCount}
+								// ВАЖНО: теперь "показать" и "сбросить" управляют appliedFilters
+								onApply={applyOverlay}
+								onReset={clearOverlay}
+								resultsCount={overlayCount}
+								// Живая форма (редактирование инпутов)
+								form={form}
+								setField={setField}
+								reset={resetForm}
 							/>
 						</div>
 					</div>
@@ -78,8 +99,10 @@ function App() {
 						<ProductsPage
 							onToggleFilters={() => setFiltersOpen(v => !v)}
 							onDetailsModeChange={setDetailsMode}
-							externalSelectedProduct={externalSelectedProduct} // ← сюда
-							onConsumeExternalSelected={() => setExternalSelectedProduct(null)}
+							// ПРИМЕНЁННЫЕ фильтры отдаём сюда
+							overlayFilters={appliedFilters}
+							// Кол-во найденных под фильтром (для левого оверлея)
+							onFiltersCountChange={setOverlayCount}
 						/>
 
 						{!detailsMode && (
@@ -96,15 +119,8 @@ function App() {
 				</main>
 			</div>
 
-			<SearchModal
-				isOpen={searchOpen}
-				onClose={() => setSearchOpen(false)}
-				onSelectProduct={p => {
-					// открыть карточку из любой точки
-					setExternalSelectedProduct(p)
-					setSearchOpen(false)
-				}}
-			/>
+			{/* Глобальный поиск */}
+			<SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 		</div>
 	)
 }

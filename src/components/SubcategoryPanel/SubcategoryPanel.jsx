@@ -7,6 +7,8 @@ export default function SubcategoryPanel({
 	onSelectProduct,
 	onOpenFilters,
 }) {
+	const isEmpty = !Array.isArray(products) || products.length === 0
+
 	return (
 		<div className='w-full h-full flex flex-col rounded-b-[20px] bg-white'>
 			{/* Header */}
@@ -31,12 +33,22 @@ export default function SubcategoryPanel({
 				</button>
 			</div>
 
-			{/* Grid */}
-			<div className='grid grid-cols-5 p-2.5 gap-2.5 overflow-y-auto scroll-hidden'>
-				{products.map(p => (
-					<ProductCardMini key={p.id} product={p} onSelect={onSelectProduct} />
-				))}
-			</div>
+			{/* Grid / empty */}
+			{isEmpty ? (
+				<div className='flex-1 grid place-items-center text-sm text-[#625a51]'>
+					В этой подкатегории пока ничего не найдено
+				</div>
+			) : (
+				<div className='grid grid-cols-5 p-2.5 gap-2.5 overflow-y-auto scroll-hidden'>
+					{products.map(p => (
+						<ProductCardMini
+							key={p.id}
+							product={p}
+							onSelect={onSelectProduct}
+						/>
+					))}
+				</div>
+			)}
 		</div>
 	)
 }

@@ -6,19 +6,24 @@ export const SORT_KEYS = {
 	POP: 'pop',
 }
 
-const byEffPriceAsc = (a, b) =>
-	(a.discountPrice ?? a.price) - (b.discountPrice ?? b.price)
-const byEffPriceDesc = (a, b) =>
-	(b.discountPrice ?? b.price) - (a.discountPrice ?? a.price)
+const priceOf = p => p?.discountPrice ?? p?.price ?? Infinity
 
-export const sortFns = {
-	[SORT_KEYS.CHEAP]: arr => [...arr].sort(byEffPriceAsc),
-	[SORT_KEYS.EXP]: arr => [...arr].sort(byEffPriceDesc),
-	[SORT_KEYS.NEW]: arr => [...arr], // заглушки — позже подменишь
-	[SORT_KEYS.POP]: arr => [...arr],
-}
+const cheap = (arr = []) => [...arr].sort((a, b) => priceOf(a) - priceOf(b))
+const exp = (arr = []) => [...arr].sort((a, b) => priceOf(b) - priceOf(a))
 
 export const applySort = (arr, key) => {
-	const fn = sortFns[key]
-	return fn ? fn(arr) : arr
+	const list = Array.isArray(arr) ? arr : []
+	switch (key) {
+		case SORT_KEYS.EXP:
+			return exp(list)
+		case SORT_KEYS.NEW:
+			// TODO: своя логика сортировки "новых"
+			return list
+		case SORT_KEYS.POP:
+			// TODO: своя логика сортировки "популярных"
+			return list
+		case SORT_KEYS.CHEAP:
+		default:
+			return cheap(list)
+	}
 }

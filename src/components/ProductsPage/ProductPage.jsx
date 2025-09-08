@@ -1,4 +1,3 @@
-// src/components/ProductsPage/ProductsPage.jsx
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 
@@ -11,6 +10,7 @@ import {
 	selectFilteredProducts,
 } from '../../store/slices/productsSlice'
 
+import { applyAdvancedFilter } from '../../utils/filters'
 import { applySort, SORT_KEYS } from '../../utils/sort'
 
 import ProductDetails from '../ProductDetails/ProductDetails'
@@ -19,14 +19,28 @@ import PromoDetails from '../PromoDetails/PromoDetails'
 import PromoMain from '../PromoMain/PromoMain'
 import SubcategoryPanel from '../SubcategoryPanel/SubcategoryPanel'
 
+/**
+ * Props:
+ * - onToggleFilters?: (open:boolean) => void
+ * - onDetailsModeChange?: (on:boolean) => void
+ * - externalSelectedProduct?: Product | null
+ * - onConsumeExternalSelected?: () => void
+ * - overlayFilters?: object                 // ПРИМЕНЁННЫЕ фильтры (только по кнопке "показать")
+ * - overlayFiltersPreview?: object          // Превью-фильтры (меняются во время ввода) — используются только для счётчика
+ * - onFiltersCountChange?: (n:number) => void
+ */
 const ProductsPage = ({
 	onToggleFilters,
 	onDetailsModeChange,
 	externalSelectedProduct,
 	onConsumeExternalSelected,
+	overlayFilters = {},
+	overlayFiltersPreview = {},
+	onFiltersCountChange = () => {},
 }) => {
 	useProductsBoot()
 
+	// глобальный стейт
 	const status = useSelector(s => s.products.status)
 	const selected = useSelector(s => s.categories.selectedCategory || 'all')
 	const allItems = useSelector(s => s.products.items)
@@ -34,50 +48,51 @@ const ProductsPage = ({
 	const discountedAll = useSelector(selectDiscountedProducts)
 	const search = useSelector(s => s.products.searchQuery || '')
 
+	// локальные экраны
 	const [selectedProduct, setSelectedProduct] = useState(null)
-	const [activeSub, setActiveSub] = useState(null)
+	const [activeSub, setActiveSub] = useState(null) // { title, products }
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
 	const [promoOpen, setPromoOpen] = useState(false)
 
-	// Закрыть вложенные экраны при смене категории
+	// управление режимом центра (ширина/скрытие левой колонки)
+	useEffect(() => {
+		onDetailsModeChange?.(Boolean(selectedProduct) || promoOpen)
+	}, [selectedProduct, promoOpen, onDetailsModeChange])
+
+	// Смена категории → закрываем вложенные экраны
 	useEffect(() => {
 		setPromoOpen(false)
 		setSelectedProduct(null)
 		setActiveSub(null)
-		onDetailsModeChange?.(false)
-	}, [selected, onDetailsModeChange])
+	}, [selected])
 
-	// товар из модалки → открыть детали
+	// Товар из модалки → открыть детали
 	useEffect(() => {
-		if (externalSelectedProduct) {
-			setPromoOpen(false)
-			setActiveSub(null)
-			setSelectedProduct(externalSelectedProduct)
-			onDetailsModeChange?.(true)
-			onConsumeExternalSelected?.()
-		}
-	}, [externalSelectedProduct, onConsumeExternalSelected, onDetailsModeChange])
+		if (!externalSelectedProduct) return
+		setPromoOpen(false)
+		setActiveSub(null)
+		setSelectedProduct(externalSelectedProduct)
+		onConsumeExternalSelected?.()
+	}, [externalSelectedProduct, onConsumeExternalSelected])
 
-	// при поиске показываем список
+	// При активном поиске закрываем вложенные экраны
 	useEffect(() => {
-		if (search.trim()) {
-			setPromoOpen(false)
-			setSelectedProduct(null)
-			setActiveSub(null)
-			onDetailsModeChange?.(false)
-		}
-	}, [search, onDetailsModeChange])
+		if (!search.trim()) return
+		setPromoOpen(false)
+		setSelectedProduct(null)
+		setActiveSub(null)
+	}, [search])
 
-	// related для деталей
+	// related для деталей товара
 	const related = useRelated(allItems, selectedProduct, 10)
 
-	// related для промо (например, скидочные или просто первые из filtered)
+	// related для промо
 	const promoRelated = useMemo(() => {
 		const list = discountedAll.length ? discountedAll : filtered
 		return list.slice(0, 14)
 	}, [discountedAll, filtered])
 
-	// разбиение на секции
+	// секции (акции / остальное)
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
 		[discountedAll]
@@ -92,70 +107,99 @@ const ProductsPage = ({
 	)
 	const sections = useSections(discounted, nonDiscounted, selected)
 
-	const openDetails = useCallback(
-		p => {
-			setPromoOpen(false)
-			setSelectedProduct(p)
-			onDetailsModeChange?.(true)
-		},
-		[onDetailsModeChange]
+	// ----- данные подкатегории -----
+	const activeList = useMemo(
+		() => (Array.isArray(activeSub?.products) ? activeSub.products : []),
+		[activeSub]
 	)
+
+	// применённые фильтры (ТОЛЬКО после нажатия «показать»)
+	const filteredApplied = useMemo(
+		() => applyAdvancedFilter(activeList, overlayFilters),
+		[activeList, overlayFilters]
+	)
+	const sortedApplied = useMemo(
+		() => applySort(filteredApplied, sortKey),
+		[filteredApplied, sortKey]
+	)
+
+	// превью-фильтры — только для счётчика «найдено N»
+	const filteredPreview = useMemo(
+		() => applyAdvancedFilter(activeList, overlayFiltersPreview),
+		[activeList, overlayFiltersPreview]
+	)
+	useEffect(() => {
+		if (activeSub) onFiltersCountChange(filteredPreview.length)
+	}, [activeSub, filteredPreview.length, onFiltersCountChange])
+
+	// ----- коллбэки -----
+	const openDetails = useCallback(p => {
+		setPromoOpen(false)
+		setSelectedProduct(p)
+	}, [])
 
 	const closeDetails = useCallback(() => {
 		setSelectedProduct(null)
-		onDetailsModeChange?.(false)
-	}, [onDetailsModeChange])
+	}, [])
+
+	const norm = s =>
+		String(s || '')
+			.trim()
+			.toLowerCase()
 
 	const openSubcategory = useCallback(
 		payload => {
 			let title = ''
 			let products = []
-			if (typeof payload === 'string') title = payload
-			else if (payload && typeof payload === 'object') {
+
+			if (typeof payload === 'string') {
+				title = payload
+			} else if (payload && typeof payload === 'object') {
 				title = payload.title || payload.category || ''
-				if (Array.isArray(payload.products)) products = payload.products
+				if (Array.isArray(payload.products) && payload.products.length) {
+					products = payload.products
+				}
 			}
+
 			if (!products.length && title) {
-				const t = String(title).toLowerCase()
-				products = allItems.filter(p => (p.category || '').toLowerCase() === t)
+				const t = norm(title)
+				products = allItems.filter(
+					p => norm(p.category) === t || norm(p.subcategory) === t
+				)
 			}
+
 			setPromoOpen(false)
-			setActiveSub({ title, products })
+			setSelectedProduct(null)
+			setActiveSub({
+				title: title || 'Категория',
+				products: Array.isArray(products) ? products : [],
+			})
 		},
 		[allItems]
 	)
 
 	const closeSubcategory = useCallback(() => setActiveSub(null), [])
 
-	// 0) PROMO DETAILS (ветка должна быть раньше деталей/подкатегории)
+	// ----- ветки рендера -----
 	if (promoOpen) {
-		onDetailsModeChange?.(true)
 		return (
 			<PromoDetails
-				currentCategory={promoRelated[0]?.category || ''} // ← ВАЖНО
-				description={'Опиши условия акции: сроки, контакты, что входит и т.п.'}
+				currentCategory={promoRelated[0]?.category || ''}
+				description='Опиши условия акции: сроки, контакты, что входит и т.п.'
 				related={promoRelated}
-				onBack={() => {
-					setPromoOpen(false)
-					onDetailsModeChange?.(false)
-				}}
+				onBack={() => setPromoOpen(false)}
 				onSelectProduct={p => {
 					setPromoOpen(false)
 					setSelectedProduct(p)
-					onDetailsModeChange?.(true)
 				}}
 				onOpenSubcategory={payload => {
-					// payload тут — СТРОКА категории (см. PromoDetails)
-					// openSubcategory уже умеет по названию категории собрать товары из allItems
 					setPromoOpen(false)
-					openSubcategory(payload) // передаём строку
-					onDetailsModeChange?.(false)
+					openSubcategory(payload)
 				}}
 			/>
 		)
 	}
 
-	// 1) Детали
 	if (selectedProduct) {
 		return (
 			<ProductDetails
@@ -171,24 +215,20 @@ const ProductsPage = ({
 		)
 	}
 
-	// 2) Подкатегория
 	if (activeSub) {
-		const list = Array.isArray(activeSub.products) ? activeSub.products : []
-		const sorted = applySort(list, sortKey)
 		return (
 			<SubcategoryPanel
 				title={activeSub.title}
-				products={sorted}
+				products={sortedApplied}
 				onClose={closeSubcategory}
 				onSelectProduct={openDetails}
-				onOpenFilters={onToggleFilters}
+				onOpenFilters={() => onToggleFilters?.(true)}
 				sort={sortKey}
 				onChangeSort={setSortKey}
 			/>
 		)
 	}
 
-	// 3) Список + баннер
 	return (
 		<div className='bg-white rounded-[20px] p-3'>
 			<PromoMain onOpen={() => setPromoOpen(true)} />
