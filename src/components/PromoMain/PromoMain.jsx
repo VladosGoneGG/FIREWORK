@@ -5,12 +5,12 @@ const PromoMain = ({ onOpen }) => {
 	return (
 		<button
 			type='button'
-			onClick={onOpen}
-			className='mb-9 block w-full rounded-[10px] overflow-hidden focus:outline-none hover:opacity-95 active:opacity-90 transition'
-			aria-label='Открыть промо'
-			title='Открыть промо'
+			onClick={() => onOpen?.()}
+			className='mb-9 block cursor-pointer focus:outline-none'
+			aria-label='Открыть акцию'
+			title='Открыть акцию'
 		>
-			<img src={promoMain} alt='Промо главная' className='w-full h-auto' />
+			<img src={promoMain} alt='Промо главная' />
 		</button>
 	)
 }

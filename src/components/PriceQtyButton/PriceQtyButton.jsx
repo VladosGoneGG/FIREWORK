@@ -69,7 +69,7 @@ const PriceQtyButton = ({ product, unitPrice, className = '' }) => {
 				aria-label='Уменьшить количество'
 				title='Уменьшить количество'
 				className={[
-					'relative w-5 h-5 grid place-items-center rounded-[6px]',
+					'relative w-5 h-5 grid place-items-center rounded-[6px] cursor-pointer',
 
 					'transition-colors duration-150',
 					'font-normal',
@@ -106,7 +106,7 @@ const PriceQtyButton = ({ product, unitPrice, className = '' }) => {
 				aria-label='Увеличить количество'
 				title='Увеличить количество'
 				className={[
-					'relative w-5 h-5 grid place-items-center rounded-[6px]',
+					'relative w-5 h-5 grid place-items-center rounded-[6px] cursor-pointer',
 					'transition-colors duration-150',
 					'font-normal',
 					'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',

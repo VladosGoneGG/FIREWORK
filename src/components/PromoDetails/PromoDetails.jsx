@@ -1,38 +1,45 @@
 // src/components/PromoDetails/PromoDetails.jsx
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
+import BannerPromo2 from '../../assets/SVG/BannerMain2.svg'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 
 /**
- * Простой экран промо, похожий на ProductDetails.
+ * Экран промо, похож на ProductDetails.
  * Props:
- * - banner: string — src баннера (по умолчанию тот же, что на главной)
- * - titleLines?: string[] — необязательные тексты поверх баннера
+ * - banner: string
  * - description?: string
  * - related?: Product[]
+ * - currentCategory?: string       ← можно явно передать категорию
  * - onBack: () => void
  * - onSelectProduct: (product) => void
- * - onOpenSubcategory?: (payload) => void
+ * - onOpenSubcategory?: (category: string | {title, products}) => void
  */
 const PromoDetails = ({
-	banner,
 	description = 'Текст промо-акции. Добавь сюда условия и преимущества.',
 	related = [],
+	currentCategory,
 	onBack,
 	onSelectProduct,
 	onOpenSubcategory,
 }) => {
+	// Категорию берём явно из пропов, если нет — пробуем из первого товара
+	const category = useMemo(
+		() => (currentCategory || related[0]?.category || '').toString(),
+		[currentCategory, related]
+	)
+
 	return (
 		<section className='bg-white rounded-[20px] w-[925px] h-[834px] overflow-hidden flex flex-col'>
 			<div className='p-2.5 flex flex-col gap-3 h-full'>
-				{/* Блок баннера (как медиа) */}
+				{/* Баннер */}
 				<div className='relative w-[900px] h-72 rounded-[10px] overflow-hidden mx-auto'>
 					<img
-						src={banner}
+						src={BannerPromo2}
 						alt='Промо'
 						className='absolute inset-0 w-full h-full object-cover'
 					/>
 
-					{/* Кнопка Назад */}
+					{/* Назад */}
 					<button
 						type='button'
 						onClick={onBack}
@@ -69,7 +76,7 @@ const PromoDetails = ({
 					</div>
 				</div>
 
-				{/* Ниже — «Выбери свой подарок» + 7 товаров */}
+				{/* Подарки */}
 				{related?.length > 0 && (
 					<div className='mt-auto'>
 						<div className='font-baron text-black text-lg mb-2 lowercase'>
@@ -81,7 +88,7 @@ const PromoDetails = ({
 								<ProductCardMini
 									key={p.id}
 									product={p}
-									onSelect={() => onSelectProduct?.(p)} // открываем детали выбранного товара
+									onSelect={() => onSelectProduct?.(p)}
 								/>
 							))}
 						</div>
@@ -90,7 +97,11 @@ const PromoDetails = ({
 							<button
 								type='button'
 								className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5]'
-								onClick={() => onOpenSubcategory?.({ title: 'подарки' })}
+								onClick={() => {
+									// Передаём точную категорию (строкой). В ProductsPage
+									// openSubcategory умеет по строке собрать товары из allItems.
+									if (category) onOpenSubcategory?.(category)
+								}}
 							>
 								посмотреть ещё
 							</button>

@@ -15,14 +15,15 @@ import { applySort, SORT_KEYS } from '../../utils/sort'
 
 import ProductDetails from '../ProductDetails/ProductDetails'
 import ProductSection from '../ProductSection/ProductSection'
+import PromoDetails from '../PromoDetails/PromoDetails'
 import PromoMain from '../PromoMain/PromoMain'
 import SubcategoryPanel from '../SubcategoryPanel/SubcategoryPanel'
 
 const ProductsPage = ({
 	onToggleFilters,
 	onDetailsModeChange,
-	externalSelectedProduct, // ← из App
-	onConsumeExternalSelected, // ← из App
+	externalSelectedProduct,
+	onConsumeExternalSelected,
 }) => {
 	useProductsBoot()
 
@@ -36,17 +37,20 @@ const ProductsPage = ({
 	const [selectedProduct, setSelectedProduct] = useState(null)
 	const [activeSub, setActiveSub] = useState(null)
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
+	const [promoOpen, setPromoOpen] = useState(false)
 
-	// При смене категории — закрыть вложенные экраны
+	// Закрыть вложенные экраны при смене категории
 	useEffect(() => {
+		setPromoOpen(false)
 		setSelectedProduct(null)
 		setActiveSub(null)
 		onDetailsModeChange?.(false)
 	}, [selected, onDetailsModeChange])
 
-	// Если пришёл товар из модалки — открыть детали
+	// товар из модалки → открыть детали
 	useEffect(() => {
 		if (externalSelectedProduct) {
+			setPromoOpen(false)
 			setActiveSub(null)
 			setSelectedProduct(externalSelectedProduct)
 			onDetailsModeChange?.(true)
@@ -54,17 +58,26 @@ const ProductsPage = ({
 		}
 	}, [externalSelectedProduct, onConsumeExternalSelected, onDetailsModeChange])
 
-	// Если введён поиск — показываем список (закрываем детали/подкатегорию)
+	// при поиске показываем список
 	useEffect(() => {
 		if (search.trim()) {
+			setPromoOpen(false)
 			setSelectedProduct(null)
 			setActiveSub(null)
 			onDetailsModeChange?.(false)
 		}
 	}, [search, onDetailsModeChange])
 
+	// related для деталей
 	const related = useRelated(allItems, selectedProduct, 10)
 
+	// related для промо (например, скидочные или просто первые из filtered)
+	const promoRelated = useMemo(() => {
+		const list = discountedAll.length ? discountedAll : filtered
+		return list.slice(0, 14)
+	}, [discountedAll, filtered])
+
+	// разбиение на секции
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
 		[discountedAll]
@@ -77,16 +90,17 @@ const ProductsPage = ({
 		() => filtered.filter(p => !discountedSet.has(p.id)),
 		[filtered, discountedSet]
 	)
-
 	const sections = useSections(discounted, nonDiscounted, selected)
 
 	const openDetails = useCallback(
 		p => {
+			setPromoOpen(false)
 			setSelectedProduct(p)
 			onDetailsModeChange?.(true)
 		},
 		[onDetailsModeChange]
 	)
+
 	const closeDetails = useCallback(() => {
 		setSelectedProduct(null)
 		onDetailsModeChange?.(false)
@@ -94,7 +108,6 @@ const ProductsPage = ({
 
 	const openSubcategory = useCallback(
 		payload => {
-			// payload: { title, products } | string
 			let title = ''
 			let products = []
 			if (typeof payload === 'string') title = payload
@@ -106,12 +119,41 @@ const ProductsPage = ({
 				const t = String(title).toLowerCase()
 				products = allItems.filter(p => (p.category || '').toLowerCase() === t)
 			}
+			setPromoOpen(false)
 			setActiveSub({ title, products })
 		},
 		[allItems]
 	)
 
 	const closeSubcategory = useCallback(() => setActiveSub(null), [])
+
+	// 0) PROMO DETAILS (ветка должна быть раньше деталей/подкатегории)
+	if (promoOpen) {
+		onDetailsModeChange?.(true)
+		return (
+			<PromoDetails
+				currentCategory={promoRelated[0]?.category || ''} // ← ВАЖНО
+				description={'Опиши условия акции: сроки, контакты, что входит и т.п.'}
+				related={promoRelated}
+				onBack={() => {
+					setPromoOpen(false)
+					onDetailsModeChange?.(false)
+				}}
+				onSelectProduct={p => {
+					setPromoOpen(false)
+					setSelectedProduct(p)
+					onDetailsModeChange?.(true)
+				}}
+				onOpenSubcategory={payload => {
+					// payload тут — СТРОКА категории (см. PromoDetails)
+					// openSubcategory уже умеет по названию категории собрать товары из allItems
+					setPromoOpen(false)
+					openSubcategory(payload) // передаём строку
+					onDetailsModeChange?.(false)
+				}}
+			/>
+		)
+	}
 
 	// 1) Детали
 	if (selectedProduct) {
@@ -149,7 +191,7 @@ const ProductsPage = ({
 	// 3) Список + баннер
 	return (
 		<div className='bg-white rounded-[20px] p-3'>
-			<PromoMain />
+			<PromoMain onOpen={() => setPromoOpen(true)} />
 			<div className='space-y-6'>
 				{sections.map(sec => (
 					<ProductSection
