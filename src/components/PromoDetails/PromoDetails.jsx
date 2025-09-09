@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import PromoBanner2 from '../../assets/SVG/BannerMain2.svg'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 
 /**
@@ -22,7 +23,8 @@ const PromoDetails = ({
 		<section className='bg-white rounded-[20px] w-[925px] h-[834px] overflow-hidden flex flex-col'>
 			<div className='p-2.5 flex flex-col gap-3 h-full'>
 				{/* Баннер-область (упростил для примера) */}
-				<div className='relative w-[900px] h-72 rounded-[10px] overflow-hidden mx-auto bg-[#f2f0ed]'>
+				<div className='relative w-[900px] h-72 rounded-[10px] overflow-hidden mx-auto'>
+					<img src={PromoBanner2} alt='Промо шоу' />
 					{/* Назад */}
 					<button
 						type='button'

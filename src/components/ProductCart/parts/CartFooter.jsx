@@ -1,11 +1,28 @@
 // src/components/ProductCart/parts/CartFooter.jsx
-import { memo } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { fmtPriceRub } from '../../../utils/format'
 
-const CartFooter = ({ total }) => {
+/**
+ * Props:
+ * - total: number — текущая сумма корзины
+ * - minOrder?: number — минимальная сумма заказа (по умолчанию 4800)
+ * - onCheckout?: () => void — колбэк при нажатии "продолжить"
+ */
+const CartFooter = ({ total = 0, minOrder = 4800, onCheckout }) => {
+	const { enough, missing } = useMemo(() => {
+		const diff = Math.max((minOrder || 0) - (total || 0), 0)
+		return { enough: diff === 0, missing: diff }
+	}, [total, minOrder])
+
+	const handleClick = useCallback(() => {
+		if (!enough) return
+		onCheckout?.()
+	}, [enough, onCheckout])
+
 	return (
 		<div className='mt-auto px-4 pb-4 pt-3 bg-white'>
-			<div className='text-center text-[8px] lowercase font-baron text-[#b4b4b4] '>
+			{/* Итого */}
+			<div className='text-center text-[8px] lowercase font-baron text-[#b4b4b4]'>
 				итого
 			</div>
 			<div className='text-center text-[20px] font-extrabold tracking-wide'>
@@ -15,8 +32,37 @@ const CartFooter = ({ total }) => {
 				</span>
 			</div>
 
-			<button className='btn-firework w-full mt-3 h-[44px] rounded-[12px]'>
-				продолжить
+			{/* Минимальный заказ */}
+			<div className='mt-1 text-center text-[10px] font-baron lowercase text-[#625a51]'>
+				минимальный заказ от:{' '}
+				<span className='font-semibold text-black'>
+					{fmtPriceRub(minOrder)}
+				</span>
+				<span className='text-[9px] relative top-0.5 ml-0.5'>руб.</span>
+			</div>
+
+			{/* Кнопка */}
+			<button
+				type='button'
+				onClick={handleClick}
+				disabled={!enough}
+				className={[
+					'w-full mt-3 h-[44px] rounded-[12px] text-[15px] font-baron lowercase transition-colors cursor-pointer',
+					enough
+						? 'bg-[#a643d3] text-white hover:bg-[#c054eb] active:text-[#997DF5] active:bg-[#efebe7]'
+						: 'bg-[#efebe7] text-[#bd52e9]',
+				].join(' ')}
+				aria-label={enough ? 'продолжить' : 'добавьте ещё'}
+				title={enough ? 'продолжить' : 'добавьте ещё'}
+			>
+				{enough ? (
+					'продолжить'
+				) : (
+					<>
+						не хватает еще {fmtPriceRub(missing)}
+						<span className='text-[10px] ml-1'>руб.</span>
+					</>
+				)}
 			</button>
 		</div>
 	)
