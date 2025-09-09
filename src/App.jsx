@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import CategoryFilter from './components/CategoryFilter/CategoryFilter'
 import FooterSection from './components/FooterSection/FooterSection'
 import Header from './components/Header/Header'
@@ -40,22 +40,12 @@ function App() {
 		setAppliedFilters({}) // полностью убираем фильтры → вернётся весь список
 	}
 
-	// --- хоткей ctrl+k для глобального поиска ---
-	useEffect(() => {
-		const onKey = e => {
-			if (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey)) {
-				e.preventDefault()
-				setSearchOpen(v => !v)
-			}
-		}
-		window.addEventListener('keydown', onKey)
-		return () => window.removeEventListener('keydown', onKey)
-	}, [])
-
 	return (
 		<div className='flex flex-col items-center h-screen overflow-hidden'>
 			<Header
-				rightSlot={<SearchBar onOpenModal={() => setSearchOpen(true)} />}
+				rightSlot={
+					<SearchBar />
+				} /* onOpenModal={() => setSearchOpen(true)} модалка фича убрать ешё hidden в компоненте */
 			/>
 
 			<div className='flex mt-[20px] w-full justify-center'>

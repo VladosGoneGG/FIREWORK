@@ -1,18 +1,28 @@
-// src/components/ProductCart/ProductCart.jsx
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { removeItem, updateQuantity } from '../../store/slices/cartSlice'
+import {
+	clearCart,
+	removeItem,
+	updateQuantity,
+} from '../../store/slices/cartSlice'
+
+import CheckoutForm from './CheckoutForm'
 import CartFooter from './parts/CartFooter'
 import CartHeader from './parts/CartHeader'
 import CartItem from './parts/CartItem'
 import ProductCartSkeleton from './parts/ProductCartSkeleton'
 
+const MIN_ORDER = 4800
 const selectCart = s => s.cart
 
 const ProductCart = ({ loading = false }) => {
 	const dispatch = useDispatch()
-	const { items, total } = useSelector(selectCart)
+	const { items = [], total = 0 } = useSelector(selectCart) || {}
 	const isLoading = loading || items == null
+
+	const formRef = useRef(null)
+	const [showForm, setShowForm] = useState(false)
+	const [success, setSuccess] = useState(false)
 
 	const inc = useCallback(
 		(id, v) => dispatch(updateQuantity({ id, quantity: v + 1 })),
@@ -30,6 +40,40 @@ const ProductCart = ({ loading = false }) => {
 		[dispatch]
 	)
 
+	useEffect(() => {
+		if (!items.length) {
+			setShowForm(false)
+			setSuccess(false)
+		}
+	}, [items.length])
+
+	const list = useMemo(() => items, [items])
+
+	const handleContinue = async () => {
+		console.log('[Cart] continue clicked')
+		if (!showForm) {
+			setShowForm(true)
+			setTimeout(() => formRef.current?.focusFirst?.(), 0)
+			return
+		}
+		// когда форма уже открыта — сначала провалидируем,
+		// и только если всё ок — сабмитим
+		const ok = await formRef.current?.validate?.()
+		if (ok) formRef.current?.submit?.()
+	}
+
+	const handleOrderSubmitted = data => {
+		console.log('[Cart] ORDER_SUBMIT_PAYLOAD:', data)
+		setSuccess(true)
+		setShowForm(false)
+
+		const t = setTimeout(() => {
+			dispatch(clearCart())
+			setSuccess(false)
+		}, 5000)
+		return () => clearTimeout(t)
+	}
+
 	if (isLoading) return <ProductCartSkeleton />
 
 	return (
@@ -41,14 +85,13 @@ const ProductCart = ({ loading = false }) => {
       '
 		>
 			<CartHeader />
-
 			<div className='w-[260px] h-[2px] ml-[18px] rounded-[20px] bg-[#efebe6]' />
 
-			<div className='flex-1 overflow-y-auto px-4 py-3 space-y-3 scroll-hidden'>
-				{items.length === 0 ? (
+			<div className='flex-1 overflow-y-auto px-4 py-3 space-y-3 scroll-hidden relative'>
+				{list.length === 0 ? (
 					<div className='opacity-60 text-sm'>пусто</div>
 				) : (
-					items.map(it => (
+					list.map(it => (
 						<CartItem
 							key={it.id}
 							item={it}
@@ -57,9 +100,31 @@ const ProductCart = ({ loading = false }) => {
 						/>
 					))
 				)}
+
+				{showForm && !success && list.length > 0 && (
+					<div className='mt-3'>
+						<CheckoutForm ref={formRef} onSubmitted={handleOrderSubmitted} />
+					</div>
+				)}
+
+				{success && (
+					<div className='absolute inset-0 grid place-items-center bg-white backdrop-blur-[1px] p-6'>
+						<div className='text-center'>
+							<div className='text-sm text-stone-700'>
+								как только заказ будет собран, вам придёт SMS-оповещение
+							</div>
+						</div>
+					</div>
+				)}
 			</div>
 
-			<CartFooter total={total} />
+			{!success && (
+				<CartFooter
+					total={total}
+					minOrder={MIN_ORDER}
+					onContinue={handleContinue}
+				/>
+			)}
 		</aside>
 	)
 }

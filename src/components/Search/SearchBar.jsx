@@ -117,7 +117,7 @@ const SearchBar = ({ onOpenModal }) => {
 				className='
           absolute right-2 top-1/2 -translate-y-1/2
           text-[10px] px-2 py-1 rounded-[10px]
-          bg-[#efebe6] hover:bg-[#e6e2dd]
+          bg-[#efebe6] hidden hover:bg-[#e6e2dd]
 					font-baron lowercase
         '
 				title='Открыть глобальный поиск'

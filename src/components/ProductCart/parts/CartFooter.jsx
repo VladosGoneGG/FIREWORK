@@ -1,27 +1,21 @@
-// src/components/ProductCart/parts/CartFooter.jsx
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { fmtPriceRub } from '../../../utils/format'
 
-/**
- * Props:
- * - total: number — текущая сумма корзины
- * - minOrder?: number — минимальная сумма заказа (по умолчанию 4800)
- * - onCheckout?: () => void — колбэк при нажатии "продолжить"
- */
-const CartFooter = ({ total = 0, minOrder = 4800, onCheckout }) => {
+const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 	const { enough, missing } = useMemo(() => {
-		const diff = Math.max((minOrder || 0) - (total || 0), 0)
-		return { enough: diff === 0, missing: diff }
+		const miss = Math.max(0, (minOrder || 0) - (total || 0))
+		return {
+			enough: (total || 0) >= (minOrder || 0) && (total || 0) > 0,
+			missing: miss,
+		}
 	}, [total, minOrder])
 
-	const handleClick = useCallback(() => {
-		if (!enough) return
-		onCheckout?.()
-	}, [enough, onCheckout])
+	const handleClick = () => {
+		if (enough) onContinue?.()
+	}
 
 	return (
 		<div className='mt-auto px-4 pb-4 pt-3 bg-white'>
-			{/* Итого */}
 			<div className='text-center text-[8px] lowercase font-baron text-[#b4b4b4]'>
 				итого
 			</div>
@@ -32,16 +26,11 @@ const CartFooter = ({ total = 0, minOrder = 4800, onCheckout }) => {
 				</span>
 			</div>
 
-			{/* Минимальный заказ */}
-			<div className='mt-1 text-center text-[10px] font-baron lowercase text-[#625a51]'>
-				минимальный заказ от:{' '}
-				<span className='font-semibold text-black'>
-					{fmtPriceRub(minOrder)}
-				</span>
-				<span className='text-[9px] relative top-0.5 ml-0.5'>руб.</span>
+			<div className='mt-1 text-center text-[10px] text-[#777] font-baron'>
+				минимальный заказ от: {fmtPriceRub(minOrder)}
+				<span className='text-[9px] ml-1 lowercase'>руб.</span>
 			</div>
 
-			{/* Кнопка */}
 			<button
 				type='button'
 				onClick={handleClick}
@@ -59,7 +48,7 @@ const CartFooter = ({ total = 0, minOrder = 4800, onCheckout }) => {
 					'продолжить'
 				) : (
 					<>
-						не хватает еще {fmtPriceRub(missing)}
+						не хватает ещё {fmtPriceRub(missing)}
 						<span className='text-[10px] ml-1'>руб.</span>
 					</>
 				)}
