@@ -21,7 +21,7 @@ function App() {
 	const [detailsMode, setDetailsMode] = useState(false)
 	const [filtersOpen, setFiltersOpen] = useState(false)
 	const [searchOpen, setSearchOpen] = useState(false)
-
+	const [selectedFromSearch, setSelectedFromSearch] = useState(null)
 	// --- состояние формы фильтров (живое) ---
 	const { form, setField, reset: resetForm, normalized } = useOverlayFilters()
 
@@ -97,8 +97,10 @@ function App() {
 						}}
 					>
 						<ProductsPage
+							externalSelectedProduct={selectedFromSearch}
 							onToggleFilters={() => setFiltersOpen(v => !v)}
 							onDetailsModeChange={setDetailsMode}
+							onConsumeExternalSelected={() => setSelectedFromSearch(null)}
 							// ПРИМЕНЁННЫЕ фильтры отдаём сюда
 							overlayFilters={appliedFilters}
 							// Кол-во найденных под фильтром (для левого оверлея)
@@ -120,7 +122,15 @@ function App() {
 			</div>
 
 			{/* Глобальный поиск */}
-			<SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+			<SearchModal
+				isOpen={searchOpen}
+				onClose={() => setSearchOpen(false)}
+				// 👇 при выборе из модалки — закрываем её и кладём товар в стейт
+				onSelectProduct={p => {
+					setSelectedFromSearch(p)
+					setSearchOpen(false)
+				}}
+			/>
 		</div>
 	)
 }
