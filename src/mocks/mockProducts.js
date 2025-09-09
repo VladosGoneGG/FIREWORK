@@ -1,3 +1,5 @@
+import fullBlockSvg from '../../public/SVG/full-block.svg'
+
 const makeProduct = (id, name, category, subcategory, overrides = {}) => ({
 	id,
 	name,
@@ -13,7 +15,7 @@ const makeProduct = (id, name, category, subcategory, overrides = {}) => ({
 	price: Math.floor(Math.random() * 3000) + 500,
 	discountPrice:
 		Math.random() > 0.5 ? Math.floor(Math.random() * 2500) + 400 : null,
-	images: ['./src/assets/SVG/full-block.svg'],
+	images: [fullBlockSvg],
 	video: null,
 	description: 'Описание товара: яркие спецэффекты и насыщенные цвета.',
 	...overrides,
