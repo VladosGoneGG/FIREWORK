@@ -61,7 +61,7 @@ const CategoryFilter = () => {
 	}
 
 	return (
-		<aside className='w-[240px] bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] font-baron lowercase font-bold'>
+		<aside className='w-[240px] bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] font-baron lowercase font-bold '>
 			<ul className='space-y-1'>
 				{list.map(cat => {
 					const key = norm(cat.name)

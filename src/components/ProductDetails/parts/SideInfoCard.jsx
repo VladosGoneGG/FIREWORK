@@ -51,7 +51,12 @@ function SideInfoCard({ product, img }) {
 					</div>
 				)}
 
-				<h3 className='font-baron leading-tight line-clamp-2'>{name}</h3>
+				<h3
+					className='font-baron leading-tight truncate w-[150px] line-clamp-2 '
+					title={name}
+				>
+					{name}
+				</h3>
 				<div className='ml-0.5 text-[10px] text-[#625a51] font-baron uppercase'>
 					<span className='lowercase'>производитель:</span>{' '}
 					{manufacturer || '—'}

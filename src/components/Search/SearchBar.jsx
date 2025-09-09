@@ -85,7 +85,7 @@ const SearchBar = ({ onOpenModal }) => {
 				src={forwarding}
 				alt='Салют на свадьбу'
 				className={`
-          absolute left-12 top-1/2 -translate-y-1/2 h-[20px]
+          absolute left-12 bottom-[8px] -translate-y-1/2 h-[14px]
           transition-opacity duration-150
           ${localQuery ? 'opacity-0' : 'opacity-100'}
           group-focus-within:opacity-0
@@ -100,7 +100,7 @@ const SearchBar = ({ onOpenModal }) => {
 					onClick={clear}
 					className='
             absolute right-12 top-1/2 -translate-y-1/2
-            w-6 h-6 rounded-full grid place-items-center
+            w-6 h-6 rounded-full  place-items-center hidden
             hover:bg-black/5
           '
 					aria-label='Очистить'

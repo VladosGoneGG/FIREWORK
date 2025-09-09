@@ -1,8 +1,10 @@
 // src/components/ProductCart/CheckoutForm.jsx
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { forwardRef, useEffect, useImperativeHandle, useMemo } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import telplace from '../../assets/SVG/placeTelef.svg'
+import PhoneInputRU from '../ui/PhoneInputRU'
 
-// --- helpers ---
+// ===== helpers =====
 const validateBirth = v => {
 	const re = /^(0[1-9]|[12]\d|3[01])\.(0[1-9]|1[0-2])\.(19\d{2}|20\d{2})$/
 	if (!re.test(v)) return 'формат: ДД.ММ.ГГГГ'
@@ -16,16 +18,17 @@ const validateBirth = v => {
 	return age >= 16 || 'только 16+'
 }
 
+// Принимаем 10 (нац.) или 11 цифр -> E.164
 const normalizeRuPhoneE164 = raw => {
-	const digits = String(raw || '').replace(/\D/g, '')
-	if (digits.length !== 11) return null
-	// допускаем 8XXXXXXXXXX или 7XXXXXXXXXX → приводим к +7XXXXXXXXXX
-	const last10 = digits.slice(-10)
-	return '+7' + last10
+	const d = String(raw || '').replace(/\D/g, '')
+	if (d.length === 11) return '+7' + d.slice(-10)
+	if (d.length === 10) return '+7' + d
+	return null
 }
 
 const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 	const {
+		control,
 		register,
 		handleSubmit,
 		watch,
@@ -35,7 +38,7 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 		formState: { errors, isSubmitting },
 	} = useForm({
 		defaultValues: {
-			phone: '',
+			phone: '', // в форме храним РОВНО 10 нац. цифр
 			lastName: '',
 			firstName: '',
 			birthDate: '',
@@ -46,36 +49,21 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 	})
 
 	const delivery = watch('delivery')
-	const [ageError, setAgeError] = useState('')
+	const lastName = watch('lastName')
+	const firstName = watch('firstName')
+	const birthDate = watch('birthDate')
 
 	useEffect(() => {
 		if (delivery === 'pickup') setValue('address', '')
 	}, [delivery, setValue])
 
 	const onSubmit = data => {
-		// birth date
-		const res = validateBirth(data.birthDate)
-		if (res !== true) {
-			setAgeError(String(res))
-			setFocus('birthDate')
-			return
-		}
-		setAgeError('')
-
-		// phone
-		const phoneE164 = normalizeRuPhoneE164(data.phone)
+		const phoneE164 = normalizeRuPhoneE164(data.phone) // "+7XXXXXXXXXX"
 		if (!phoneE164) {
-			// если не прошла нормализация — подсветим поле
-			// (валидация уже сделает сообщение, но перестрахуемся)
 			setFocus('phone')
 			return
 		}
-
-		const payload = {
-			...data,
-			phone: phoneE164, // нормализованный телефон
-		}
-
+		const payload = { ...data, phone: phoneE164 }
 		console.log('[CheckoutForm] valid submit payload:', payload)
 		onSubmitted?.(payload)
 	}
@@ -86,12 +74,8 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 		setFocus(first || 'phone')
 	}
 
-	// отдаём наружу submit/focus/validate
 	useImperativeHandle(ref, () => ({
-		submit: () => {
-			console.log('[CheckoutForm] submit() called from parent')
-			handleSubmit(onSubmit, onInvalid)()
-		},
+		submit: () => handleSubmit(onSubmit, onInvalid)(),
 		focusFirst: () => setFocus('phone'),
 		validate: async () => {
 			const ok = await trigger()
@@ -104,6 +88,14 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 		isSubmitting,
 	}))
 
+	// флаги для зелёных индикаторов (ФИО/Дата)
+	const lnIsValid = useMemo(() => !!String(lastName || '').trim(), [lastName])
+	const fnIsValid = useMemo(() => !!String(firstName || '').trim(), [firstName])
+	const bdIsValid = useMemo(
+		() => validateBirth(birthDate) === true,
+		[birthDate]
+	)
+
 	return (
 		<form
 			onSubmit={handleSubmit(onSubmit, onInvalid)}
@@ -113,52 +105,93 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 			<div className='text-black text-xs font-baron mb-2'>данные клиента</div>
 
 			<div className='space-y-2'>
-				{/* Телефон: валидирует +7XXXXXXXXXX или 8XXXXXXXXXX (11 цифр, любые разделители) */}
-				<input
-					{...register('phone', {
+				{/* Телефон: кастомный контрол с корректным Backspace и SVG-плейсхолдером */}
+				<Controller
+					name='phone'
+					control={control}
+					rules={{
 						required: 'укажите номер',
-						validate: v => {
-							const e164 = normalizeRuPhoneE164(v)
-							return e164 ? true : 'введите 11 цифр, начиная с +7 или 8'
-						},
-					})}
-					placeholder='+7 (___) - ___ - __ - __'
-					className='w-full h-9 px-2.5 bg-stone-200 rounded-[10px] text-xs font-baron placeholder-zinc-400 outline-none'
+						validate: v =>
+							String(v || '').length === 10 ? true : 'введите 10 цифр',
+					}}
+					render={({ field }) => (
+						<>
+							<PhoneInputRU
+								value={field.value || ''} // храним 10 цифр
+								onChange={field.onChange}
+								onBlur={field.onBlur}
+								placeholderSvg={telplace}
+							/>
+							{errors.phone && (
+								<div className='text-[10px] text-red-500'>
+									{errors.phone.message}
+								</div>
+							)}
+						</>
+					)}
 				/>
-				{errors.phone && (
-					<div className='text-[10px] text-red-500'>{errors.phone.message}</div>
-				)}
 
-				<input
-					{...register('lastName', { required: 'фамилия обязательна' })}
-					placeholder='Фамилия'
-					className='w-full h-9 px-2.5 bg-stone-200 rounded-[10px] text-xs font-baron placeholder-zinc-400 outline-none'
-				/>
+				{/* Фамилия */}
+				<div className='w-full h-9 px-2.5 bg-stone-200 rounded-[10px] inline-flex items-center gap-3.5'>
+					<div
+						className={[
+							'w-2.5 h-2.5 rounded-full transition-colors',
+							lnIsValid ? 'bg-green-600' : 'bg-zinc-300',
+						].join(' ')}
+					/>
+					<input
+						{...register('lastName', { required: 'фамилия обязательна' })}
+						placeholder='Фамилия'
+						className='flex-1 h-8 bg-transparent text-xs font-baron text-black placeholder-zinc-400 outline-none'
+					/>
+				</div>
 				{errors.lastName && (
 					<div className='text-[10px] text-red-500'>
 						{errors.lastName.message}
 					</div>
 				)}
 
-				<input
-					{...register('firstName', { required: 'имя обязательно' })}
-					placeholder='Имя'
-					className='w-full h-9 px-2.5 bg-stone-200 rounded-[10px] text-xs font-baron placeholder-zinc-400 outline-none'
-				/>
+				{/* Имя */}
+				<div className='w-full h-9 px-2.5 bg-stone-200 rounded-[10px] inline-flex items-center gap-3.5'>
+					<div
+						className={[
+							'w-2.5 h-2.5 rounded-full transition-colors',
+							fnIsValid ? 'bg-green-600' : 'bg-zinc-300',
+						].join(' ')}
+					/>
+					<input
+						{...register('firstName', { required: 'имя обязательно' })}
+						placeholder='Имя'
+						className='flex-1 h-8 bg-transparent text-xs font-baron text-black placeholder-zinc-400 outline-none'
+					/>
+				</div>
 				{errors.firstName && (
 					<div className='text-[10px] text-red-500'>
 						{errors.firstName.message}
 					</div>
 				)}
 
-				<input
-					{...register('birthDate', { required: 'дата рождения обязательна' })}
-					placeholder='дата рождения (ДД.ММ.ГГГГ)'
-					className='w-full h-9 px-2.5 bg-stone-200 rounded-[10px] text-xs font-baron placeholder-zinc-400 outline-none'
-				/>
-				{(errors.birthDate || ageError) && (
+				{/* Дата рождения (валидация 16+) */}
+				<div className='w-full h-9 px-2.5 bg-stone-200 rounded-[10px] inline-flex items-center gap-3.5'>
+					<div
+						className={[
+							'w-2.5 h-2.5 rounded-full transition-colors',
+							bdIsValid ? 'bg-green-600' : 'bg-zinc-300',
+						].join(' ')}
+					/>
+					<input
+						{...register('birthDate', {
+							required: 'дата рождения обязательна',
+							validate: v => validateBirth(v), // true или сообщение (в т.ч. "только 16+")
+						})}
+						placeholder='дата рождения'
+						inputMode='numeric'
+						className='flex-1 h-8 bg-transparent text-xs font-baron text-black placeholder-zinc-400 outline-none'
+					/>
+				</div>
+				{errors.birthDate && (
 					<div className='text-[10px] text-red-500'>
-						{errors.birthDate?.message || ageError}
+						{errors.birthDate.message}
 					</div>
 				)}
 			</div>
@@ -177,7 +210,7 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 						setValue('delivery', 'pickup', { shouldValidate: true })
 					}
 					className={[
-						'w-1/2 h-9 px-2.5 rounded-[10px] text-xs font-baron',
+						'w-1/2 h-9 px-2.5 rounded-[10px] text-xs font-baron cursor-pointer',
 						watch('delivery') === 'pickup'
 							? 'bg-[#bd52e9] text-white'
 							: 'bg-stone-200 text-black',
@@ -192,7 +225,7 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 						setValue('delivery', 'delivery', { shouldValidate: true })
 					}
 					className={[
-						'w-1/2 h-9 px-2.5 rounded-[10px] text-xs font-baron',
+						'w-1/2 h-9 px-2.5 rounded-[10px] text-xs font-baron cursor-pointer',
 						watch('delivery') === 'delivery'
 							? 'bg-[#bd52e9] text-white'
 							: 'bg-stone-200 text-black',
@@ -203,7 +236,7 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 			</div>
 
 			{watch('delivery') === 'pickup' ? (
-				<div className='mt-2 w-full h-9 px-2.5 rounded-[10px] outline outline-1 outline-zinc-300 grid place-items-center text-stone-600 text-xs font-baron'>
+				<div className='mt-2 w-full h-9 px-2.5 rounded-[10px] outline-1 outline-zinc-300 grid place-items-center text-stone-600 text-xs font-baron'>
 					каховская 1А/С
 				</div>
 			) : (

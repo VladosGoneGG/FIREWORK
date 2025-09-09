@@ -20,13 +20,15 @@ const CartItem = ({ item, onDec, onInc }) => {
 
 			<div className='flex-1 min-w-0'>
 				<div className='leading-tight truncate'>{item.name}</div>
-				<div className='text-[11px] opacity-60'>{item.manufacturer || ''}</div>
+				<div className='text-[8px] text-[#625A51]'>
+					{item.manufacturer || ''}
+				</div>
 
 				<div className='mt-1 flex items-center justify-between'>
 					<Qty value={item.quantity} onDec={onDec} onInc={onInc} />
-					<div className='text-[18px] font-bold'>
+					<div className='text-[18px] font-bold pr-2.5'>
 						{priceText}
-						<span className='text-[8px] font-baron lowercase relative top-0.5 right-1.5'>
+						<span className='text-[10px] font-baron lowercase relative top-0.5 right-1.5'>
 							руб.
 						</span>
 					</div>

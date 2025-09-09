@@ -1,4 +1,6 @@
+import { useMemo, useState } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
+import SortDropdown from '../ui/SortDropdown'
 
 export default function SubcategoryPanel({
 	title,
@@ -7,30 +9,46 @@ export default function SubcategoryPanel({
 	onSelectProduct,
 	onOpenFilters,
 }) {
-	const isEmpty = !Array.isArray(products) || products.length === 0
+	const [sortBy, setSortBy] = useState('price-asc')
+
+	const sortedProducts = useMemo(() => {
+		if (!Array.isArray(products)) return []
+		const getUnitPrice = p =>
+			typeof p?.discountPrice === 'number'
+				? p.discountPrice
+				: typeof p?.price === 'number'
+				? p.price
+				: Number.POSITIVE_INFINITY
+
+		const arr = [...products]
+		if (sortBy === 'price-asc') {
+			arr.sort((a, b) => getUnitPrice(a) - getUnitPrice(b))
+		} else if (sortBy === 'price-desc') {
+			arr.sort((a, b) => getUnitPrice(b) - getUnitPrice(a))
+		}
+		return arr
+	}, [products, sortBy])
+
+	const isEmpty = !sortedProducts.length
 
 	return (
-		<div className='w-full h-full flex flex-col rounded-b-[20px] bg-white'>
+		<div className='w-full h-full flex flex-col  rounded-b-[20px] bg-white'>
 			{/* Header */}
-			<div className='flex items-center gap-2 mb-3'>
-				<button
-					type='button'
-					onClick={onClose}
-					className='text-[12px] px-2 py-1 rounded hover:bg-[#efebe6]'
-				>
-					←
-				</button>
-				<div className='text-lg font-baron'>{title}</div>
+			<div className='flex items-center gap-2 p-2.5'>
+				<div className='pl-2.5 text-lg font-baron'>{title}</div>
 
-				<button
-					type='button'
-					onClick={onOpenFilters}
-					className='ml-auto w-16 h-6 px-[5px] py-1 rounded-[10px]
-                     text-white text-[10px] font-baron
-                     bg-firework-radial hover:bg-firework-hover active:bg-firework-active'
-				>
-					Фильтр
-				</button>
+				{/* справа: сортировка + фильтр */}
+				<div className='ml-auto flex items-center gap-2'>
+					<button
+						type='button'
+						onClick={onOpenFilters}
+						className='w-16 h-6 px-[5px] py-1 rounded-[10px] cursor-pointer
+                       text-white text-[10px] font-baron btn-firework'
+					>
+						Фильтр
+					</button>
+					<SortDropdown value={sortBy} onChange={setSortBy} />
+				</div>
 			</div>
 
 			{/* Grid / empty */}
@@ -40,7 +58,7 @@ export default function SubcategoryPanel({
 				</div>
 			) : (
 				<div className='grid grid-cols-5 p-2.5 gap-2.5 overflow-y-auto scroll-hidden'>
-					{products.map(p => (
+					{sortedProducts.map(p => (
 						<ProductCardMini
 							key={p.id}
 							product={p}

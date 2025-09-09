@@ -34,7 +34,7 @@ function PriceBlock({ price, discountPrice, fmtPrice }) {
 					</div>
 					<div className='text-[12px] font-bold'>
 						{fmtPrice(discountPrice)}
-						<span className='text-[8px] font-baron lowercase relative top-0.5 right-0.5'>
+						<span className='text-[8px] font-baron lowercase relative top-0.5 left-[1px]'>
 							руб.
 						</span>
 					</div>

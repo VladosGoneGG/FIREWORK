@@ -1,10 +1,13 @@
+// src/components/PromoDetails/PromoDetails.jsx
 import { memo } from 'react'
 import PromoBanner2 from '../../assets/SVG/BannerMain2.svg'
+import PressableButton from '../PressableButton/PressableButton'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
+import BackButton from '../ui/BackButton'
 
 /**
  * Props:
- * - currentCategory?: string  ← ВАЖНО: правильная категория из данных
+ * - currentCategory?: string
  * - description?: string
  * - related?: Product[]
  * - onBack: () => void
@@ -22,17 +25,19 @@ const PromoDetails = ({
 	return (
 		<section className='bg-white rounded-[20px] w-[925px] h-[834px] overflow-hidden flex flex-col'>
 			<div className='p-2.5 flex flex-col gap-3 h-full'>
-				{/* Баннер-область (упростил для примера) */}
+				{/* Баннер */}
 				<div className='relative w-[900px] h-72 rounded-[10px] overflow-hidden mx-auto'>
-					<img src={PromoBanner2} alt='Промо шоу' />
-					{/* Назад */}
-					<button
-						type='button'
+					<img
+						src={PromoBanner2}
+						alt='Промо шоу'
+						className='w-full rounded-[12.5px] h-full object-cover block'
+					/>
+
+					{/* Назад — фикс: absolute + координаты (позиционируем обёртку BackButton, вариант B) */}
+					<BackButton
 						onClick={onBack}
-						className='absolute left-2 top-2 z-10 text-[12px] px-2 py-1 rounded-[8px] bg-white/85 hover:bg-white'
-					>
-						← Назад
-					</button>
+						className='absolute top-[0px] left-[0px] z-50 drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]'
+					/>
 				</div>
 
 				{/* Описание */}
@@ -43,22 +48,28 @@ const PromoDetails = ({
 					<p className='text-stone-600 text-base font-[Calibri]'>
 						{description}
 					</p>
-
-					<div className='mt-4'>
-						<button
-							type='button'
-							className='px-6 h-12 rounded-[10px] bg-[radial-gradient(ellipse_173.76%_142.27%_at_-13.16%_-0%,_#1D0353_0%,_#C054EB_100%)] text-white font-baron text-base lowercase hover:opacity-95 active:opacity-90 transition'
-						>
-							заказать звонок
-						</button>
-					</div>
 				</div>
 
 				{/* Подарки / связанное */}
 				{!!related.length && (
 					<div className='mt-auto'>
+						<div className='mt-4'>
+							<PressableButton className='btn-firework w-[220px] h-[50px] text-[15px] font-baron tracking-wide  mb-[20px]'>
+								рассчитать стоимость
+							</PressableButton>
+						</div>
 						<div className='font-baron text-black text-lg mb-2 lowercase'>
 							выбери свой подарок
+						</div>
+
+						<div className='mt-2 text-right'>
+							<button
+								type='button'
+								className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer'
+								onClick={() => onOpenSubcategory?.(currentCategory)}
+							>
+								посмотреть ещё
+							</button>
 						</div>
 
 						<div className='grid grid-cols-7 gap-2.5 overflow-y-auto scroll-hidden'>
@@ -69,16 +80,6 @@ const PromoDetails = ({
 									onSelect={() => onSelectProduct?.(p)}
 								/>
 							))}
-						</div>
-
-						<div className='mt-2 text-right'>
-							<button
-								type='button'
-								className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5]'
-								onClick={() => onOpenSubcategory?.(currentCategory)} // ← передаём СТРОКУ категории
-							>
-								посмотреть ещё
-							</button>
 						</div>
 					</div>
 				)}

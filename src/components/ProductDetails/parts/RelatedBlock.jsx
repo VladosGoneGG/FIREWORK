@@ -23,7 +23,7 @@ const RelatedBlock = ({
 				<button
 					type='button'
 					onClick={() => onOpenSubcategory?.(currentCategory)} // ← только строка
-					className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5]'
+					className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer'
 				>
 					посмотреть ещё
 				</button>

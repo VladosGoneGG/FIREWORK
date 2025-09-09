@@ -5,7 +5,7 @@ import PressableButton from '../PressableButton/PressableButton'
 const CategoryRow = ({ cat, active, onClick }) => {
 	return (
 		<PressableButton
-			className={`flex items-center gap-4 my-[5px] w-[220px] h-[30px] text-[12px] rounded-[12px] text-left
+			className={`flex items-center gap-4 my-[5px] w-[220px] h-[30px] text-[12px] rounded-[12px] text-left 
         ${
 					active
 						? 'text-firework-red font-medium'

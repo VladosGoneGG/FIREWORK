@@ -2,29 +2,40 @@ import { memo } from 'react'
 
 const Qty = ({ value, onDec, onInc, className = '' }) => (
 	<div
-		className={
-			'font-baron lowercase inline-flex items-center gap-2 w-[50px] h-[20px] rounded-full bg-[#f2f0ed] ' +
-			className
-		}
+		className={[
+			'inline-flex items-center justify-center',
+			'w-[50px] h-[20px] rounded-[10px] bg-[#EFEBE6]',
+			'gap-[7px]',
+			'font-baron lowercase',
+			className,
+		].join(' ')}
 	>
+		{/* Минус (слева) */}
 		<button
 			type='button'
 			onClick={onDec}
-			className='w-6 h-6 grid place-items-center rounded-full hover:bg-black/10'
 			aria-label='Уменьшить'
 			title='Уменьшить'
+			className='relative w-[7.58px] h-[7.58px] flex items-center justify-center cursor-pointer'
 		>
-			–
+			<span className='absolute top-1/2 -translate-y-1/2 w-[7.58px] h-[1.08px] bg-[#625A51]' />
 		</button>
-		<span className='min-w-4 text-sm'>{value}</span>
+
+		{/* Значение */}
+		<span className='text-[10px] leading-none text-black'>{value}</span>
+
+		{/* Плюс (справа) */}
 		<button
 			type='button'
 			onClick={onInc}
-			className='w-6 h-6 grid place-items-center rounded-full hover:bg-black/10'
 			aria-label='Увеличить'
 			title='Увеличить'
+			className='relative w-[7.58px] h-[7.58px] flex items-center justify-center cursor-pointer'
 		>
-			+
+			{/* горизонтальная черта */}
+			<span className='absolute top-1/2 -translate-y-1/2 w-[7.58px] h-[1.08px] bg-[#625A51]' />
+			{/* вертикальная черта */}
+			<span className='absolute left-1/2 -translate-x-1/2 h-[7.58px] w-[1.08px] bg-[#625A51]' />
 		</button>
 	</div>
 )

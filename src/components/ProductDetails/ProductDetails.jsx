@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import fireworksSvg from '../../assets/SVG/fireworksSvg.svg'
 import DescriptionBlock from './parts/DescriptionBlock'
 import MediaBlock from './parts/MediaBlock'
 import RelatedBlock from './parts/RelatedBlock'
@@ -29,7 +30,7 @@ const ProductDetails = ({
 			<div className='p-2.5 flex flex-col gap-3 h-full'>
 				{/* верх: медиа + правая колонка */}
 				<div className='flex items-start gap-2.5'>
-					<MediaBlock img={img} name={product.name} onBack={onBack} />
+					<MediaBlock img={fireworksSvg} name={product.name} onBack={onBack} />
 
 					<SideInfoCard product={product} img={img} inStock={inStock} />
 				</div>
