@@ -7,7 +7,13 @@ const PressableButton = ({ children, className = '', ...props }) => {
 
 	return (
 		<button
-			className={`${className} transition-all cursor-pointer  duration-200 ${pressedClass}`}
+			className={`${className} 
+        cursor-pointer
+        transform
+        transition-colors transition-transform transition-opacity
+        duration-300 ease-out
+       
+        ${pressedClass}`}
 			onMouseDown={() => setIsPressed(true)}
 			onMouseUp={() => setIsPressed(false)}
 			onMouseLeave={() => setIsPressed(false)}

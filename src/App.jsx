@@ -115,7 +115,7 @@ function App() {
 			<SearchModal
 				isOpen={searchOpen}
 				onClose={() => setSearchOpen(false)}
-				// 👇 при выборе из модалки — закрываем её и кладём товар в стейт
+				//  при выборе из модалки — закрываем её и кладём товар в стейт
 				onSelectProduct={p => {
 					setSelectedFromSearch(p)
 					setSearchOpen(false)
