@@ -95,6 +95,7 @@ function App() {
 							overlayFilters={appliedFilters}
 							// Кол-во найденных под фильтром (для левого оверлея)
 							onFiltersCountChange={setOverlayCount}
+							filtersOpen={filtersOpen}
 						/>
 
 						{!detailsMode && (
@@ -110,7 +111,6 @@ function App() {
 					</aside>
 				</main>
 			</div>
-
 			{/* Глобальный поиск */}
 			<SearchModal
 				isOpen={searchOpen}

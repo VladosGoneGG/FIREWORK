@@ -151,4 +151,56 @@
 	.btn-firework:active {
 		@apply bg-none !text-[#c054eb]  bg-firework-active;
 	}
+
+	.btn-firework-filter {
+		@apply relative rounded-[10px] cursor-pointer text-white;
+		/* база: градиент */
+		background: var(--background-image-firework-radial);
+
+		/* анти-блидинг + плавный композит */
+		overflow: hidden; /* режем всё за радиусом */
+		backface-visibility: hidden; /* убирает подёргивания в некоторых GPU путях */
+		contain: paint; /* ограничиваем область перерисовки */
+	}
+
+	/* Плавный слой-оверлей поверх градиента */
+	.btn-firework-filter::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: transparent; /* меняем на hover/active */
+		opacity: 0; /* анимируем только прозрачность */
+		transition: opacity 300ms ease-in-out;
+		z-index: 0;
+
+		/* фикс блидинга: жёстко обрезаем по радиусу */
+		border-radius: 10px;
+		-webkit-mask: radial-gradient(circle, #000 100%, transparent 100%)
+			content-box;
+		mask: radial-gradient(circle, #000 100%, transparent 100%) content-box;
+		will-change: opacity;
+	}
+
+	/* контент всегда выше оверлея */
+	.btn-firework-filter > * {
+		position: relative;
+		z-index: 1;
+		color: #fff; /* белый текст по умолчанию/hover */
+	}
+
+	/* hover — мягко накрываем фирменным цветом */
+	.btn-firework-filter:hover::after {
+		background: var(--color-firework-hover); /* #BD52E9 */
+		opacity: 1;
+	}
+
+	/* active — светлый фон и тёмный текст */
+	.btn-firework-filter:active::after {
+		background: var(--color-firework-active); /* #EFEBE6 */
+		opacity: 1;
+	}
+	.btn-firework-filter:active,
+	.btn-firework-filter:active * {
+		color: #625a51;
+	}
 }

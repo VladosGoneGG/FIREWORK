@@ -1,3 +1,4 @@
+// src/components/ProductCardMini/ProductCardMini.jsx
 import { memo, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import { addItem } from '../../store/slices/cartSlice'
@@ -40,12 +41,18 @@ function ProductCardMini({ product, onSelect }) {
 		[onSelect, product]
 	)
 
+	// «Цена за единицу» с учётом акции
+	const unitPrice =
+		typeof discountPrice === 'number' ? discountPrice : price || 0
+
 	const add = useCallback(
 		e => {
 			e.stopPropagation()
-			if (!outOfStock) dispatch(addItem(product))
+			if (outOfStock) return
+			// Кладём unitPrice в payload — корзина и UI будут точно использовать скидочную цену
+			dispatch(addItem({ ...product, unitPrice }))
 		},
-		[dispatch, outOfStock, product]
+		[dispatch, outOfStock, product, unitPrice]
 	)
 
 	return (
@@ -78,7 +85,7 @@ function ProductCardMini({ product, onSelect }) {
 							{renderSec(durationSec)}
 						</PriceBlock.Param>
 					</div>
-					<div className='flex flex-col '>
+					<div className='flex flex-col'>
 						<PriceBlock.Param icon='caliber'>{caliber ?? '—'}</PriceBlock.Param>
 						<PriceBlock.Param icon='effects'>
 							{effectsCount ?? '—'}

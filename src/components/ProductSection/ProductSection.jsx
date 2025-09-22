@@ -1,3 +1,5 @@
+// src/components/ProductSection/ProductSection.jsx
+import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useMemo, useState } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSkeleton'
@@ -7,7 +9,7 @@ const ProductSection = ({
 	products = [],
 	onSelectProduct,
 	onOpenSubcategory,
-	loading = false, // ← новое
+	loading = false,
 }) => {
 	const [visibleCount, setVisibleCount] = useState(5)
 
@@ -41,17 +43,25 @@ const ProductSection = ({
 			</div>
 
 			<div className='grid grid-cols-5 gap-3'>
-				{loading
-					? Array.from({ length: 10 }).map((_, i) => (
-							<ProductCardMiniSkeleton key={i} />
-					  ))
-					: visible.map(p => (
-							<ProductCardMini
+				{loading ? (
+					Array.from({ length: 10 }).map((_, i) => (
+						<ProductCardMiniSkeleton key={i} />
+					))
+				) : (
+					<AnimatePresence>
+						{visible.map(p => (
+							<motion.div
 								key={p.id}
-								product={p}
-								onSelect={onSelectProduct}
-							/>
-					  ))}
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								exit={{ opacity: 0, y: -10 }}
+								transition={{ duration: 0.1, ease: 'easeOut' }}
+							>
+								<ProductCardMini product={p} onSelect={onSelectProduct} />
+							</motion.div>
+						))}
+					</AnimatePresence>
+				)}
 			</div>
 		</section>
 	)

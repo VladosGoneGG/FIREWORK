@@ -26,6 +26,17 @@ const normalizeRuPhoneE164 = raw => {
 	return null
 }
 
+// Автоформат «ДД.ММ.ГГГГ» во время набора
+const formatBirthTyping = raw => {
+	const digits = String(raw || '')
+		.replace(/\D/g, '')
+		.slice(0, 8) // максимум 8 цифр
+	if (!digits) return ''
+	if (digits.length <= 2) return digits
+	if (digits.length <= 4) return `${digits.slice(0, 2)}.${digits.slice(2)}`
+	return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`
+}
+
 const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 	const {
 		control,
@@ -105,7 +116,7 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 			<div className='text-black text-xs font-baron mb-2'>данные клиента</div>
 
 			<div className='space-y-2'>
-				{/* Телефон: кастомный контрол с корректным Backspace и SVG-плейсхолдером */}
+				{/* Телефон */}
 				<Controller
 					name='phone'
 					control={control}
@@ -171,7 +182,7 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 					</div>
 				)}
 
-				{/* Дата рождения (валидация 16+) */}
+				{/* Дата рождения (автоформат + валидация 16+) */}
 				<div className='w-full h-9 px-2.5 bg-stone-200 rounded-[10px] inline-flex items-center gap-3.5'>
 					<div
 						className={[
@@ -182,10 +193,15 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 					<input
 						{...register('birthDate', {
 							required: 'дата рождения обязательна',
-							validate: v => validateBirth(v), // true или сообщение (в т.ч. "только 16+")
+							validate: v => validateBirth(v), // true / текст ошибки
+							onChange: e =>
+								setValue('birthDate', formatBirthTyping(e.target.value), {
+									shouldValidate: false, // валидация — при сабмите
+								}),
 						})}
-						placeholder='дата рождения'
+						placeholder='ДД.ММ.ГГГГ'
 						inputMode='numeric'
+						maxLength={10} // "ДД.ММ.ГГГГ"
 						className='flex-1 h-8 bg-transparent text-xs font-baron text-black placeholder-zinc-400 outline-none'
 					/>
 				</div>

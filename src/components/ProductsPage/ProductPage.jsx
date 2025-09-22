@@ -1,3 +1,4 @@
+// src/components/ProductsPage/ProductsPage.jsx
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 
@@ -19,15 +20,18 @@ import PromoDetails from '../PromoDetails/PromoDetails'
 import PromoMain from '../PromoMain/PromoMain'
 import SubcategoryPanel from '../SubcategoryPanel/SubcategoryPanel'
 
+import { AnimatePresence, motion } from 'motion/react'
+
 /**
  * Props:
  * - onToggleFilters?: (open:boolean) => void
  * - onDetailsModeChange?: (on:boolean) => void
  * - externalSelectedProduct?: Product | null
  * - onConsumeExternalSelected?: () => void
- * - overlayFilters?: object                 // ПРИМЕНЁННЫЕ фильтры (только по кнопке "показать")
- * - overlayFiltersPreview?: object          // Превью-фильтры (меняются во время ввода) — используются только для счётчика
+ * - overlayFilters?: object
+ * - overlayFiltersPreview?: object
  * - onFiltersCountChange?: (n:number) => void
+ * - filtersOpen?: boolean
  */
 const ProductsPage = ({
 	onToggleFilters,
@@ -37,6 +41,7 @@ const ProductsPage = ({
 	overlayFilters = {},
 	overlayFiltersPreview = {},
 	onFiltersCountChange = () => {},
+	filtersOpen,
 }) => {
 	useProductsBoot()
 
@@ -83,7 +88,7 @@ const ProductsPage = ({
 		setActiveSub(null)
 	}, [search])
 
-	// related для деталей товара
+	// related
 	const related = useRelated(allItems, selectedProduct, 10)
 
 	// related для промо
@@ -92,7 +97,7 @@ const ProductsPage = ({
 		return list.slice(0, 14)
 	}, [discountedAll, filtered])
 
-	// секции (акции / остальное)
+	// секции
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
 		[discountedAll]
@@ -113,7 +118,7 @@ const ProductsPage = ({
 		[activeSub]
 	)
 
-	// применённые фильтры (ТОЛЬКО после нажатия «показать»)
+	// применённые фильтры
 	const filteredApplied = useMemo(
 		() => applyAdvancedFilter(activeList, overlayFilters),
 		[activeList, overlayFilters]
@@ -180,75 +185,117 @@ const ProductsPage = ({
 
 	const closeSubcategory = useCallback(() => setActiveSub(null), [])
 
-	// ----- ветки рендера -----
-	if (promoOpen) {
-		return (
-			<PromoDetails
-				currentCategory={promoRelated[0]?.category || ''}
-				description='Опиши условия акции: сроки, контакты, что входит и т.п.'
-				related={promoRelated}
-				onBack={() => setPromoOpen(false)}
-				onSelectProduct={p => {
-					setPromoOpen(false)
-					setSelectedProduct(p)
-				}}
-				onOpenSubcategory={payload => {
-					setPromoOpen(false)
-					openSubcategory(payload)
-				}}
-			/>
-		)
-	}
-
-	if (selectedProduct) {
-		return (
-			<ProductDetails
-				product={selectedProduct}
-				related={related}
-				onBack={closeDetails}
-				onOpenSubcategory={payload => {
-					closeDetails()
-					openSubcategory(payload?.title || selectedProduct.category)
-				}}
-				onSelectProduct={openDetails}
-			/>
-		)
-	}
-
-	if (activeSub) {
-		return (
-			<SubcategoryPanel
-				title={activeSub.title}
-				products={sortedApplied}
-				onClose={closeSubcategory}
-				onSelectProduct={openDetails}
-				onOpenFilters={() => onToggleFilters?.(true)}
-				sort={sortKey}
-				onChangeSort={setSortKey}
-			/>
-		)
+	// ----- анимационные пресеты -----
+	const fastScreen = {
+		initial: { y: 10, scale: 0.995, opacity: 1 },
+		animate: {
+			y: 0,
+			scale: 1,
+			opacity: 1,
+			transition: { duration: 0.08, ease: 'easeOut' },
+		},
+		exit: {
+			y: -10,
+			scale: 0.995,
+			opacity: 1,
+			transition: { duration: 0.08, ease: 'easeIn' },
+		},
 	}
 
 	return (
-		<div className='bg-white rounded-[20px] p-3'>
-			<PromoMain onOpen={() => setPromoOpen(true)} />
-			<div className='space-y-6'>
-				{sections.map(sec => (
-					<ProductSection
-						key={sec.title}
-						title={sec.title}
-						products={sec.items}
-						onSelectProduct={openDetails}
-						onOpenSubcategory={payload =>
-							openSubcategory(
-								payload ?? { title: sec.title, products: sec.items }
-							)
-						}
-						loading={status === 'loading'}
+		<AnimatePresence mode='wait'>
+			{promoOpen ? (
+				<motion.div key='promo' {...fastScreen} layout>
+					<PromoDetails
+						currentCategory={promoRelated[0]?.category || ''}
+						description='Опиши условия акции: сроки, контакты, что входит и т.п.'
+						related={promoRelated}
+						onBack={() => setPromoOpen(false)}
+						onSelectProduct={p => {
+							setPromoOpen(false)
+							setSelectedProduct(p)
+						}}
+						onOpenSubcategory={payload => {
+							setPromoOpen(false)
+							openSubcategory(payload)
+						}}
 					/>
-				))}
-			</div>
-		</div>
+				</motion.div>
+			) : selectedProduct ? (
+				<motion.div
+					key={`details-${selectedProduct.id}`}
+					{...fastScreen}
+					layout
+				>
+					<ProductDetails
+						product={selectedProduct}
+						related={related}
+						onBack={closeDetails}
+						onOpenSubcategory={payload => {
+							closeDetails()
+							openSubcategory(payload?.title || selectedProduct.category)
+						}}
+						onSelectProduct={openDetails}
+					/>
+				</motion.div>
+			) : activeSub ? (
+				<motion.div
+					key={`sub-${activeSub.title}`}
+					{...fastScreen}
+					layout
+					initial={{ opacity: 0, y: 24, scale: 0.985 }}
+					animate={{ opacity: 1, y: 0, scale: 1 }}
+					exit={{ opacity: 0, y: -24, scale: 0.985 }}
+					transition={{ duration: 0.45, ease: 'easeOut' }}
+				>
+					<SubcategoryPanel
+						title={activeSub.title}
+						products={sortedApplied}
+						onClose={closeSubcategory}
+						onSelectProduct={openDetails}
+						onOpenFilters={() => onToggleFilters?.(!filtersOpen)}
+						sort={sortKey}
+						onChangeSort={setSortKey}
+						filtersOpen={filtersOpen}
+					/>
+				</motion.div>
+			) : (
+				<motion.div
+					key='home'
+					initial={{ y: 8, opacity: 1 }}
+					animate={{
+						y: 0,
+						opacity: 1,
+						transition: { duration: 0.16, ease: 'easeOut' },
+					}}
+					exit={{
+						y: -8,
+						opacity: 1,
+						transition: { duration: 0.1, ease: 'easeIn' },
+					}}
+					transition={{ duration: 0.35, ease: 'easeOut' }}
+					className='bg-white rounded-[20px] p-3'
+				>
+					<PromoMain onOpen={() => setPromoOpen(true)} />
+					<div className='space-y-6'>
+						{sections.map(sec => (
+							<ProductSection
+								key={sec.title}
+								title={sec.title}
+								products={sec.items}
+								onSelectProduct={openDetails}
+								onOpenSubcategory={payload =>
+									openSubcategory(
+										payload ?? { title: sec.title, products: sec.items }
+									)
+								}
+								loading={status === 'loading'}
+							/>
+						))}
+					</div>
+				</motion.div>
+			)}
+		</AnimatePresence>
 	)
 }
 

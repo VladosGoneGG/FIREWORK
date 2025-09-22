@@ -8,6 +8,7 @@ export default function SubcategoryPanel({
 	onClose,
 	onSelectProduct,
 	onOpenFilters,
+	filtersOpen,
 }) {
 	const [sortBy, setSortBy] = useState('price-asc')
 
@@ -42,10 +43,14 @@ export default function SubcategoryPanel({
 					<button
 						type='button'
 						onClick={onOpenFilters}
-						className='w-16 h-6 px-[5px] py-1 rounded-[10px] cursor-pointer
-                       text-white text-[10px] font-baron btn-firework'
+						className={[
+							'w-16 h-6 px-[5px] py-1 rounded-[10px] font-baron  text-[10px] ',
+							filtersOpen
+								? 'bg-[#EFEBE7] text-[#BD52E9]'
+								: 'btn-firework-filter',
+						].join(' ')}
 					>
-						Фильтр
+						<span>фильтр</span>
 					</button>
 					<SortDropdown value={sortBy} onChange={setSortBy} />
 				</div>

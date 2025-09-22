@@ -108,7 +108,7 @@ const ProductCart = ({ loading = false }) => {
 				)}
 
 				{success && (
-					<div className='absolute inset-0 grid place-items-center bg-white backdrop-blur-[1px] p-6'>
+					<div className='absolute z-20 inset-0 grid place-items-center bg-white backdrop-blur-[1px] p-6'>
 						<div className='text-center'>
 							<div className='text-sm text-stone-700'>
 								как только заказ будет собран, вам придёт SMS-оповещение
