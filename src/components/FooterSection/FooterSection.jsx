@@ -9,7 +9,7 @@ const FooterSection = () => {
 					<ul className='uppercase flex flex-col gap-[10px]  '>
 						<li>контакты</li>
 						<li>условия доставки</li>
-						<li>условия акций</li>
+						<li>оптовикам</li>
 					</ul>
 				</div>
 				<div>

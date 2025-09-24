@@ -1,38 +1,21 @@
-// src/components/ProductsPage/ProductsPage.jsx
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
-
 import useProductsBoot from '../../hooks/useProductsBoot'
 import useRelated from '../../hooks/useRelated'
 import useSections from '../../hooks/useSections'
-
 import {
 	selectDiscountedProducts,
 	selectFilteredProducts,
 } from '../../store/slices/productsSlice'
-
 import { applyAdvancedFilter } from '../../utils/filters'
 import { applySort, SORT_KEYS } from '../../utils/sort'
 
+import { AnimatePresence, motion } from 'motion/react'
 import ProductDetails from '../ProductDetails/ProductDetails'
 import ProductSection from '../ProductSection/ProductSection'
-import PromoDetails from '../PromoDetails/PromoDetails'
-import PromoMain from '../PromoMain/PromoMain'
+import PromoSlider from '../PromoSlider/PromoSlider'
 import SubcategoryPanel from '../SubcategoryPanel/SubcategoryPanel'
 
-import { AnimatePresence, motion } from 'motion/react'
-
-/**
- * Props:
- * - onToggleFilters?: (open:boolean) => void
- * - onDetailsModeChange?: (on:boolean) => void
- * - externalSelectedProduct?: Product | null
- * - onConsumeExternalSelected?: () => void
- * - overlayFilters?: object
- * - overlayFiltersPreview?: object
- * - onFiltersCountChange?: (n:number) => void
- * - filtersOpen?: boolean
- */
 const ProductsPage = ({
 	onToggleFilters,
 	onDetailsModeChange,
@@ -45,7 +28,6 @@ const ProductsPage = ({
 }) => {
 	useProductsBoot()
 
-	// глобальный стейт
 	const status = useSelector(s => s.products.status)
 	const selected = useSelector(s => s.categories.selectedCategory || 'all')
 	const allItems = useSelector(s => s.products.items)
@@ -53,51 +35,34 @@ const ProductsPage = ({
 	const discountedAll = useSelector(selectDiscountedProducts)
 	const search = useSelector(s => s.products.searchQuery || '')
 
-	// локальные экраны
 	const [selectedProduct, setSelectedProduct] = useState(null)
 	const [activeSub, setActiveSub] = useState(null) // { title, products }
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
-	const [promoOpen, setPromoOpen] = useState(false)
 
-	// управление режимом центра (ширина/скрытие левой колонки)
 	useEffect(() => {
-		onDetailsModeChange?.(Boolean(selectedProduct) || promoOpen)
-	}, [selectedProduct, promoOpen, onDetailsModeChange])
+		onDetailsModeChange?.(Boolean(selectedProduct))
+	}, [selectedProduct, onDetailsModeChange])
 
-	// Смена категории → закрываем вложенные экраны
 	useEffect(() => {
-		setPromoOpen(false)
 		setSelectedProduct(null)
 		setActiveSub(null)
 	}, [selected])
 
-	// Товар из модалки → открыть детали
 	useEffect(() => {
 		if (!externalSelectedProduct) return
-		setPromoOpen(false)
 		setActiveSub(null)
 		setSelectedProduct(externalSelectedProduct)
 		onConsumeExternalSelected?.()
 	}, [externalSelectedProduct, onConsumeExternalSelected])
 
-	// При активном поиске закрываем вложенные экраны
 	useEffect(() => {
 		if (!search.trim()) return
-		setPromoOpen(false)
 		setSelectedProduct(null)
 		setActiveSub(null)
 	}, [search])
 
-	// related
 	const related = useRelated(allItems, selectedProduct, 10)
 
-	// related для промо
-	const promoRelated = useMemo(() => {
-		const list = discountedAll.length ? discountedAll : filtered
-		return list.slice(0, 14)
-	}, [discountedAll, filtered])
-
-	// секции
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
 		[discountedAll]
@@ -112,13 +77,11 @@ const ProductsPage = ({
 	)
 	const sections = useSections(discounted, nonDiscounted, selected)
 
-	// ----- данные подкатегории -----
 	const activeList = useMemo(
 		() => (Array.isArray(activeSub?.products) ? activeSub.products : []),
 		[activeSub]
 	)
 
-	// применённые фильтры
 	const filteredApplied = useMemo(
 		() => applyAdvancedFilter(activeList, overlayFilters),
 		[activeList, overlayFilters]
@@ -128,7 +91,6 @@ const ProductsPage = ({
 		[filteredApplied, sortKey]
 	)
 
-	// превью-фильтры — только для счётчика «найдено N»
 	const filteredPreview = useMemo(
 		() => applyAdvancedFilter(activeList, overlayFiltersPreview),
 		[activeList, overlayFiltersPreview]
@@ -137,15 +99,8 @@ const ProductsPage = ({
 		if (activeSub) onFiltersCountChange(filteredPreview.length)
 	}, [activeSub, filteredPreview.length, onFiltersCountChange])
 
-	// ----- коллбэки -----
-	const openDetails = useCallback(p => {
-		setPromoOpen(false)
-		setSelectedProduct(p)
-	}, [])
-
-	const closeDetails = useCallback(() => {
-		setSelectedProduct(null)
-	}, [])
+	const openDetails = useCallback(p => setSelectedProduct(p), [])
+	const closeDetails = useCallback(() => setSelectedProduct(null), [])
 
 	const norm = s =>
 		String(s || '')
@@ -173,7 +128,6 @@ const ProductsPage = ({
 				)
 			}
 
-			setPromoOpen(false)
 			setSelectedProduct(null)
 			setActiveSub({
 				title: title || 'Категория',
@@ -185,47 +139,30 @@ const ProductsPage = ({
 
 	const closeSubcategory = useCallback(() => setActiveSub(null), [])
 
-	// ----- анимационные пресеты -----
-	const fastScreen = {
-		initial: { y: 10, scale: 0.995, opacity: 1 },
-		animate: {
+	// лёгкие варианты (только opacity/y)
+	const variants = {
+		initial: { opacity: 0, y: 10 },
+		enter: {
+			opacity: 1,
 			y: 0,
-			scale: 1,
-			opacity: 1,
-			transition: { duration: 0.08, ease: 'easeOut' },
+			transition: { duration: 0.12, ease: 'easeOut' },
 		},
-		exit: {
-			y: -10,
-			scale: 0.995,
-			opacity: 1,
-			transition: { duration: 0.08, ease: 'easeIn' },
-		},
+		exit: { opacity: 0, y: -8, transition: { duration: 0.1, ease: 'easeIn' } },
 	}
 
+	// вычисляем «состояние» экрана и стабильный key
+	const view = selectedProduct ? 'details' : activeSub ? 'sub' : 'home'
+
 	return (
-		<AnimatePresence mode='wait'>
-			{promoOpen ? (
-				<motion.div key='promo' {...fastScreen} layout>
-					<PromoDetails
-						currentCategory={promoRelated[0]?.category || ''}
-						description='Опиши условия акции: сроки, контакты, что входит и т.п.'
-						related={promoRelated}
-						onBack={() => setPromoOpen(false)}
-						onSelectProduct={p => {
-							setPromoOpen(false)
-							setSelectedProduct(p)
-						}}
-						onOpenSubcategory={payload => {
-							setPromoOpen(false)
-							openSubcategory(payload)
-						}}
-					/>
-				</motion.div>
-			) : selectedProduct ? (
+		<AnimatePresence mode='sync' initial={false}>
+			{view === 'details' && (
 				<motion.div
-					key={`details-${selectedProduct.id}`}
-					{...fastScreen}
-					layout
+					key='details'
+					variants={variants}
+					initial='initial'
+					animate='enter'
+					exit='exit'
+					className='bg-white rounded-[20px] '
 				>
 					<ProductDetails
 						product={selectedProduct}
@@ -238,15 +175,16 @@ const ProductsPage = ({
 						onSelectProduct={openDetails}
 					/>
 				</motion.div>
-			) : activeSub ? (
+			)}
+
+			{view === 'sub' && (
 				<motion.div
-					key={`sub-${activeSub.title}`}
-					{...fastScreen}
-					layout
-					initial={{ opacity: 0, y: 24, scale: 0.985 }}
-					animate={{ opacity: 1, y: 0, scale: 1 }}
-					exit={{ opacity: 0, y: -24, scale: 0.985 }}
-					transition={{ duration: 0.45, ease: 'easeOut' }}
+					key='sub'
+					variants={variants}
+					initial='initial'
+					animate='enter'
+					exit='exit'
+					className='bg-white rounded-[20px] p-3'
 				>
 					<SubcategoryPanel
 						title={activeSub.title}
@@ -259,25 +197,19 @@ const ProductsPage = ({
 						filtersOpen={filtersOpen}
 					/>
 				</motion.div>
-			) : (
+			)}
+
+			{view === 'home' && (
 				<motion.div
 					key='home'
-					initial={{ y: 8, opacity: 1 }}
-					animate={{
-						y: 0,
-						opacity: 1,
-						transition: { duration: 0.16, ease: 'easeOut' },
-					}}
-					exit={{
-						y: -8,
-						opacity: 1,
-						transition: { duration: 0.1, ease: 'easeIn' },
-					}}
-					transition={{ duration: 0.35, ease: 'easeOut' }}
+					variants={variants}
+					initial='initial'
+					animate='enter'
+					exit='exit'
 					className='bg-white rounded-[20px] p-3'
 				>
-					<PromoMain onOpen={() => setPromoOpen(true)} />
-					<div className='space-y-6'>
+					<PromoSlider active /> {/* автопрокрутка только на главной */}
+					<div className='mt-4 space-y-6'>
 						{sections.map(sec => (
 							<ProductSection
 								key={sec.title}

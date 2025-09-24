@@ -1,23 +1,27 @@
+// src/components/ProductCart/ProductCart.jsx
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import sucessSvg from '../../assets/SVG/sucess.svg'
 import {
 	clearCart,
 	removeItem,
 	updateQuantity,
 } from '../../store/slices/cartSlice'
-
+import { buildOrderPayload, sendOrder } from '../../utils/orderApi'
 import CheckoutForm from './CheckoutForm'
 import CartFooter from './parts/CartFooter'
 import CartHeader from './parts/CartHeader'
 import CartItem from './parts/CartItem'
 import ProductCartSkeleton from './parts/ProductCartSkeleton'
+// ⬇️ добавили утилиты отправки
 
 const MIN_ORDER = 4800
 const selectCart = s => s.cart
 
 const ProductCart = ({ loading = false }) => {
 	const dispatch = useDispatch()
-	const { items = [], total = 0 } = useSelector(selectCart) || {}
+	const cartState = useSelector(selectCart) // ⬅️ понадобится для payload
+	const { items = [], total = 0 } = cartState || {}
 	const isLoading = loading || items == null
 
 	const formRef = useRef(null)
@@ -50,20 +54,20 @@ const ProductCart = ({ loading = false }) => {
 	const list = useMemo(() => items, [items])
 
 	const handleContinue = async () => {
-		console.log('[Cart] continue clicked')
 		if (!showForm) {
 			setShowForm(true)
 			setTimeout(() => formRef.current?.focusFirst?.(), 0)
 			return
 		}
-		// когда форма уже открыта — сначала провалидируем,
-		// и только если всё ок — сабмитим
+		// когда форма уже открыта — валидируем и сабмитим
 		const ok = await formRef.current?.validate?.()
 		if (ok) formRef.current?.submit?.()
 	}
 
-	const handleOrderSubmitted = data => {
-		console.log('[Cart] ORDER_SUBMIT_PAYLOAD:', data)
+	// ⬇️ стал async и реально шлёт заказ
+	const handleOrderSubmitted = async formData => {
+		const payload = buildOrderPayload(formData, { items, total })
+		await sendOrder(payload) // пока просто в консоль
 		setSuccess(true)
 		setShowForm(false)
 
@@ -73,7 +77,6 @@ const ProductCart = ({ loading = false }) => {
 		}, 5000)
 		return () => clearTimeout(t)
 	}
-
 	if (isLoading) return <ProductCartSkeleton />
 
 	return (
@@ -87,7 +90,14 @@ const ProductCart = ({ loading = false }) => {
 			<CartHeader />
 			<div className='w-[260px] h-[2px] ml-[18px] rounded-[20px] bg-[#efebe6]' />
 
-			<div className='flex-1 overflow-y-auto px-4 py-3 space-y-3 scroll-hidden relative'>
+			<div
+				className={[
+					'flex-1 overflow-y-auto px-4 py-3 space-y-3 scroll-hidden relative',
+					// ⬇️ блокируем клики по плюсам/минусам, когда success=true
+					success ? 'pointer-events-none' : 'pointer-events-auto',
+				].join(' ')}
+				aria-hidden={success}
+			>
 				{list.length === 0 ? (
 					<div className='opacity-60 text-sm'>пусто</div>
 				) : (
@@ -108,9 +118,10 @@ const ProductCart = ({ loading = false }) => {
 				)}
 
 				{success && (
-					<div className='absolute z-20 inset-0 grid place-items-center bg-white backdrop-blur-[1px] p-6'>
-						<div className='text-center'>
-							<div className='text-sm text-stone-700'>
+					<div className='absolute z-20 inset-0 flex justify-center items-center bg-white  p-6 pointer-events-auto'>
+						<div className='flex flex-col gap-[24px] justify-center items-center'>
+							<img src={sucessSvg} alt='Успех' />
+							<div className='text-[12px] font-baron text-stone-700'>
 								как только заказ будет собран, вам придёт SMS-оповещение
 							</div>
 						</div>
