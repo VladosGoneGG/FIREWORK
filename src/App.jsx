@@ -40,8 +40,11 @@ function App() {
 		setAppliedFilters({}) // полностью убираем фильтры → вернётся весь список
 	}
 
+	const centerWidth = DETAILS_W // ← фикс ширина
+	const centerHeight = detailsMode ? DETAILS_H : `calc(100vh - ${HEADER_H}px)`
+
 	return (
-		<div className='flex flex-col items-center h-screen overflow-hidden'>
+		<div className='flex flex-col items-center min-h-screen overflow-y-auto'>
 			<Header
 				rightSlot={
 					<SearchBar />
@@ -80,31 +83,37 @@ function App() {
 
 					{/* ЦЕНТР */}
 					<div
-						className='scroll-hidden bg-transparent shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px] overflow-y-auto flex flex-col'
-						style={{
-							width: detailsMode ? DETAILS_W : CENTER_W,
-							height: detailsMode ? DETAILS_H : `calc(100vh - ${HEADER_H}px)`,
-						}}
+						className='scroll-hidden bg-transparent flex flex-col'
+						style={{ width: centerWidth }}
 					>
-						<ProductsPage
-							externalSelectedProduct={selectedFromSearch}
-							onToggleFilters={() => setFiltersOpen(v => !v)}
-							onDetailsModeChange={setDetailsMode}
-							onConsumeExternalSelected={() => setSelectedFromSearch(null)}
-							// ПРИМЕНЁННЫЕ фильтры отдаём сюда
-							overlayFilters={appliedFilters}
-							// Кол-во найденных под фильтром (для левого оверлея)
-							onFiltersCountChange={setOverlayCount}
-							filtersOpen={filtersOpen}
-						/>
+						{/* Карточка с контентом: ТЕНЬ + СКРУГЛЕНИЕ, но высота теперь maxHeight */}
+						<div
+							className='relative z-10 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px] flex flex-col'
+							style={{ maxHeight: centerHeight }}
+						>
+							{/* Внутренний скролл только у контента, скругление снизу всегда видно */}
+							<div className='flex-1 overflow-y-auto scroll-hidden rounded-[20px] '>
+								<ProductsPage
+									externalSelectedProduct={selectedFromSearch}
+									onToggleFilters={() => setFiltersOpen(v => !v)}
+									onDetailsModeChange={setDetailsMode}
+									onConsumeExternalSelected={() => setSelectedFromSearch(null)}
+									overlayFilters={appliedFilters}
+									onFiltersCountChange={setOverlayCount}
+									filtersOpen={filtersOpen}
+									narrow={!detailsMode}
+									narrowWidth={CENTER_W}
+								/>
+							</div>
+						</div>
 
+						{/* Футер — отдельный блок НИЖЕ карточки */}
 						{!detailsMode && (
-							<div className='mt-3'>
+							<div className='mb-[20px] relative z-0 '>
 								<FooterSection />
 							</div>
 						)}
 					</div>
-
 					{/* ПРАВАЯ КОЛОНКА */}
 					<aside className='w-80 sticky' style={{ top: HEADER_H }}>
 						<ProductCart />

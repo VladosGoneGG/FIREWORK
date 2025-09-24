@@ -3,7 +3,7 @@ import Logo from '../../assets/SVG/LOGO.svg'
 
 const Header = ({ rightSlot }) => {
 	return (
-		<header className='w-[1240px] h-[150px] rounded-b-[20px] shadow-[0_0_10px_0_rgba(0,0,0,0.2)] bg-white'>
+		<header className='w-[1240px] h-[144px] rounded-b-[20px] shadow-[0_0_10px_0_rgba(0,0,0,0.2)] bg-white'>
 			<div className='mx-auto max-w-[1240px] px-4 py-3'>
 				<div className='flex items-center justify-between select-none'>
 					<div>

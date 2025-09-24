@@ -180,7 +180,13 @@
 		mask: radial-gradient(circle, #000 100%, transparent 100%) content-box;
 		will-change: opacity;
 	}
-
+	.no-scrollbar::-webkit-scrollbar {
+		display: none;
+	}
+	.no-scrollbar {
+		-ms-overflow-style: none; /* IE/Edge */
+		scrollbar-width: none; /* Firefox */
+	}
 	/* контент всегда выше оверлея */
 	.btn-firework-filter > * {
 		position: relative;
