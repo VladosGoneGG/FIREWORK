@@ -41,15 +41,20 @@ function ProductCardMini({ product, onSelect }) {
 		[onSelect, product]
 	)
 
-	// «Цена за единицу» с учётом акции
-	const unitPrice =
-		typeof discountPrice === 'number' ? discountPrice : price || 0
+	// --- НОРМАЛИЗАЦИЯ ЦЕН ---
+	const p = Number(price)
+	const dp = Number(discountPrice)
+	const hasValidDiscount =
+		Number.isFinite(dp) && dp > 0 && Number.isFinite(p) && p > 0 && dp < p
+
+	// «Цена за единицу» с учётом валидной скидки
+	const unitPrice = hasValidDiscount ? dp : Number.isFinite(p) ? p : 0
 
 	const add = useCallback(
 		e => {
 			e.stopPropagation()
 			if (outOfStock) return
-			// Кладём unitPrice в payload — корзина и UI будут точно использовать скидочную цену
+			// Кладём нормализованный unitPrice — корзина всегда будет считать правильно
 			dispatch(addItem({ ...product, unitPrice }))
 		},
 		[dispatch, outOfStock, product, unitPrice]
@@ -78,8 +83,8 @@ function ProductCardMini({ product, onSelect }) {
 				<ProductMeta name={name} manufacturer={manufacturer} />
 
 				{/* Параметры */}
-				<div className=' flex text-[12px] justify-between '>
-					<div className='w-[65px] h-[25px]flex flex-col  gap-0.5'>
+				<div className=' flex  text-[12px] justify-between text-[#625A51]  '>
+					<div className='w-[65px] h-[25px]flex flex-col gap-0.5'>
 						<PriceBlock.Param icon='shots'>{shots ?? '—'}</PriceBlock.Param>
 						<PriceBlock.Param icon='time' title={fmtSecFull(durationSec)}>
 							{renderSec(durationSec)}
@@ -94,7 +99,7 @@ function ProductCardMini({ product, onSelect }) {
 				</div>
 
 				{/* Цена + кнопка */}
-				<div className='mt-2 flex items-end justify-between'>
+				<div className=' flex items-end justify-between'>
 					<PriceBlock
 						price={price}
 						discountPrice={discountPrice}

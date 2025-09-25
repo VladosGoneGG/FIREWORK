@@ -4,16 +4,19 @@ import { fmtPriceRub } from '../../../utils/format'
 import Qty from './Qty'
 
 const CartItem = ({ item, onDec, onInc }) => {
-	// 1) Берём цену позиции с учётом акции
+	// 1) Цена за единицу (с учётом акции)
 	const unitPrice =
 		typeof item?.discountPrice === 'number'
 			? item.discountPrice
 			: item?.price || 0
 
-	// 2) Текст для текущей (фактической) цены
-	const priceText = fmtPriceRub(unitPrice)
+	// 2) Количество
+	const qty = Math.max(1, item.quantity || 1)
 
-	// 3) Нужна ли «старая» цена
+	// 3) Общая сумма за позицию
+	const lineTotal = unitPrice * qty
+
+	// 4) Нужна ли «старая» цена
 	const hasOldPrice =
 		typeof item?.discountPrice === 'number' &&
 		typeof item?.price === 'number' &&
@@ -37,7 +40,7 @@ const CartItem = ({ item, onDec, onInc }) => {
 					{item.manufacturer || ''}
 				</div>
 
-				{/* Если есть старая цена — покажем её маленькой и зачёркнутой */}
+				{/* Старая цена, если есть */}
 				{hasOldPrice && (
 					<div
 						className='text-[10px] text-[#BD52E9] line-through decoration-1 mt-0.5'
@@ -49,14 +52,16 @@ const CartItem = ({ item, onDec, onInc }) => {
 				)}
 
 				<div className='mt-1 flex items-center justify-between'>
-					<Qty value={item.quantity} onDec={onDec} onInc={onInc} />
+					<Qty value={qty} onDec={onDec} onInc={onInc} />
 
-					{/* Фактическая цена за единицу */}
-					<div className='text-[18px] font-bold pr-2.5'>
-						{priceText}
-						<span className='text-[10px] font-baron lowercase relative top-0.5 right-1.5'>
-							руб.
-						</span>
+					{/* Общая сумма за позицию */}
+					<div className='text-right pr-2.5'>
+						<div className='text-[18px] font-bold'>
+							{fmtPriceRub(lineTotal)}
+							<span className='text-[10px] font-baron lowercase relative top-0.5 right-1.5'>
+								руб.
+							</span>
+						</div>
 					</div>
 				</div>
 			</div>

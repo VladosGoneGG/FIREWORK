@@ -19,9 +19,9 @@ const Header = ({ rightSlot }) => {
 					</div>
 				</div>
 
-				<div className='w-[1200px] h-[2px] my-[20px] rounded-[20px] bg-[#efebe6]' />
+				<div className='w-[1200px] h-[2px] mt-[20px] mb-[15px] rounded-[20px] bg-[#efebe6]' />
 
-				<div className='mt-3 flex items-center gap-20'>
+				<div className='flex items-center gap-20'>
 					<a href='/'>
 						<img src={Logo} alt='Логотип' className='ml-[64px]' />
 					</a>

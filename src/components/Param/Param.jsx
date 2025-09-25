@@ -7,7 +7,7 @@ const Param = ({ icon, children, title }) => {
 	return (
 		<div className='flex items-center gap-1 text-[12px] text-[#6b6b6b]'>
 			{isImg ? (
-				<img src={icon} alt='' className='w-4 h-4 shrink-0' />
+				<img src={icon} alt='' className='w-[21px] h-[21px] shrink-0' />
 			) : (
 				<span className='text-[14px] shrink-0'>{icon}</span>
 			)}

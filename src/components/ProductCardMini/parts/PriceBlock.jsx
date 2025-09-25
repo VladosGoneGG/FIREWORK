@@ -24,16 +24,25 @@ export function Param({ icon, title, children }) {
 }
 
 function PriceBlock({ price, discountPrice, fmtPrice }) {
-	const hasDiscount = typeof discountPrice === 'number'
+	// Нормализуем входы в числа
+	const p = Number(price)
+	const dp = Number(discountPrice)
+
+	// Валидная скидка: оба числа > 0 и dp < p
+	const hasDiscount =
+		Number.isFinite(p) && p > 0 && Number.isFinite(dp) && dp > 0 && dp < p
+
 	return (
-		<div className='ml-1'>
+		<div className='ml-1 pt-2'>
 			{hasDiscount ? (
 				<>
-					<div className='text-[12px] font-baron lowercase line-through text-[#BD52E9] font-bold'>
-						{fmtPrice(price)}
+					{/* старая цена (зачёркнутая) */}
+					<div className='relative bottom-2.5 h-[2.5px] text-[12px] font-baron lowercase line-through text-[#BD52E9] font-bold'>
+						{fmtPrice(p)}
 					</div>
+					{/* новая цена */}
 					<div className='text-[15px] font-bold'>
-						{fmtPrice(discountPrice)}
+						{fmtPrice(dp)}
 						<span className='text-[10px] font-baron lowercase relative top-0.5 left-[1px]'>
 							руб.
 						</span>
@@ -41,7 +50,7 @@ function PriceBlock({ price, discountPrice, fmtPrice }) {
 				</>
 			) : (
 				<div className='text-[15px] font-bold'>
-					{fmtPrice(price)}
+					{fmtPrice(Number.isFinite(p) && p > 0 ? p : 0)}
 					<span className='text-[10px] font-baron lowercase relative top-0.5'>
 						руб.
 					</span>

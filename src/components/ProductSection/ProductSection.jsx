@@ -42,7 +42,7 @@ const ProductSection = ({
 				)}
 			</div>
 
-			<div className='grid grid-cols-5 gap-3'>
+			<div className='grid grid-cols-5 gap-[11px]'>
 				{loading ? (
 					Array.from({ length: 10 }).map((_, i) => (
 						<ProductCardMiniSkeleton key={i} />

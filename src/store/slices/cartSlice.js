@@ -6,12 +6,19 @@ export const initialCartState = {
 	total: 0,
 }
 
-// берём скидочную, если есть, иначе обычную
-const getUnitPrice = p =>
-	typeof p?.discountPrice === 'number' ? p.discountPrice : p?.price || 0
+// Всегда берём цену в таком порядке:
+// 1) item.unitPrice (если уже сохранена в корзине)
+// 2) item.discountPrice
+// 3) item.price
+const getUnit = (it = {}) => {
+	const n = v => (typeof v === 'number' ? v : Number(v))
+	if (!Number.isNaN(n(it.unitPrice))) return n(it.unitPrice)
+	if (!Number.isNaN(n(it.discountPrice))) return n(it.discountPrice)
+	return n(it.price) || 0
+}
 
 const calcTotal = items =>
-	items.reduce((sum, it) => sum + getUnitPrice(it) * (it.quantity || 1), 0)
+	items.reduce((sum, it) => sum + getUnit(it) * (it.quantity || 1), 0)
 
 const cartSlice = createSlice({
 	name: 'cart',
@@ -22,10 +29,10 @@ const cartSlice = createSlice({
 			if (idx >= 0) {
 				state.items[idx].quantity += 1
 			} else {
-				// можно сохранить unitPrice для удобства отображения (не обязательно)
+				// Фиксируем unitPrice на момент добавления — UI и total будут консистентны
 				state.items.push({
 					...payload,
-					unitPrice: getUnitPrice(payload),
+					unitPrice: getUnit(payload),
 					quantity: 1,
 				})
 			}
@@ -34,7 +41,7 @@ const cartSlice = createSlice({
 		updateQuantity(state, { payload: { id, quantity } }) {
 			const it = state.items.find(i => i.id === id)
 			if (it) {
-				it.quantity = Math.max(1, quantity)
+				it.quantity = Math.max(1, Number(quantity) || 1)
 				state.total = calcTotal(state.items)
 			}
 		},
@@ -46,6 +53,7 @@ const cartSlice = createSlice({
 			state.items = []
 			state.total = 0
 		},
+		// гидратация из localStorage
 		setCart(state, { payload }) {
 			return payload && typeof payload === 'object' ? payload : state
 		},

@@ -57,7 +57,7 @@ function SideInfoCard({ product, img }) {
 				>
 					{name}
 				</h3>
-				<div className='ml-0.5 text-[10px] text-[#625a51] font-baron uppercase'>
+				<div className=' text-[10px] text-[#625a51] font-baron uppercase'>
 					<span className='lowercase'>производитель:</span>{' '}
 					{manufacturer || '—'}
 				</div>
@@ -93,8 +93,8 @@ function SideInfoCard({ product, img }) {
 				</div>
 
 				{/* наличие */}
-				<div className='mt-2 ml-0.5 text-[#28a745] text-[7px] lowercase font-baron'>
-					в наличии <span className='text-[10px]'>{inStock}</span> шт
+				<div className='text-[#098D00] text-[13px] lowercase font-baron '>
+					в наличии <span className='text-[13px]'>{inStock}</span> шт
 				</div>
 
 				{/* кнопка */}
