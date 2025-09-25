@@ -65,7 +65,7 @@ function ProductCardMini({ product, onSelect }) {
 			title={name}
 			className='w-[120px] h-[206px] bg-white'
 		>
-			<div className='h-full w-full flex flex-col lowercase font-baron'>
+			<div className='h-full w-full flex flex-col  lowercase font-baron'>
 				{/* Фото 100×100 */}
 				<ProductThumb
 					src={img}
@@ -78,14 +78,14 @@ function ProductCardMini({ product, onSelect }) {
 				<ProductMeta name={name} manufacturer={manufacturer} />
 
 				{/* Параметры */}
-				<div className='flex text-[12px] justify-evenly'>
-					<div className='flex flex-col'>
+				<div className=' flex text-[12px] justify-between '>
+					<div className='w-[65px] h-[25px]flex flex-col  gap-0.5'>
 						<PriceBlock.Param icon='shots'>{shots ?? '—'}</PriceBlock.Param>
 						<PriceBlock.Param icon='time' title={fmtSecFull(durationSec)}>
 							{renderSec(durationSec)}
 						</PriceBlock.Param>
 					</div>
-					<div className='flex flex-col'>
+					<div className='w-[50px] h-[25px]  flex flex-col '>
 						<PriceBlock.Param icon='caliber'>{caliber ?? '—'}</PriceBlock.Param>
 						<PriceBlock.Param icon='effects'>
 							{effectsCount ?? '—'}
@@ -94,7 +94,7 @@ function ProductCardMini({ product, onSelect }) {
 				</div>
 
 				{/* Цена + кнопка */}
-				<div className='mt-auto flex items-end justify-between'>
+				<div className='mt-2 flex items-end justify-between'>
 					<PriceBlock
 						price={price}
 						discountPrice={discountPrice}

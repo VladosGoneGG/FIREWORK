@@ -2,7 +2,7 @@
 
 export default function ProductMeta({ name, manufacturer }) {
 	return (
-		<div className='text-center'>
+		<div className='text-left mb-1'>
 			<h4 className='font-semibold leading-tight break-words line-clamp-1 text-[12px]'>
 				{name}
 			</h4>
