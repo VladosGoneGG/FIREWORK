@@ -200,8 +200,8 @@ export default function SubcategoryOverlay({
 		>
 			<div className='w-[240px] h-[834px] bg-white rounded-[20px] shadow-[0_0_10px_0_rgba(0,0,0,0.20)] overflow-hidden flex flex-col'>
 				{/* header */}
-				<div className='px-5 pt-4 pb-2 relative'>
-					<div className='text-[#625A51] text-lg font-baron lowercase'>
+				<div className='px-5 pt-4 pb-2 relative top-[2px]'>
+					<div className='text-[#625A51]  text-lg font-baron lowercase'>
 						фильтры
 					</div>
 					<div className='w-[204px] h-[2px] bg-[#EFEBE6] rounded-[20px] mt-2 mx-auto' />

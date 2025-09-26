@@ -70,7 +70,7 @@ function ProductCardMini({ product, onSelect }) {
 			title={name}
 			className='w-[120px] h-[206px] bg-white'
 		>
-			<div className='h-full w-full flex flex-col  lowercase font-baron'>
+			<div className='h-full w-full flex flex-col  font-baron'>
 				{/* Фото 100×100 */}
 				<ProductThumb
 					src={img}

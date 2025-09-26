@@ -33,6 +33,21 @@
 	font-display: swap;
 }
 
+@font-face {
+	font-family: 'Barlow';
+	src: url('./assets/fonts/Barlow-Regular.ttf') format('truetype');
+	font-weight: 400; /* regular */
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Barlow';
+	src: url('./assets/fonts/Barlow-Bold.ttf') format('truetype');
+	font-weight: 700; /* bold */
+	font-style: normal;
+	font-display: swap;
+}
 /* === ТЕМА (Tailwind v4) === */
 @theme {
 	/* Цвета */
@@ -54,6 +69,7 @@
 	--font-baron: 'BaronNeue', sans-serif;
 	--font-calibri: 'Calibri', sans-serif;
 	--font-inter: 'Inter', sans-serif;
+	--font-barlow: 'Barlow', sans-serif;
 }
 
 @layer utilities {
@@ -99,15 +115,26 @@
 }
 /* База */
 @layer base {
-	html {
-		background-color: #efebe6;
-	}
+	html,
 	body {
+		background-color: #efebe6;
 		line-height: 1.5;
 		color: #333;
 		margin: 0;
 		padding: 0;
+
+		/* <-- ВАЖНО: разрешаем прокрутку страницы */
+		overflow-y: auto;
+		overflow-x: hidden;
+
+		/* Скрываем скроллбар, не отключая скролл */
+		-ms-overflow-style: none; /* IE/Edge */
+		scrollbar-width: none; /* Firefox */
+		min-height: 100%;
 	}
+	body::-webkit-scrollbar {
+		display: none;
+	} /* Chrome/Safari */
 
 	.baron-text {
 		font-family: var(--font-baron);

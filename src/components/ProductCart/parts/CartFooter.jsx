@@ -16,19 +16,16 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 
 	return (
 		<div className='mt-auto px-4 pb-4 pt-3 bg-white'>
-			<div className='text-center text-[8px] lowercase font-baron text-[#b4b4b4]'>
-				итого
-			</div>
 			<div className='text-center text-[20px] font-extrabold tracking-wide'>
+				<span className='text-[12px] text-[#B4B4B4]'>итого</span>{' '}
 				{fmtPriceRub(total)}
 				<span className='text-[10px] font-baron lowercase relative right-1.5 top-0.5'>
 					руб.
 				</span>
 			</div>
 
-			<div className='mt-1 text-center text-[10px] text-[#777] font-baron'>
-				минимальный заказ от: {fmtPriceRub(minOrder)}
-				<span className='text-[9px] ml-1 lowercase'>руб.</span>
+			<div className='lowercase mt-1 text-center text-[12px] text-[#625A51] font-baron'>
+				минимальный заказ от: {fmtPriceRub(minOrder)}руб.
 			</div>
 
 			<button

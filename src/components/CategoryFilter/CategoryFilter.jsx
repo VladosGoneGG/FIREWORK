@@ -1,3 +1,4 @@
+// src/components/CategoryFilter/CategoryFilter.jsx
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
@@ -11,7 +12,8 @@ import CategoryFilterSkeleton from './CategoryFilterSkeleton'
 
 const norm = name => (name === 'Все' ? 'all' : String(name || '').toLowerCase())
 
-const CategoryFilter = () => {
+const CategoryFilter = ({ onAnyCategoryClick }) => {
+	// ← добавили проп
 	const dispatch = useDispatch()
 	const { list, selectedCategory, status } = useSelector(s => s.categories)
 	const [expandedId, setExpandedId] = useState(null)
@@ -28,6 +30,7 @@ const CategoryFilter = () => {
 
 	const handleCategoryClick = useCallback(
 		cat => {
+			onAnyCategoryClick?.() // ← помечаем, что это уже не лендинг
 			const key = norm(cat.name)
 			dispatch(setCategory(key))
 			dispatch(clearSearchQuery())
@@ -37,23 +40,20 @@ const CategoryFilter = () => {
 				setExpandedId(null)
 			}
 		},
-		[dispatch, hasSubsById]
+		[dispatch, hasSubsById, onAnyCategoryClick]
 	)
 
 	const handleSubClick = useCallback(
 		name => {
+			onAnyCategoryClick?.() // ← тоже помечаем
 			dispatch(setCategory(norm(name)))
 			dispatch(clearSearchQuery())
 		},
-		[dispatch]
+		[dispatch, onAnyCategoryClick]
 	)
 
-	// ← показываем скелетон при загрузке
-	if (status === 'loading') {
-		return <CategoryFilterSkeleton />
-	}
+	if (status === 'loading') return <CategoryFilterSkeleton />
 
-	// никаких “ошибок/нет данных” — по просьбе просто пустая колонка
 	if (!list?.length) {
 		return (
 			<aside className='w-[240px] bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)]' />
@@ -61,7 +61,7 @@ const CategoryFilter = () => {
 	}
 
 	return (
-		<aside className='w-[240px] bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] font-baron lowercase font-bold '>
+		<aside className='w-[240px] min-h-[401px] bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] font-baron lowercase font-bold '>
 			<ul className='space-y-1'>
 				{list.map(cat => {
 					const key = norm(cat.name)
