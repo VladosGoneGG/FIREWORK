@@ -28,7 +28,7 @@ const PromoSlider = ({
 	return (
 		<div
 			className={[
-				'relative w-[640px] h-[300px] rounded-[10px] overflow-hidden mx-auto bg-[#f6f4f2]',
+				'relative w-[640px] h-[300px] rounded-[10px] overflow-hidden mx-auto bg-[#f6f4f2] mt-2.5',
 				'select-none',
 				className,
 			].join(' ')}

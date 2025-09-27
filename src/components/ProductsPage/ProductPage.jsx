@@ -11,7 +11,7 @@ import {
 import { applyAdvancedFilter } from '../../utils/filters'
 import { applySort, SORT_KEYS } from '../../utils/sort'
 
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import ProductDetails from '../ProductDetails/ProductDetails'
 import ProductSection from '../ProductSection/ProductSection'
 import PromoSlider from '../PromoSlider/PromoSlider'
@@ -27,7 +27,7 @@ const ProductsPage = ({
 	overlayFiltersPreview = {},
 	onFiltersCountChange = () => {},
 	filtersOpen,
-	showSlider = false, // ← слайдер рендерим только если явно передали на главной
+	showSlider = false,
 }) => {
 	useProductsBoot()
 
@@ -39,7 +39,7 @@ const ProductsPage = ({
 	const search = useSelector(s => s.products.searchQuery || '')
 
 	const [selectedProduct, setSelectedProduct] = useState(null)
-	const [activeSub, setActiveSub] = useState(null) // { title, products }
+	const [activeSub, setActiveSub] = useState(null)
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
 
 	useEffect(() => {
@@ -80,13 +80,11 @@ const ProductsPage = ({
 	)
 	const sections = useSections(discounted, nonDiscounted, selected)
 
-	// ----- данные подкатегории -----
 	const activeList = useMemo(
 		() => (Array.isArray(activeSub?.products) ? activeSub.products : []),
 		[activeSub]
 	)
 
-	// применённые фильтры
 	const filteredApplied = useMemo(
 		() => applyAdvancedFilter(activeList, overlayFilters),
 		[activeList, overlayFilters]
@@ -96,7 +94,6 @@ const ProductsPage = ({
 		[filteredApplied, sortKey]
 	)
 
-	// превью-фильтры — только для счётчика
 	const filteredPreview = useMemo(
 		() => applyAdvancedFilter(activeList, overlayFiltersPreview),
 		[activeList, overlayFiltersPreview]
@@ -145,22 +142,20 @@ const ProductsPage = ({
 
 	const closeSubcategory = useCallback(() => setActiveSub(null), [])
 
-	// лёгкие варианты (opacity/y)
-	const variants = {
-		initial: { opacity: 0, y: 10 },
+	// Единый эффект (как у «Посмотреть ещё»)
+	const FX = {
+		initial: { opacity: 0, y: 8 },
 		enter: {
 			opacity: 1,
 			y: 0,
-			transition: { duration: 0.14, ease: 'easeOut' },
+			transition: { duration: 0.18, ease: 'easeOut' },
 		},
-		exit: { opacity: 0, y: -8, transition: { duration: 0.12, ease: 'easeIn' } },
+		exit: { opacity: 0, y: 8, transition: { duration: 0.14, ease: 'easeIn' } },
 	}
 
-	// Показывать слайдер? (только если сказали showSlider И мы на «главной» без поиска/деталей/подкатегории)
 	const shouldShowSlider =
 		!!showSlider && !selectedProduct && !activeSub && !String(search).trim()
 
-	// Верхняя панель фильтр/сортировка (как в SubcategoryPanel)
 	const FilterBar = (
 		<div className='flex items-center gap-2 p-2.5'>
 			<div className='pl-2.5 text-lg font-baron' />
@@ -180,85 +175,165 @@ const ProductsPage = ({
 		</div>
 	)
 
-	// состояние экрана
-	const view = selectedProduct ? 'details' : activeSub ? 'sub' : 'home'
+	const view = activeSub ? 'sub' : 'home'
+
+	// ⬇️ Лочим скролл страницы при открытой карточке + компенсируем ширину скроллбара
+	useEffect(() => {
+		if (!selectedProduct) return
+		const root = document.documentElement
+		const prevOverflow = root.style.overflow
+		const prevPadRight = root.style.paddingRight
+		const sbw = window.innerWidth - root.clientWidth
+		root.style.overflow = 'hidden'
+		if (sbw > 0) root.style.paddingRight = `${sbw}px`
+		return () => {
+			root.style.overflow = prevOverflow
+			root.style.paddingRight = prevPadRight
+		}
+	}, [selectedProduct])
 
 	return (
-		<AnimatePresence mode='sync' initial={false}>
-			{view === 'details' && (
-				<motion.div
-					key='details'
-					variants={variants}
-					initial='initial'
-					animate='enter'
-					exit='exit'
-					className='bg-white rounded-[20px]'
-				>
-					<ProductDetails
-						product={selectedProduct}
-						related={related}
-						onBack={closeDetails}
-						onOpenSubcategory={payload => {
-							closeDetails()
-							openSubcategory(payload?.title || selectedProduct.category)
+		<LayoutGroup id='products-page'>
+			{/* фиксированная минимальная высота — страница не «прыгает» при оверлее */}
+			<div
+				className={`relative rounded-[20px] overflow-hidden bg-white ${
+					selectedProduct ? 'h-[834px]' : 'min-h-[834px]'
+				}`}
+			>
+				{/* ==== БАЗОВЫЙ СЛОЙ (HOME/SUB) — всегда смонтирован. Замораживаем, когда открыт details. ==== */}
+				<motion.div layout='position'>
+					<motion.div
+						layout='position'
+						initial={false}
+						animate={selectedProduct ? { opacity: 0 } : { opacity: 1 }}
+						style={{
+							position: selectedProduct ? 'absolute' : 'static',
+							inset: selectedProduct ? 0 : 'auto',
+							visibility: selectedProduct ? 'hidden' : 'visible',
+							pointerEvents: selectedProduct ? 'none' : 'auto',
+							width: '100%',
 						}}
-						onSelectProduct={openDetails}
-					/>
-				</motion.div>
-			)}
+					>
+						<AnimatePresence mode='wait' initial={false}>
+							{view === 'sub' ? (
+								<motion.div
+									key='sub'
+									layout='position'
+									variants={FX}
+									initial='initial'
+									animate='enter'
+									exit='exit'
+								>
+									<SubcategoryPanel
+										title={activeSub?.title}
+										products={sortedApplied}
+										onClose={closeSubcategory}
+										onSelectProduct={openDetails}
+										onOpenFilters={() => onToggleFilters?.(!filtersOpen)}
+										sort={sortKey}
+										onChangeSort={setSortKey}
+										filtersOpen={filtersOpen}
+									/>
+								</motion.div>
+							) : (
+								<motion.div
+									key='home'
+									layout='position'
+									variants={FX}
+									initial='initial'
+									animate='enter'
+									exit='exit'
+								>
+									<motion.div layout='position'>
+										<AnimatePresence mode='wait' initial={false}>
+											{shouldShowSlider ? (
+												<motion.div
+													key='slider'
+													layout='position'
+													variants={FX}
+													initial='initial'
+													animate='enter'
+													exit='exit'
+												>
+													<PromoSlider active />
+												</motion.div>
+											) : (
+												<motion.div
+													key='filterbar'
+													layout='position'
+													variants={FX}
+													initial='initial'
+													animate='enter'
+													exit='exit'
+												>
+													{FilterBar}
+												</motion.div>
+											)}
+										</AnimatePresence>
+									</motion.div>
 
-			{view === 'sub' && (
-				<motion.div
-					key='sub'
-					variants={variants}
-					initial='initial'
-					animate='enter'
-					exit='exit'
-					className='bg-white rounded-[20px] p-3'
-				>
-					<SubcategoryPanel
-						title={activeSub.title}
-						products={sortedApplied}
-						onClose={closeSubcategory}
-						onSelectProduct={openDetails}
-						onOpenFilters={() => onToggleFilters?.(!filtersOpen)}
-						sort={sortKey}
-						onChangeSort={setSortKey}
-						filtersOpen={filtersOpen}
-					/>
+									<motion.div layout='position' className='mt-4 space-y-6'>
+										{sections.map(sec => (
+											<motion.div
+												key={sec.title}
+												layout='position'
+												variants={FX}
+												initial='initial'
+												animate='enter'
+												exit='exit'
+											>
+												<ProductSection
+													title={sec.title}
+													products={sec.items}
+													onSelectProduct={openDetails}
+													onOpenSubcategory={payload =>
+														openSubcategory(
+															payload ?? {
+																title: sec.title,
+																products: sec.items,
+															}
+														)
+													}
+													loading={status === 'loading'}
+												/>
+											</motion.div>
+										))}
+									</motion.div>
+								</motion.div>
+							)}
+						</AnimatePresence>
+					</motion.div>
 				</motion.div>
-			)}
 
-			{view === 'home' && (
-				<motion.div
-					key='home'
-					variants={variants}
-					initial='initial'
-					animate='enter'
-					exit='exit'
-					className='bg-white rounded-[20px] p-3'
-				>
-					{shouldShowSlider ? <PromoSlider active /> : FilterBar}
-
-					<div className='mt-4 space-y-6'>
-						{sections.map(sec => (
-							<ProductSection
-								key={sec.title}
-								title={sec.title}
-								products={sec.items}
-								onSelectProduct={openDetails}
-								onOpenSubcategory={payload =>
-									openSubcategory(
-										payload ?? { title: sec.title, products: sec.items }
-									)
-								}
-								loading={status === 'loading'}
-							/>
-						))}
-					</div>
-				</motion.div>
-			)}
-		</AnimatePresence>
+				{/* ==== ДЕТАЛИ — абсолютный непрозрачный оверлей, анимируем контент. ==== */}
+				<AnimatePresence initial={false} mode='wait'>
+					{selectedProduct && (
+						<div className='absolute inset-0 z-10 bg-white '>
+							<motion.div
+								key='details-content'
+								variants={FX}
+								initial='initial'
+								animate='enter'
+								exit='exit'
+								className='h-full'
+								style={{ willChange: 'opacity, transform' }}
+							>
+								<ProductDetails
+									product={selectedProduct}
+									related={related}
+									onBack={closeDetails}
+									onOpenSubcategory={payload => {
+										closeDetails()
+										openSubcategory(payload?.title || selectedProduct.category)
+									}}
+									onSelectProduct={openDetails}
+								/>
+							</motion.div>
+						</div>
+					)}
+				</AnimatePresence>
+			</div>
+		</LayoutGroup>
 	)
 }
 

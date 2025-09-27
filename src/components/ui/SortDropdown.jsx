@@ -37,7 +37,7 @@ function SortDropdown({
 				aria-haspopup='listbox'
 				aria-expanded={open}
 				className={[
-					'w-[150px] h-[25px] px-[5px] py-[4px] cursor-pointer',
+					'w-[150px] h-[25px]   cursor-pointer',
 					'rounded-[10px] ring-1 ring-inset ring-[#D9D9D9]',
 					'inline-flex items-center justify-center gap-[13px]',
 					// цвет текста = цвет стрелки (т.к. она красится currentColor)

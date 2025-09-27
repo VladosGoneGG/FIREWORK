@@ -1,3 +1,4 @@
+// src/components/ProductDetails/ProductDetails.jsx
 import { memo } from 'react'
 import fireworksSvg from '../../assets/SVG/fireworksSvg.svg'
 import DescriptionBlock from './parts/DescriptionBlock'
@@ -8,10 +9,10 @@ import SideInfoCard from './parts/SideInfoCard'
 /**
  * Props:
  * - product: Product
- * - related: Product[]                // полный список «похожих» (из ProductsPage)
+ * - related: Product[]
  * - onBack: () => void
  * - onOpenSubcategory: (payload) => void
- * - onSelectProduct?: (product)=>void // открыть другой товар по клику снизу
+ * - onSelectProduct?: (product)=>void
  */
 const ProductDetails = ({
 	product,
@@ -26,28 +27,28 @@ const ProductDetails = ({
 	const inStock = Number.isFinite(product.stock) ? product.stock : 15
 
 	return (
+		// фиксированный размер карточки, без внутреннего скролла
 		<section className='bg-white rounded-[20px] w-[925px] h-[834px] overflow-hidden flex flex-col'>
 			<div className='p-2.5 flex flex-col gap-3 h-full'>
-				{/* верх: медиа + правая колонка */}
-				<div className='flex items-start gap-2.5'>
+				{/* верх: медиа + правая колонка (фикс.секция без роста) */}
+				<div className='flex items-start gap-2.5 flex-none'>
 					<MediaBlock img={fireworksSvg} name={product.name} onBack={onBack} />
-
 					<SideInfoCard product={product} img={img} inStock={inStock} />
 				</div>
 
-				{/* описание */}
-				<DescriptionBlock description={product.description} />
+				{/* низ: описание + «добавь в набор»; без прокрутки, как в исходной задумке */}
+				<div className='flex-1 min-h-0'>
+					<DescriptionBlock description={product.description} />
 
-				{/* добавь в набор */}
-				<RelatedBlock
-					related={related}
-					currentCategory={product.category}
-					onSelectProduct={onSelectProduct}
-					onOpenSubcategory={payload => {
-						// В payload уже есть готовые products
-						onOpenSubcategory?.(payload)
-					}}
-				/>
+					<RelatedBlock
+						related={related}
+						currentCategory={product.category}
+						onSelectProduct={onSelectProduct}
+						onOpenSubcategory={payload => {
+							onOpenSubcategory?.(payload)
+						}}
+					/>
+				</div>
 			</div>
 		</section>
 	)

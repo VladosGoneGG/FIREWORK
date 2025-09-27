@@ -39,12 +39,12 @@ export default function SubcategoryPanel({
 				<div className='pl-2.5 text-lg font-baron'>{title}</div>
 
 				{/* справа: сортировка + фильтр */}
-				<div className='ml-auto flex items-center gap-2'>
+				<div className='ml-auto flex items-center   gap-2'>
 					<button
 						type='button'
 						onClick={onOpenFilters}
 						className={[
-							'w-16 h-6 px-[5px] py-1 rounded-[10px] font-baron  text-[10px] ',
+							'w-[70px] h-[25px] px-[5px] py-1 rounded-[10px] font-baron  text-[10px] ',
 							filtersOpen
 								? 'bg-[#EFEBE7] text-[#BD52E9]'
 								: 'btn-firework-filter',

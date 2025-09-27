@@ -40,9 +40,6 @@ function App() {
 		setAppliedFilters({})
 	}
 
-	const centerWidth = DETAILS_W
-	const centerHeight = detailsMode ? DETAILS_H : `calc(100vh - ${HEADER_H}px)`
-
 	// Слайдер только на самом первом экране (isLanding=true) и когда реально "домой":
 	const showSliderOnHome =
 		isLanding &&
