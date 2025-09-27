@@ -142,15 +142,11 @@ const ProductsPage = ({
 
 	const closeSubcategory = useCallback(() => setActiveSub(null), [])
 
-	// Единый эффект (как у «Посмотреть ещё»)
+	// Мягкий fade (без сдвигов)
 	const FX = {
-		initial: { opacity: 0, y: 8 },
-		enter: {
-			opacity: 1,
-			y: 0,
-			transition: { duration: 0.18, ease: 'easeOut' },
-		},
-		exit: { opacity: 0, y: 8, transition: { duration: 0.14, ease: 'easeIn' } },
+		initial: { opacity: 0 },
+		enter: { opacity: 1, transition: { duration: 0.16, ease: 'easeOut' } },
+		exit: { opacity: 0, transition: { duration: 0.12, ease: 'easeIn' } },
 	}
 
 	const shouldShowSlider =
@@ -159,12 +155,12 @@ const ProductsPage = ({
 	const FilterBar = (
 		<div className='flex items-center gap-2 p-2.5'>
 			<div className='pl-2.5 text-lg font-baron' />
-			<div className='ml-auto flex items-center gap-2'>
+			<div className='ml-auto flex items-center ju gap-2'>
 				<button
 					type='button'
 					onClick={() => onToggleFilters?.(!filtersOpen)}
 					className={[
-						'w-16 h-6 px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
+						'w-[75px] h-[25px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
 						filtersOpen ? 'bg-[#EFEBE7] text-[#BD52E9]' : 'btn-firework-filter',
 					].join(' ')}
 				>
@@ -177,7 +173,7 @@ const ProductsPage = ({
 
 	const view = activeSub ? 'sub' : 'home'
 
-	// ⬇️ Лочим скролл страницы при открытой карточке + компенсируем ширину скроллбара
+	// Лочим скролл страницы при открытой карточке + компенсируем ширину скроллбара
 	useEffect(() => {
 		if (!selectedProduct) return
 		const root = document.documentElement
@@ -194,13 +190,12 @@ const ProductsPage = ({
 
 	return (
 		<LayoutGroup id='products-page'>
-			{/* фиксированная минимальная высота — страница не «прыгает» при оверлее */}
 			<div
-				className={`relative rounded-[20px] overflow-hidden bg-white ${
-					selectedProduct ? 'h-[834px]' : 'min-h-[834px]'
-				}`}
+				className={`relative bg-white rounded-[20px] overflow-hidden mx-auto 
+                w-full max-w-[1200px] px-4 lg:px-3 md:px-2
+                ${selectedProduct ? 'h-[834px]' : 'min-h-[834px]'}`}
 			>
-				{/* ==== БАЗОВЫЙ СЛОЙ (HOME/SUB) — всегда смонтирован. Замораживаем, когда открыт details. ==== */}
+				{/* ==== БАЗОВЫЙ СЛОЙ ==== */}
 				<motion.div layout='position'>
 					<motion.div
 						layout='position'
@@ -214,65 +209,32 @@ const ProductsPage = ({
 							width: '100%',
 						}}
 					>
-						<AnimatePresence mode='wait' initial={false}>
-							{view === 'sub' ? (
-								<motion.div
-									key='sub'
-									layout='position'
-									variants={FX}
-									initial='initial'
-									animate='enter'
-									exit='exit'
-								>
-									<SubcategoryPanel
-										title={activeSub?.title}
-										products={sortedApplied}
-										onClose={closeSubcategory}
-										onSelectProduct={openDetails}
-										onOpenFilters={() => onToggleFilters?.(!filtersOpen)}
-										sort={sortKey}
-										onChangeSort={setSortKey}
-										filtersOpen={filtersOpen}
-									/>
-								</motion.div>
-							) : (
-								<motion.div
-									key='home'
-									layout='position'
-									variants={FX}
-									initial='initial'
-									animate='enter'
-									exit='exit'
-								>
-									<motion.div layout='position'>
-										<AnimatePresence mode='wait' initial={false}>
-											{shouldShowSlider ? (
-												<motion.div
-													key='slider'
-													layout='position'
-													variants={FX}
-													initial='initial'
-													animate='enter'
-													exit='exit'
-												>
-													<PromoSlider active />
-												</motion.div>
-											) : (
-												<motion.div
-													key='filterbar'
-													layout='position'
-													variants={FX}
-													initial='initial'
-													animate='enter'
-													exit='exit'
-												>
-													{FilterBar}
-												</motion.div>
-											)}
-										</AnimatePresence>
-									</motion.div>
+						{/* ТОП: слайдер/фильтр — только на HOME (чтобы не было дубля с панелью) */}
+						{view === 'home' && (
+							<motion.div
+								layout='position'
+								variants={FX}
+								initial='initial'
+								animate='enter'
+								exit='exit'
+							>
+								{shouldShowSlider ? <PromoSlider active /> : FilterBar}
+							</motion.div>
+						)}
 
-									<motion.div layout='position' className='mt-4 space-y-6'>
+						{/* КОНТЕНТ: список категорий <-> субкатегория, подменяем на месте */}
+						<div className='mt-4'>
+							<AnimatePresence mode='wait' initial={false}>
+								{view === 'home' ? (
+									<motion.div
+										key='home'
+										layout='position'
+										variants={FX}
+										initial='initial'
+										animate='enter'
+										exit='exit'
+										className='space-y-6'
+									>
 										{sections.map(sec => (
 											<motion.div
 												key={sec.title}
@@ -299,16 +261,37 @@ const ProductsPage = ({
 											</motion.div>
 										))}
 									</motion.div>
-								</motion.div>
-							)}
-						</AnimatePresence>
+								) : (
+									<motion.div
+										key='sub'
+										layout='position'
+										variants={FX}
+										initial='initial'
+										animate='enter'
+										exit='exit'
+									>
+										{/* Сама панель появляется ровно на месте списка категорий */}
+										<SubcategoryPanel
+											title={activeSub?.title}
+											products={sortedApplied}
+											onClose={closeSubcategory}
+											onSelectProduct={openDetails}
+											onOpenFilters={() => onToggleFilters?.(!filtersOpen)}
+											sort={sortKey}
+											onChangeSort={setSortKey}
+											filtersOpen={filtersOpen}
+										/>
+									</motion.div>
+								)}
+							</AnimatePresence>
+						</div>
 					</motion.div>
 				</motion.div>
 
-				{/* ==== ДЕТАЛИ — абсолютный непрозрачный оверлей, анимируем контент. ==== */}
+				{/* ==== ДЕТАЛИ — абсолютный оверлей ==== */}
 				<AnimatePresence initial={false} mode='wait'>
 					{selectedProduct && (
-						<div className='absolute inset-0 z-10 bg-white '>
+						<div className='absolute inset-0 z-10 bg-white'>
 							<motion.div
 								key='details-content'
 								variants={FX}
@@ -316,7 +299,7 @@ const ProductsPage = ({
 								animate='enter'
 								exit='exit'
 								className='h-full'
-								style={{ willChange: 'opacity, transform' }}
+								style={{ willChange: 'opacity' }}
 							>
 								<ProductDetails
 									product={selectedProduct}

@@ -3,33 +3,64 @@ import Logo from '../../assets/SVG/LOGO.svg'
 
 const Header = ({ rightSlot }) => {
 	return (
-		<header className='w-[1240px] h-[144px] rounded-b-[20px] shadow-[0_0_10px_0_rgba(0,0,0,0.2)] bg-white'>
-			<div className='mx-auto max-w-[1240px] px-4 py-3'>
-				<div className='flex items-center justify-between select-none'>
-					<div>
-						<p className='font-baron ml-14 text-[18px] text-[#625a51]'>
-							Нижний Новгород
-						</p>
-					</div>
-					<h2 className='font-baron text-[#bf53eb] text-xl tracking-wide'>
+		<header
+			className='
+        mx-auto
+        w-[min(1240px,calc(100vw-20px))]
+        bg-white rounded-b-[20px]
+        shadow-[0_0_10px_0_rgba(0,0,0,0.2)]
+      '
+		>
+			<div className='py-4'>
+				{/* Верхняя строка */}
+				<div className='flex items-center justify-between gap-6 select-none px-4'>
+					<p className='font-baron text-[#625a51] text-[18px]'>
+						Нижний Новгород
+					</p>
+
+					<h2
+						className='
+              font-baron text-[#bf53eb] tracking-wide
+              text-xl text-center truncate max-w-[60%]
+            '
+						title='крупнейший магазин пиротехники'
+					>
 						крупнейший магазин пиротехники
 					</h2>
-					<div className='text-[18px] mr-14 font-baron text-[#625a51]'>
+
+					<div
+						className='
+              font-baron text-[#625a51] text-[18px]
+              text-right truncate max-w-[40%]
+            '
+						title='ип федяков и.в.'
+					>
 						ип федяков и.в.
 					</div>
 				</div>
 
-				<div className='w-[1200px] h-[2px] mt-[20px] mb-[15px] rounded-[20px] bg-[#efebe6]' />
+				{/* Разделитель */}
+				<div className='mx-auto my-4 h-[2px] rounded-[20px] bg-[#efebe6] w-[min(1200px,calc(100%-40px))]' />
 
-				<div className='flex items-center gap-20'>
-					<a href='/'>
-						<img src={Logo} alt='Логотип' className='ml-[64px]' />
+				{/* Нижняя строка: ЛОГОТИП + ПОИСК В ОДНУ СТРОКУ */}
+				<div className='flex items-center  gap-15 px-4'>
+					<a href='/' className='shrink-0'>
+						<img
+							src={Logo}
+							alt='Логотип'
+							className='ml-[64px] h-[40px] w-auto'
+						/>
 					</a>
-					{/* сюда придёт SearchBar из App */}
-					{rightSlot}
+
+					{/* Поиск/правый слот — справа, в ту же строку */}
+					<div className='flex-1 min-w-0 flex '>
+						{/* ограничиваем ширину под SearchHeader */}
+						<div className='w-full max-w-[665px]'>{rightSlot}</div>
+					</div>
 				</div>
 			</div>
 		</header>
 	)
 }
+
 export default Header

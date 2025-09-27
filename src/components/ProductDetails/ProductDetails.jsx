@@ -6,14 +6,6 @@ import MediaBlock from './parts/MediaBlock'
 import RelatedBlock from './parts/RelatedBlock'
 import SideInfoCard from './parts/SideInfoCard'
 
-/**
- * Props:
- * - product: Product
- * - related: Product[]
- * - onBack: () => void
- * - onOpenSubcategory: (payload) => void
- * - onSelectProduct?: (product)=>void
- */
 const ProductDetails = ({
 	product,
 	related = [],
@@ -36,18 +28,22 @@ const ProductDetails = ({
 					<SideInfoCard product={product} img={img} inStock={inStock} />
 				</div>
 
-				{/* низ: описание + «добавь в набор»; без прокрутки, как в исходной задумке */}
-				<div className='flex-1 min-h-0'>
+				{/* низ: описание + «добавь в набор» */}
+				<div className='flex-1 min-h-0 flex flex-col'>
+					{/* описание остаётся сверху/по центру, если нужно — оберни в контейнер и центрируй */}
 					<DescriptionBlock description={product.description} />
 
-					<RelatedBlock
-						related={related}
-						currentCategory={product.category}
-						onSelectProduct={onSelectProduct}
-						onOpenSubcategory={payload => {
-							onOpenSubcategory?.(payload)
-						}}
-					/>
+					{/* прижимаем «добавь в набор» к нижнему краю */}
+					<div className='mt-auto w-full flex flex-col justify-end'>
+						<RelatedBlock
+							related={related}
+							currentCategory={product.category}
+							onSelectProduct={onSelectProduct}
+							onOpenSubcategory={payload => {
+								onOpenSubcategory?.(payload)
+							}}
+						/>
+					</div>
 				</div>
 			</div>
 		</section>

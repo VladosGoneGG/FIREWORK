@@ -1,3 +1,4 @@
+// src/components/ProductSection/ProductSection.jsx
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useMemo, useState } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
@@ -10,10 +11,11 @@ const ProductSection = ({
 	onOpenSubcategory,
 	loading = false,
 }) => {
+	// минимум 5 карточек, если есть
 	const [visibleCount, setVisibleCount] = useState(5)
 
 	useEffect(() => {
-		setVisibleCount(5)
+		setVisibleCount(Math.min(5, products.length || 0))
 	}, [products])
 
 	const visible = useMemo(
@@ -22,11 +24,13 @@ const ProductSection = ({
 	)
 
 	const handleOpenMore = () => {
-		if (onOpenSubcategory) onOpenSubcategory({ title, products })
-		else setVisibleCount(c => c + 5)
+		if (onOpenSubcategory) {
+			onOpenSubcategory({ title, products })
+		} else {
+			setVisibleCount(c => Math.min(c + 5, products.length))
+		}
 	}
 
-	// единый мягкий эффект: без «заезда вниз», чтобы низ не резало
 	const FX_IN = {
 		opacity: 1,
 		y: 0,
@@ -42,7 +46,8 @@ const ProductSection = ({
 		<section className='space-y-3'>
 			<div className='flex items-center justify-between'>
 				<h3 className='text-[18px] lowercase font-baron pl-5'>{title}</h3>
-				{!loading && products.length > 5 && (
+
+				{!loading && products.length > visibleCount && (
 					<button
 						type='button'
 						onClick={handleOpenMore}
@@ -53,9 +58,10 @@ const ProductSection = ({
 				)}
 			</div>
 
-			{/* overflow-visible + небольшой нижний паддинг, чтобы анимация не упиралась в край */}
+			{/* минимум 5 колонок на десктопах */}
 			<div className='grid grid-cols-5 gap-[11px] p-2.5 overflow-visible pb-3'>
 				{loading ? (
+					// два ряда по 5 — выглядит ровно
 					Array.from({ length: 10 }).map((_, i) => (
 						<ProductCardMiniSkeleton key={i} />
 					))

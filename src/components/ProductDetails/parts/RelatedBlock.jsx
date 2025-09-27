@@ -29,7 +29,7 @@ const RelatedBlock = ({
 				</button>
 			</div>
 
-			<div className='grid grid-cols-7 gap-2.5 overflow-y-auto scroll-hidden'>
+			<div className='grid grid-cols-7 mt-[10px] gap-2.5 overflow-y-auto scroll-hidden'>
 				{related.slice(0, 7).map(p => (
 					<ProductCardMini
 						key={p.id}

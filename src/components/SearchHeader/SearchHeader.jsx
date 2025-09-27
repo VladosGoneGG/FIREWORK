@@ -1,10 +1,11 @@
+// src/components/SearchHeader/SearchHeader.jsx
 import debounce from 'lodash.debounce'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { setSearchQuery } from '../../store/slices/productsSlice'
 
-import forwarding from '../../assets/SVG/forwadding.svg' // твой SVG-плейсхолдер
-import loop from '../../assets/SVG/loop.svg' // лупа
+import forwarding from '../../assets/SVG/forwadding.svg' // декоративный SVG
+import loop from '../../assets/SVG/loop.svg' // иконка лупы
 
 const SearchHeader = () => {
 	const dispatch = useDispatch()
@@ -28,38 +29,47 @@ const SearchHeader = () => {
 
 	return (
 		<div
-			className='
+			className={`
         relative group flex items-center
-        border border-[#efebe6] rounded-[20px]
-        w-[665px] h-[50px] bg-white'
+        border border-[#efebe6] bg-white rounded-[20px]
+        h-[50px]
+        w-full max-w-[665px]   
+      `}
 		>
 			{/* Лупа слева */}
 			<img
 				src={loop}
 				alt='Поиск'
-				className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none'
+				className='absolute left-3 md:left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none'
 			/>
 
-			{/* Сам input */}
+			{/* Поле ввода — резиновое, не вылазит за контейнер */}
 			<input
 				value={localQuery}
 				onChange={onChange}
 				aria-label='Поиск по товарам'
-				className='
+				placeholder=' '
+				className={`
           outline-none bg-transparent w-full h-full
-          pl-12 pr-4 rounded-[20px] hover:bg-[#efebe6]'
+          rounded-[20px]
+          pl-11 md:pl-12 pr-3 md:pr-4
+          hover:bg-[#efebe6]
+        `}
 			/>
 
-			{/* SVG-плейсхолдер */}
+			{/* Декоративный SVG-плейсхолдер — скрываем на узких десктопах, прячем при вводе */}
 			<img
 				src={forwarding}
-				alt='Салют на свадьбу'
+				alt=''
+				aria-hidden='true'
 				className={`
-          absolute left-12 top-1/2 -translate-y-1/2 h-[20px]
+          absolute left-11 md:left-12 top-1/2 -translate-y-1/2
+          h-[20px]
           transition-opacity duration-150
           ${localQuery ? 'opacity-0' : 'opacity-100'}
           group-focus-within:opacity-0
           pointer-events-none
+          hidden lg:block  /* на узких не показываем, чтобы не мешал тексту */
         `}
 			/>
 		</div>

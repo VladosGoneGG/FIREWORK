@@ -68,7 +68,7 @@ function ProductCardMini({ product, onSelect }) {
 			onClick={handleSelect}
 			onKeyDown={onKey}
 			title={name}
-			className='w-[120px] h-[206px] bg-white'
+			className='w-[120px]  h-[206px] bg-white'
 		>
 			<div className='h-full w-full flex flex-col  font-baron'>
 				{/* Фото 100×100 */}
