@@ -1,4 +1,3 @@
-// src/App.jsx
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import CategoryFilter from './components/CategoryFilter/CategoryFilter'
@@ -23,7 +22,7 @@ function App() {
 	const [filtersOpen, setFiltersOpen] = useState(false)
 	const [searchOpen, setSearchOpen] = useState(false)
 	const [selectedFromSearch, setSelectedFromSearch] = useState(null)
-	const [isLanding, setIsLanding] = useState(true) // ← добавили
+	const [isLanding, setIsLanding] = useState(true)
 
 	const selectedCategory = useSelector(
 		s => s.categories.selectedCategory || 'all'
@@ -34,13 +33,13 @@ function App() {
 	const [appliedFilters, setAppliedFilters] = useState({})
 	const [overlayCount, setOverlayCount] = useState(0)
 
-	const applyOverlay = () => setAppliedFilters(normalized)
+	// Важно: создаём НОВЫЙ объект, чтобы точно триггерить ре-рендер
+	const applyOverlay = () => setAppliedFilters({ ...normalized })
 	const clearOverlay = () => {
 		resetForm()
 		setAppliedFilters({})
 	}
 
-	// Слайдер только на самом первом экране (isLanding=true) и когда реально "домой":
 	const showSliderOnHome =
 		isLanding &&
 		selectedCategory === 'all' &&
@@ -64,7 +63,7 @@ function App() {
 							{!filtersOpen && (
 								<>
 									<CategoryFilter
-										onAnyCategoryClick={() => setIsLanding(false)} // ← сигнал: ушли с лендинга
+										onAnyCategoryClick={() => setIsLanding(false)}
 									/>
 									<PromoPanel />
 								</>
@@ -75,11 +74,11 @@ function App() {
 								onClose={() => setFiltersOpen(false)}
 								onApply={() => {
 									setIsLanding(false)
-									applyOverlay()
-								}} // фильтры = не лендинг
+									applyOverlay() // применяем, не закрываем
+								}}
 								onReset={() => {
 									setIsLanding(false)
-									clearOverlay()
+									clearOverlay() // сбрасываем, не закрываем (по желанию можно закрыть)
 								}}
 								resultsCount={overlayCount}
 								form={form}
@@ -110,12 +109,13 @@ function App() {
 										setDetailsMode(on)
 									}}
 									onConsumeExternalSelected={() => setSelectedFromSearch(null)}
-									overlayFilters={appliedFilters}
+									overlayFilters={appliedFilters} // применённые фильтры — показываем их
+									overlayFiltersPreview={normalized} // превью — для счётчика
 									onFiltersCountChange={setOverlayCount}
 									filtersOpen={filtersOpen}
 									narrow={!detailsMode}
 									narrowWidth={CENTER_W}
-									showSlider={showSliderOnHome} // ← только на лендинге
+									showSlider={showSliderOnHome}
 								/>
 							</div>
 						</div>
@@ -140,7 +140,7 @@ function App() {
 				isOpen={searchOpen}
 				onClose={() => setSearchOpen(false)}
 				onSelectProduct={p => {
-					setIsLanding(false) // выбор из поиска — тоже не лендинг
+					setIsLanding(false)
 					setSelectedFromSearch(p)
 					setSearchOpen(false)
 				}}

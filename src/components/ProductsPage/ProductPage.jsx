@@ -1,6 +1,7 @@
-// src/components/ProductsPage/ProductPage.jsx
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
+
 import useProductsBoot from '../../hooks/useProductsBoot'
 import useRelated from '../../hooks/useRelated'
 import useSections from '../../hooks/useSections'
@@ -8,10 +9,10 @@ import {
 	selectDiscountedProducts,
 	selectFilteredProducts,
 } from '../../store/slices/productsSlice'
-import { applyAdvancedFilter } from '../../utils/filters'
+
+import { applyAdvancedFilter as applyFilters } from '../../utils/filters'
 import { applySort, SORT_KEYS } from '../../utils/sort'
 
-import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import ProductDetails from '../ProductDetails/ProductDetails'
 import ProductSection from '../ProductSection/ProductSection'
 import PromoSlider from '../PromoSlider/PromoSlider'
@@ -20,14 +21,14 @@ import SortDropdown from '../ui/SortDropdown'
 
 const ProductsPage = ({
 	onToggleFilters,
+	filtersOpen,
+	overlayFilters = {}, // применённые
+	overlayFiltersPreview = {}, // превью (для счётчика)
+	onFiltersCountChange = () => {},
 	onDetailsModeChange,
 	externalSelectedProduct,
 	onConsumeExternalSelected,
-	overlayFilters = {},
-	overlayFiltersPreview = {},
-	onFiltersCountChange = () => {},
-	filtersOpen,
-	showSlider = false,
+	showSlider = true,
 }) => {
 	useProductsBoot()
 
@@ -42,95 +43,84 @@ const ProductsPage = ({
 	const [activeSub, setActiveSub] = useState(null)
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
 
-	useEffect(() => {
-		onDetailsModeChange?.(Boolean(selectedProduct))
-	}, [selectedProduct, onDetailsModeChange])
+	const anchorRef = useRef(null)
 
+	useEffect(
+		() => onDetailsModeChange?.(Boolean(selectedProduct)),
+		[selectedProduct, onDetailsModeChange]
+	)
 	useEffect(() => {
 		setSelectedProduct(null)
 		setActiveSub(null)
 	}, [selected])
-
 	useEffect(() => {
 		if (!externalSelectedProduct) return
 		setActiveSub(null)
 		setSelectedProduct(externalSelectedProduct)
 		onConsumeExternalSelected?.()
 	}, [externalSelectedProduct, onConsumeExternalSelected])
-
 	useEffect(() => {
-		if (!search.trim()) return
+		if (!String(search).trim()) return
 		setSelectedProduct(null)
 		setActiveSub(null)
 	}, [search])
 
 	const related = useRelated(allItems, selectedProduct, 10)
 
+	const view = activeSub ? 'sub' : 'home'
+	const shouldShowSlider =
+		!!showSlider && !selectedProduct && !activeSub && !String(search).trim()
+
+	// HOME: применяем ИМЕННО overlayFilters (применённые)
+	const homeFiltered = useMemo(
+		() => applyFilters(filtered, overlayFilters),
+		[filtered, overlayFilters]
+	)
+
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
 		[discountedAll]
 	)
-	const discounted = useMemo(
-		() => filtered.filter(p => discountedSet.has(p.id)),
-		[filtered, discountedSet]
+	const homeDiscounted = useMemo(
+		() => homeFiltered.filter(p => discountedSet.has(p.id)),
+		[homeFiltered, discountedSet]
 	)
-	const nonDiscounted = useMemo(
-		() => filtered.filter(p => !discountedSet.has(p.id)),
-		[filtered, discountedSet]
+	const homeNonDiscounted = useMemo(
+		() => homeFiltered.filter(p => !discountedSet.has(p.id)),
+		[homeFiltered, discountedSet]
 	)
-	const sections = useSections(discounted, nonDiscounted, selected)
+	const sections = useSections(homeDiscounted, homeNonDiscounted, selected)
 
-	const activeList = useMemo(
-		() => (Array.isArray(activeSub?.products) ? activeSub.products : []),
-		[activeSub]
-	)
-
-	const filteredApplied = useMemo(
-		() => applyAdvancedFilter(activeList, overlayFilters),
-		[activeList, overlayFilters]
-	)
-	const sortedApplied = useMemo(
-		() => applySort(filteredApplied, sortKey),
-		[filteredApplied, sortKey]
+	const sectionsSorted = useMemo(
+		() =>
+			sections.map(sec => ({
+				...sec,
+				items: applySort(sec.items, sortKey),
+			})),
+		[sections, sortKey]
 	)
 
-	const filteredPreview = useMemo(
-		() => applyAdvancedFilter(activeList, overlayFiltersPreview),
-		[activeList, overlayFiltersPreview]
-	)
-	useEffect(() => {
-		if (activeSub) onFiltersCountChange(filteredPreview.length)
-	}, [activeSub, filteredPreview.length, onFiltersCountChange])
-
-	const openDetails = useCallback(p => setSelectedProduct(p), [])
-	const closeDetails = useCallback(() => setSelectedProduct(null), [])
-
+	// SUB: тоже применяем overlayFilters
 	const norm = s =>
 		String(s || '')
 			.trim()
 			.toLowerCase()
-
 	const openSubcategory = useCallback(
 		payload => {
-			let title = ''
-			let products = []
-
-			if (typeof payload === 'string') {
-				title = payload
-			} else if (payload && typeof payload === 'object') {
+			let title = '',
+				products = []
+			if (typeof payload === 'string') title = payload
+			else if (payload && typeof payload === 'object') {
 				title = payload.title || payload.category || ''
-				if (Array.isArray(payload.products) && payload.products.length) {
+				if (Array.isArray(payload.products) && payload.products.length)
 					products = payload.products
-				}
 			}
-
 			if (!products.length && title) {
 				const t = norm(title)
 				products = allItems.filter(
 					p => norm(p.category) === t || norm(p.subcategory) === t
 				)
 			}
-
 			setSelectedProduct(null)
 			setActiveSub({
 				title: title || 'Категория',
@@ -140,40 +130,41 @@ const ProductsPage = ({
 		[allItems]
 	)
 
-	const closeSubcategory = useCallback(() => setActiveSub(null), [])
+	const activeList = useMemo(
+		() => (Array.isArray(activeSub?.products) ? activeSub.products : []),
+		[activeSub]
+	)
+	const subFiltered = useMemo(
+		() => applyFilters(activeList, overlayFilters),
+		[activeList, overlayFilters]
+	)
+	const subSorted = useMemo(
+		() => applySort(subFiltered, sortKey),
+		[subFiltered, sortKey]
+	)
 
-	// Мягкий fade (без сдвигов)
+	// Счётчик для оверлея считаем от PREVIEW (overlayFiltersPreview)
+	const previewFiltered = useMemo(
+		() =>
+			applyFilters(
+				view === 'home' ? filtered : activeList,
+				overlayFiltersPreview
+			),
+		[view, filtered, activeList, overlayFiltersPreview]
+	)
+	useEffect(() => {
+		onFiltersCountChange(previewFiltered.length)
+	}, [previewFiltered.length, onFiltersCountChange])
+
+	const openDetails = useCallback(p => setSelectedProduct(p), [])
+	const closeDetails = useCallback(() => setSelectedProduct(null), [])
+
 	const FX = {
 		initial: { opacity: 0 },
 		enter: { opacity: 1, transition: { duration: 0.16, ease: 'easeOut' } },
 		exit: { opacity: 0, transition: { duration: 0.12, ease: 'easeIn' } },
 	}
 
-	const shouldShowSlider =
-		!!showSlider && !selectedProduct && !activeSub && !String(search).trim()
-
-	const FilterBar = (
-		<div className='flex items-center gap-2 p-2.5'>
-			<div className='pl-2.5 text-lg font-baron' />
-			<div className='ml-auto flex items-center ju gap-2'>
-				<button
-					type='button'
-					onClick={() => onToggleFilters?.(!filtersOpen)}
-					className={[
-						'w-[75px] h-[25px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
-						filtersOpen ? 'bg-[#EFEBE7] text-[#BD52E9]' : 'btn-firework-filter',
-					].join(' ')}
-				>
-					<span>фильтр</span>
-				</button>
-				<SortDropdown value={sortKey} onChange={setSortKey} />
-			</div>
-		</div>
-	)
-
-	const view = activeSub ? 'sub' : 'home'
-
-	// Лочим скролл страницы при открытой карточке + компенсируем ширину скроллбара
 	useEffect(() => {
 		if (!selectedProduct) return
 		const root = document.documentElement
@@ -188,14 +179,38 @@ const ProductsPage = ({
 		}
 	}, [selectedProduct])
 
+	const FilterBar = (
+		<div className='relative'>
+			<div className='flex items-center pt-2.5 gap-2 px-2.5'>
+				<div className='text-lg font-baron' />
+				<div className='ml-auto flex items-center gap-2'>
+					<button
+						type='button'
+						onClick={onToggleFilters}
+						className={[
+							'w-[75px] h-[25px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
+							filtersOpen
+								? 'bg-[#EFEBE7] text-[#BD52E9]'
+								: 'btn-firework-filter',
+						].join(' ')}
+					>
+						<span>фильтр</span>
+					</button>
+					<SortDropdown value={sortKey} onChange={setSortKey} />
+				</div>
+			</div>
+		</div>
+	)
+
 	return (
 		<LayoutGroup id='products-page'>
 			<div
+				ref={anchorRef}
 				className={`relative bg-white rounded-[20px] overflow-hidden mx-auto 
-                w-full max-w-[1200px] px-4 lg:px-3 md:px-2
-                ${selectedProduct ? 'h-[834px]' : 'min-h-[834px]'}`}
+          w-full max-w-[1200px] px-4 lg:px-3 md:px-2
+          ${selectedProduct ? 'h-[834px]' : 'min-h-[834px]'}`}
 			>
-				{/* ==== БАЗОВЫЙ СЛОЙ ==== */}
+				{/* ==== ОСНОВНОЙ СЛОЙ ==== */}
 				<motion.div layout='position'>
 					<motion.div
 						layout='position'
@@ -209,21 +224,21 @@ const ProductsPage = ({
 							width: '100%',
 						}}
 					>
-						{/* ТОП: слайдер/фильтр — только на HOME (чтобы не было дубля с панелью) */}
+						{/* HOME: слайдер + фильтр-кнопка */}
 						{view === 'home' && (
 							<motion.div
-								layout='position'
 								variants={FX}
 								initial='initial'
 								animate='enter'
 								exit='exit'
+								layout='position'
 							>
 								{shouldShowSlider ? <PromoSlider active /> : FilterBar}
 							</motion.div>
 						)}
 
-						{/* КОНТЕНТ: список категорий <-> субкатегория, подменяем на месте */}
-						<div className='mt-4'>
+						{/* Контент */}
+						<div className='mt-3'>
 							<AnimatePresence mode='wait' initial={false}>
 								{view === 'home' ? (
 									<motion.div
@@ -235,7 +250,7 @@ const ProductsPage = ({
 										exit='exit'
 										className='space-y-6'
 									>
-										{sections.map(sec => (
+										{sectionsSorted.map(sec => (
 											<motion.div
 												key={sec.title}
 												layout='position'
@@ -270,16 +285,14 @@ const ProductsPage = ({
 										animate='enter'
 										exit='exit'
 									>
-										{/* Сама панель появляется ровно на месте списка категорий */}
 										<SubcategoryPanel
 											title={activeSub?.title}
-											products={sortedApplied}
-											onClose={closeSubcategory}
+											products={subSorted}
 											onSelectProduct={openDetails}
-											onOpenFilters={() => onToggleFilters?.(!filtersOpen)}
-											sort={sortKey}
+											onOpenFilters={onToggleFilters}
+											filtersOpen={!!filtersOpen}
+											sortKey={sortKey}
 											onChangeSort={setSortKey}
-											filtersOpen={filtersOpen}
 										/>
 									</motion.div>
 								)}
@@ -288,7 +301,7 @@ const ProductsPage = ({
 					</motion.div>
 				</motion.div>
 
-				{/* ==== ДЕТАЛИ — абсолютный оверлей ==== */}
+				{/* ==== ДЕТАЛИ ==== */}
 				<AnimatePresence initial={false} mode='wait'>
 					{selectedProduct && (
 						<div className='absolute inset-0 z-10 bg-white'>

@@ -1,29 +1,22 @@
 // src/utils/sort.js
 export const SORT_KEYS = {
-	CHEAP: 'cheap',
-	EXP: 'exp',
-	NEW: 'new',
-	POP: 'pop',
+	CHEAP: 'price-asc',
+	EXPENSIVE: 'price-desc',
 }
 
-const priceOf = p => p?.discountPrice ?? p?.price ?? Infinity
+const getUnitPrice = p => {
+	if (typeof p?.discountPrice === 'number') return p.discountPrice
+	if (typeof p?.price === 'number') return p.price
+	return Number.POSITIVE_INFINITY
+}
 
-const cheap = (arr = []) => [...arr].sort((a, b) => priceOf(a) - priceOf(b))
-const exp = (arr = []) => [...arr].sort((a, b) => priceOf(b) - priceOf(a))
-
-export const applySort = (arr, key) => {
-	const list = Array.isArray(arr) ? arr : []
-	switch (key) {
-		case SORT_KEYS.EXP:
-			return exp(list)
-		case SORT_KEYS.NEW:
-			// TODO: своя логика сортировки "новых"
-			return list
-		case SORT_KEYS.POP:
-			// TODO: своя логика сортировки "популярных"
-			return list
-		case SORT_KEYS.CHEAP:
-		default:
-			return cheap(list)
+export function applySort(list = [], sortKey = SORT_KEYS.CHEAP) {
+	const arr = Array.isArray(list) ? [...list] : []
+	if (sortKey === SORT_KEYS.EXPENSIVE || sortKey === 'price-desc') {
+		arr.sort((a, b) => getUnitPrice(b) - getUnitPrice(a))
+	} else {
+		// по умолчанию — дешевле сначала
+		arr.sort((a, b) => getUnitPrice(a) - getUnitPrice(b))
 	}
+	return arr
 }
