@@ -1,6 +1,6 @@
 // src/components/SubcategoryOverlay/SubcategoryOverlay.jsx
 import { AnimatePresence, motion } from 'motion/react'
-import { memo, useCallback } from 'react'
+import React, { memo, useCallback } from 'react'
 
 // списки значений
 const PRODUCT_TYPES = ['дым', 'петарды', 'наземный фейерверк']
@@ -11,7 +11,123 @@ const POWER_LEVELS = ['слабый', 'средний', 'мощный']
 const toArr = v => (Array.isArray(v) ? v : v == null ? [] : [v])
 const nnum = v => (Number.isFinite(Number(v)) ? Number(v) : 0)
 
-/* ===== Двойной слайдер цены ===== */
+/* ====================== ЧЕКБОКС-СТРОКА (по ТЗ) ====================== */
+/*
+Состояния:
+- обычный (unchecked idle): 10×10, #EFEBE6
+- hover (unchecked): 6×6, rgba(153,125,245,0.5)
+- active (mousedown, unchecked): 6×6, #EFEBE6
+- checked: 6×6, #BF53EA
+- hover над выбранным: 10×10, #EFEBE6
+*/
+function WhiteCheckRow({ label, checked, onToggle }) {
+	const [hover, setHover] = React.useState(false)
+	const [active, setActive] = React.useState(false)
+
+	// палитра
+	const COLOR_BASE_BG = '#EFEBE6'
+	const COLOR_HOVER_CENTER = 'rgba(153,125,245,0.5)' // 997DF5 @ 50%
+	const COLOR_ACTIVE_BORDER = '#BD52E9'
+	const COLOR_CHECKED_CENTER = '#BF53EA'
+	const COLOR_HOVER_CHECKED_CENTER = '#BD52E9'
+	const COLOR_HOVER_CHECKED_BORDER = 'rgba(153,125,245,0.5)' // 997DF5 @ 50%
+
+	// размеры «плюшки» (центрального кружка)
+	let dotSize = 10
+	let dotColor = COLOR_BASE_BG
+
+	if (!checked) {
+		if (hover) {
+			// UNCHECKED HOVER: центр 997DF5 @ 50%, размер 6
+			dotSize = 6
+			dotColor = COLOR_HOVER_CENTER
+		} else {
+			// UNCHECKED IDLE: центр EFEBE6, размер 10
+			dotSize = 10
+			dotColor = COLOR_BASE_BG
+		}
+	} else {
+		if (hover) {
+			// CHECKED HOVER: центр BD52E9, размер 6
+			dotSize = 6
+			dotColor = COLOR_HOVER_CHECKED_CENTER
+		} else {
+			// CHECKED IDLE: центр BF53EA, размер 6
+			dotSize = 6
+			dotColor = COLOR_CHECKED_CENTER
+		}
+	}
+
+	// обводка внешнего круга (14×14)
+	// по ТЗ:
+	// - unchecked: без обводки
+	// - checked idle: без обводки
+	// - checked hover: обводка 997DF5 @ 50%
+	// - active (mousedown): обводка BD52E9 (поверх всего)
+	let outerBorderClass = 'border-0'
+	let outerBorderStyle = {}
+	if (checked && hover) {
+		outerBorderClass = 'border-2'
+		outerBorderStyle.borderColor = COLOR_HOVER_CHECKED_BORDER
+	}
+	if (active) {
+		outerBorderClass = 'border-2'
+		outerBorderStyle.borderColor = COLOR_ACTIVE_BORDER
+	}
+
+	return (
+		<button
+			type='button'
+			role='checkbox'
+			aria-checked={checked}
+			onClick={onToggle}
+			onMouseEnter={() => setHover(true)}
+			onMouseLeave={() => {
+				setHover(false)
+				setActive(false)
+			}}
+			onMouseDown={() => setActive(true)}
+			onMouseUp={() => setActive(false)}
+			className={[
+				'w-full h-[24px] px-2 bg-white rounded-[6px]',
+				'flex items-center gap-2 text-[10px] font-baron text-black',
+				'transition-colors select-none',
+				'cursor-pointer', // <-- поинтер на всей строке
+				active ? 'bg-[#efece7]' : '',
+			].join(' ')}
+			title={label}
+		>
+			{/* внешний круг 14x14 */}
+			<span
+				className={[
+					'shrink-0 grid place-items-center',
+					'w-[10px] h-[10px] rounded-full bg-white',
+					outerBorderClass,
+				].join(' ')}
+				style={outerBorderStyle}
+			>
+				{/* внутренняя «плюшка» */}
+				<span
+					style={{
+						width: dotSize,
+						height: dotSize,
+						background: dotColor,
+						borderRadius: '50%',
+						transition:
+							'width .12s ease, height .12s ease, background-color .12s ease, background .12s ease',
+					}}
+				/>
+			</span>
+
+			<span className='truncate'>{label}</span>
+		</button>
+	)
+}
+
+/* ====================== Двойной слайдер (кастом) ====================== */
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+const snap = (v, step, min) => Math.round((v - min) / step) * step + min
+
 const RangeDual = memo(function RangeDual({
 	min = 0,
 	max = 20000,
@@ -21,76 +137,126 @@ const RangeDual = memo(function RangeDual({
 	onChange, // (min, max)
 	className = '',
 }) {
-	const vMin = Math.max(min, Math.min(valueMin ?? min, valueMax ?? max))
-	const vMax = Math.min(max, Math.max(valueMax ?? max, valueMin ?? min))
-	const pMin = ((vMin - min) / (max - min)) * 100
-	const pMax = ((vMax - min) / (max - min)) * 100
+	const trackRef = React.useRef(null)
 
-	const trackStyle = {
-		background: `linear-gradient(
-      to right,
-      #CCBEFA 0%,
-      #CCBEFA ${pMin}%,
-      #BF53EA ${pMin}%,
-      #BF53EA ${pMax}%,
-      #CCBEFA ${pMax}%,
-      #CCBEFA 100%
-    )`,
+	const vMin = clamp(
+		Number.isFinite(valueMin) ? valueMin : min,
+		min,
+		Number.isFinite(valueMax) ? valueMax : max
+	)
+	const vMax = clamp(
+		Number.isFinite(valueMax) ? valueMax : max,
+		Number.isFinite(valueMin) ? valueMin : min,
+		max
+	)
+
+	const range = max - min
+	const pMin = ((vMin - min) / range) * 100
+	const pMax = ((vMax - min) / range) * 100
+
+	const startDrag = thumb => e => {
+		e.preventDefault()
+		const track = trackRef.current
+		if (!track) return
+		const rect = track.getBoundingClientRect()
+
+		const getValFromClientX = clientX => {
+			const x = clamp(clientX - rect.left, 0, rect.width)
+			const raw = min + (x / rect.width) * range
+			return clamp(snap(raw, step, min), min, max)
+		}
+
+		const move = clientX => {
+			const val = getValFromClientX(clientX)
+			if (thumb === 'min') {
+				const nextMin = Math.min(val, vMax - step)
+				onChange?.(nextMin, vMax)
+			} else {
+				const nextMax = Math.max(val, vMin + step)
+				onChange?.(vMin, nextMax)
+			}
+		}
+
+		const onPointerMove = ev => move(ev.clientX)
+		const onPointerUp = () => {
+			window.removeEventListener('pointermove', onPointerMove)
+			window.removeEventListener('pointerup', onPointerUp)
+		}
+
+		window.addEventListener('pointermove', onPointerMove)
+		window.addEventListener('pointerup', onPointerUp)
 	}
 
-	const handleMin = e => {
-		const next = Math.min(Number(e.target.value), vMax - step)
-		onChange?.(next, vMax)
-	}
-	const handleMax = e => {
-		const next = Math.max(Number(e.target.value), vMin + step)
-		onChange?.(vMin, next)
+	const clickOnTrack = e => {
+		const track = trackRef.current
+		if (!track) return
+		const rect = track.getBoundingClientRect()
+		const x = clamp(e.clientX - rect.left, 0, rect.width)
+		const raw = min + (x / rect.width) * range
+		const val = clamp(snap(raw, step, min), min, max)
+
+		const distToMin = Math.abs(val - vMin)
+		const distToMax = Math.abs(val - vMax)
+		if (distToMin <= distToMax) {
+			const nextMin = Math.min(val, vMax - step)
+			onChange?.(nextMin, vMax)
+		} else {
+			const nextMax = Math.max(val, vMin + step)
+			onChange?.(vMin, nextMax)
+		}
 	}
 
 	return (
-		<div className={['relative w-full h-5', className].join(' ')}>
+		<div className={['relative w-full', className].join(' ')}>
 			<div
-				className='absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] rounded-[20px]'
-				style={trackStyle}
-			/>
-			<div
-				className='absolute -translate-x-1/2 top-1/2 -translate-y-1/2 w-[10px] h-[10px] rounded-full bg-[#BF53EA] pointer-events-none'
-				style={{ left: `${pMin}%` }}
-			/>
-			<div
-				className='absolute -translate-x-1/2 top-1/2 -translate-y-1/2 w-[10px] h-[10px] rounded-full bg-[#BF53EA] pointer-events-none'
-				style={{ left: `${pMax}%` }}
-			/>
-			<input
-				type='range'
-				min={min}
-				max={max}
-				step={step}
-				value={vMin}
-				onChange={handleMin}
-				className='absolute top-0 bottom-0 appearance-none bg-transparent cursor-pointer'
-				style={{ left: 0, right: `${100 - pMax}%`, accentColor: '#BF53EA' }}
-				aria-label='Минимальная цена'
-			/>
-			<input
-				type='range'
-				min={min}
-				max={max}
-				step={step}
-				value={vMax}
-				onChange={handleMax}
-				className='absolute top-0 bottom-0 appearance-none bg-transparent cursor-pointer'
-				style={{ left: `${pMin}%`, right: 0, accentColor: '#BF53EA' }}
-				aria-label='Максимальная цена'
-			/>
+				ref={trackRef}
+				className='relative h-[16px] flex items-center select-none'
+				onPointerDown={e => {
+					if (e.target.dataset.thumb) return
+					clickOnTrack(e)
+				}}
+			>
+				{/* базовая линия */}
+				<div className='absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] rounded-[20px] bg-[#CCBEFA]' />
+
+				{/* выделенный диапазон */}
+				<div
+					className='absolute top-1/2 -translate-y-1/2 h-[2px] rounded-[20px] bg-[#BF53EA]'
+					style={{
+						left: `${pMin}%`,
+						width: `${pMax - pMin}%`,
+						transition: 'left .12s ease, width .12s ease',
+					}}
+				/>
+
+				{/* ползунок MIN */}
+				<button
+					type='button'
+					data-thumb='min'
+					aria-label='Минимальная цена'
+					className='absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[10px] h-[10px] rounded-full bg-[#BF53EA] shadow-sm cursor-pointer active:cursor-pointer'
+					style={{ left: `${pMin}%`, transition: 'left .12s ease' }}
+					onPointerDown={startDrag('min')}
+				/>
+
+				{/* ползунок MAX */}
+				<button
+					type='button'
+					data-thumb='max'
+					aria-label='Максимальная цена'
+					className='absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[10px] h-[10px] rounded-full bg-[#BF53EA] shadow-sm cursor-pointer active:cursor-pointer'
+					style={{ left: `${pMax}%`, transition: 'left .12s ease' }}
+					onPointerDown={startDrag('max')}
+				/>
+			</div>
 		</div>
 	)
 })
 
-/* ===== Мелкие компоненты ===== */
+/* ====================== Мелкие компоненты ====================== */
 function BadgeInput({ label, value, onChange }) {
 	return (
-		<div className='w-[105px] h-[35px] px-[10px] py-[12px] bg-[#EFEBE6] rounded-[10px] inline-flex items-center gap-[5px]'>
+		<div className='w-[95px] h-[35px] px-[10px] py-[12px] bg-[#EFEBE6] rounded-[10px] inline-flex items-center gap-[5px]'>
 			<div className='text-[8px] text-[#B4B4B4] font-baron'>{label}</div>
 			<input
 				type='number'
@@ -98,7 +264,7 @@ function BadgeInput({ label, value, onChange }) {
 				onChange={e =>
 					onChange?.(e.target.value === '' ? '' : Number(e.target.value))
 				}
-				className='flex-1 bg-transparent outline-none text-black text-[12px] font-baron'
+				className='flex-1 bg-transparent outline-none text-black text-[12px] font-baron '
 			/>
 		</div>
 	)
@@ -107,35 +273,7 @@ const Divider = () => (
 	<div className='w-[204px] h-[2px] bg-[#EFEBE6] rounded-[20px] mx-auto' />
 )
 
-function WhiteCheckRow({ label, checked, onToggle }) {
-	return (
-		<button
-			type='button'
-			onClick={onToggle}
-			className={[
-				'w-full h-[24px] px-2',
-				'bg-white',
-				checked ? 'ring-[#BD52E9]' : 'ring-[#D9D9D9]',
-				'flex items-center gap-2 text-[10px] font-baron text-black',
-				'active:bg-[#efece7] transition',
-			].join(' ')}
-			aria-pressed={checked}
-			title={label}
-		>
-			<span
-				className={[
-					'w-[10px] h-[10px] rounded-full border cursor-pointer',
-					checked
-						? 'bg-[#BD52E9] border-[#BD52E9]'
-						: 'bg-white border-[#D9D9D9]',
-				].join(' ')}
-			/>
-			<span className='truncate'>{label}</span>
-		</button>
-	)
-}
-
-/* ===== Анимация только для панели (без портала и позиционирования) ===== */
+/* ====================== Анимация панели ====================== */
 const variants = {
 	closed: {
 		opacity: 0,
@@ -149,7 +287,7 @@ const variants = {
 	},
 }
 
-/* ========================= Основной компонент ========================= */
+/* ====================== Основной компонент ====================== */
 export default function SubcategoryOverlay({
 	isOpen,
 	onApply,
@@ -158,8 +296,8 @@ export default function SubcategoryOverlay({
 	resultsCount = 0,
 	form,
 	setField,
-	className = '', // <- пусть родитель задаёт позицию/размер (absolute/fixed/left/top)
-	style = {}, // <- и inline-стили при необходимости
+	className = '',
+	style = {},
 }) {
 	const priceMin = nnum(form?.price?.min ?? 0)
 	const priceMax = nnum(form?.price?.max ?? 20000)
@@ -208,7 +346,7 @@ export default function SubcategoryOverlay({
 						<button
 							type='button'
 							onClick={onClose}
-							className='absolute top-2 right-2 w-6 h-6 grid place-items-center rounded text-[#625A51] hover:text-[#BD52E9] transition-colors focus:outline-none cursor-pointer'
+							className='absolute top-5.5 right-4 w-6 h-6 grid place-items-center rounded text-[#625A51] hover:text-[#BD52E9] transition-colors focus:outline-none cursor-pointer'
 							aria-label='Закрыть'
 							title='Закрыть'
 						>
@@ -233,16 +371,31 @@ export default function SubcategoryOverlay({
 
 					{/* body */}
 					<div
-						className='flex-1 min-h-0
-    overflow-y-auto overscroll-contain touch-pan-y
-    px-[18px] pb-2
-    scroll-smooth scroll-hidden'
+						className='flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-[18px] pb-2 scroll-smooth scroll-hidden'
 						onWheelCapture={e => e.stopPropagation()}
 						onTouchMoveCapture={e => e.stopPropagation()}
 					>
 						{/* Цена */}
 						<div className='mt-4'>
 							<div className='text-black text-[12px] font-baron mb-2'>Цена</div>
+
+							<div className='mt-3 grid grid-cols-2 gap-[10px] '>
+								<BadgeInput
+									label='от'
+									value={form?.price?.min}
+									onChange={v =>
+										setField?.('price.min', v === '' ? '' : Number(v))
+									}
+								/>
+
+								<BadgeInput
+									label='до'
+									value={form?.price?.max}
+									onChange={v =>
+										setField?.('price.max', v === '' ? '' : Number(v))
+									}
+								/>
+							</div>
 							<RangeDual
 								min={0}
 								max={20000}
@@ -252,22 +405,6 @@ export default function SubcategoryOverlay({
 								onChange={onPriceChange}
 								className='mx-[2px]'
 							/>
-							<div className='mt-3 grid grid-cols-2 gap-[10px]'>
-								<BadgeInput
-									label='от'
-									value={form?.price?.min}
-									onChange={v =>
-										setField?.('price.min', v === '' ? '' : Number(v))
-									}
-								/>
-								<BadgeInput
-									label='до'
-									value={form?.price?.max}
-									onChange={v =>
-										setField?.('price.max', v === '' ? '' : Number(v))
-									}
-								/>
-							</div>
 						</div>
 
 						<div className='my-4'>
@@ -389,18 +526,19 @@ export default function SubcategoryOverlay({
 							<button
 								type='button'
 								onClick={onReset}
-								className='w-1/2 h-[25px] px-[5px] py-[4px] bg-[#EFEBE6] rounded-[10px] text-[10px] font-baron'
+								className='w-1/2 h-[25px] px-[5px] py-[4px] bg-[#EFEBE6] rounded-[10px] text-[10px] font-baron cursor-pointer hover:text-[#BD52E9]'
 							>
 								сбросить все
 							</button>
+
+							{/* кнопка "показать" с плавной заливкой на hover */}
 							<button
 								type='button'
 								onClick={onApply}
-								className='w-1/2 h-[25px] px-[5px] py-[4px] rounded-[10px] text-white text-[10px] font-baron
-                bg-[radial-gradient(ellipse_173.76%_142.27%_at_-13.16%_-0%,_#1D0353_0%,_#C054EB_100%)]
-                hover:opacity-95 active:opacity-90 transition-colors'
+								className='relative w-1/2 h-[25px] cursor-pointer px-[5px] py-[4px] rounded-[10px] text-white text-[10px] font-baron bg-[radial-gradient(ellipse_173.76%_142.27%_at_-13.16%_-0%,_#1D0353_0%,_#C054EB_100%)] overflow-hidden'
 							>
-								показать
+								<span className='relative z-10'>показать</span>
+								<span className='absolute inset-0 rounded-[10px] bg-[#BD52E9] opacity-0 transition-opacity duration-300 hover:opacity-100' />
 							</button>
 						</div>
 					</div>
