@@ -14,14 +14,14 @@ const Header = ({ rightSlot }) => {
 			<div className='py-4'>
 				{/* Верхняя строка */}
 				<div className='flex items-center justify-between gap-6 select-none px-4'>
-					<p className='font-baron text-[#625a51] text-[18px]'>
+					<p className='ml-[46px] font-baron text-[#625a51] text-[18px]'>
 						Нижний Новгород
 					</p>
 
 					<h2
 						className='
               font-baron text-[#bf53eb] tracking-wide
-              text-xl text-center truncate max-w-[60%]
+              text-xl text-center  max-w-[60%]
             '
 						title='крупнейший магазин пиротехники'
 					>
@@ -31,7 +31,7 @@ const Header = ({ rightSlot }) => {
 					<div
 						className='
               font-baron text-[#625a51] text-[18px]
-              text-right truncate max-w-[40%]
+              text-right  max-w-[40%] mr-[46px]
             '
 						title='ип федяков и.в.'
 					>

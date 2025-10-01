@@ -45,16 +45,15 @@ function ProductCardMini({ product, onSelect }) {
 	const p = Number(price)
 	const dp = Number(discountPrice)
 	const hasValidDiscount =
-		Number.isFinite(dp) && dp > 0 && Number.isFinite(p) && p > 0 && dp < p
+		Number.isFinite(p) && p > 0 && Number.isFinite(dp) && dp > 0 && dp < p
 
-	// «Цена за единицу» с учётом валидной скидки
+	// Итоговая цена для корзины
 	const unitPrice = hasValidDiscount ? dp : Number.isFinite(p) ? p : 0
 
 	const add = useCallback(
 		e => {
 			e.stopPropagation()
 			if (outOfStock) return
-			// Кладём нормализованный unitPrice — корзина всегда будет считать правильно
 			dispatch(addItem({ ...product, unitPrice }))
 		},
 		[dispatch, outOfStock, product, unitPrice]
@@ -101,8 +100,9 @@ function ProductCardMini({ product, onSelect }) {
 				{/* Цена + кнопка */}
 				<div className=' flex items-end justify-between'>
 					<PriceBlock
+						// ВАЖНО: пробрасываем скидку только если она валидная
 						price={price}
-						discountPrice={discountPrice}
+						discountPrice={hasValidDiscount ? discountPrice : null}
 						fmtPrice={fmtPrice}
 					/>
 					<AddToCartButton disabled={outOfStock} onClick={add} />

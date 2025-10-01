@@ -1,25 +1,38 @@
 import fullBlockSvg from '../../public/SVG/full-block.svg'
 
-const makeProduct = (id, name, category, subcategory, overrides = {}) => ({
-	id,
-	name,
-	manufacturer: 'PIROFF',
-	category,
-	subcategory,
-	shots: Math.floor(Math.random() * 100) + 10,
-	caliber: (Math.random() * 1.5 + 0.8).toFixed(1), // 0.8 – 2.3"
-	durationSec: Math.floor(Math.random() * 80) + 20,
-	effectsCount: Math.floor(Math.random() * 10) + 1,
-	certificateUrl: './certs/salut100.pdf',
-	stock: Math.floor(Math.random() * 50) + 1,
-	price: Math.floor(Math.random() * 3000) + 500,
-	discountPrice:
-		Math.random() > 0.5 ? Math.floor(Math.random() * 2500) + 400 : null,
-	images: [fullBlockSvg],
-	video: null,
-	description: 'Описание товара: яркие спецэффекты и насыщенные цвета.',
-	...overrides,
-})
+const makeProduct = (id, name, category, subcategory, overrides = {}) => {
+	const basePrice = Math.floor(Math.random() * 3000) + 500 // 500..3499
+	// 50% товаров будут со скидкой
+	const hasDiscount = Math.random() > 0.5
+	let discountPrice = null
+
+	if (hasDiscount) {
+		const discountPct = 0.1 + Math.random() * 0.3 // 10%..40%
+		discountPrice = Math.max(1, Math.floor(basePrice * (1 - discountPct)))
+		// гигиена: не даём совпасть
+		if (discountPrice >= basePrice) discountPrice = basePrice - 1
+	}
+
+	return {
+		id,
+		name,
+		manufacturer: 'PIROFF',
+		category,
+		subcategory,
+		shots: Math.floor(Math.random() * 100) + 10,
+		caliber: (Math.random() * 1.5 + 0.8).toFixed(1),
+		durationSec: Math.floor(Math.random() * 80) + 20,
+		effectsCount: Math.floor(Math.random() * 10) + 1,
+		certificateUrl: './certs/salut100.pdf',
+		stock: Math.floor(Math.random() * 50) + 1,
+		price: basePrice, // ← базовая
+		discountPrice, // ← финальная (ниже basePrice) или null
+		images: [fullBlockSvg],
+		video: null,
+		description: 'Описание товара: яркие спецэффекты и насыщенные цвета.',
+		...overrides,
+	}
+}
 
 // Собираем массив по категориям/подкатегориям
 const mockProducts = []

@@ -4,14 +4,23 @@ import { useEffect, useMemo, useState } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSkeleton'
 
+/**
+ * Props:
+ * - title: string
+ * - products: array
+ * - onSelectProduct: (product) => void
+ * - onOpenSubcategory: ({ title, products }) => void
+ * - loading: boolean
+ * - showHeader?: boolean  // можно скрыть хедер, если он уже есть выше по дереву
+ */
 const ProductSection = ({
 	title,
 	products = [],
 	onSelectProduct,
 	onOpenSubcategory,
 	loading = false,
+	showHeader = true,
 }) => {
-	// минимум 5 карточек, если есть
 	const [visibleCount, setVisibleCount] = useState(5)
 
 	useEffect(() => {
@@ -42,26 +51,29 @@ const ProductSection = ({
 		transition: { duration: 0.12, ease: 'easeIn' },
 	}
 
+	const hasMore = !loading && products.length > visibleCount
+
 	return (
 		<section className='space-y-3'>
-			<div className='flex items-center justify-between'>
-				<h3 className='text-[18px] lowercase font-baron pl-5'>{title}</h3>
+			{showHeader && (
+				<div className='flex items-center justify-between'>
+					<h3 className='text-[18px] lowercase font-baron pl-5'>{title}</h3>
 
-				{!loading && products.length > visibleCount && (
-					<button
-						type='button'
-						onClick={handleOpenMore}
-						className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer pr-[23px]'
-					>
-						посмотреть ещё
-					</button>
-				)}
-			</div>
+					{hasMore && (
+						<button
+							type='button'
+							onClick={handleOpenMore}
+							className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer pr-[23px]'
+						>
+							посмотреть ещё
+						</button>
+					)}
+				</div>
+			)}
 
 			{/* минимум 5 колонок на десктопах */}
 			<div className='grid grid-cols-5 gap-[11px] p-2.5 overflow-visible pb-3'>
 				{loading ? (
-					// два ряда по 5 — выглядит ровно
 					Array.from({ length: 10 }).map((_, i) => (
 						<ProductCardMiniSkeleton key={i} />
 					))

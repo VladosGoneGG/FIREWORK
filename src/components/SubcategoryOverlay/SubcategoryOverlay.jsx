@@ -89,7 +89,7 @@ function WhiteCheckRow({ label, checked, onToggle }) {
 			onMouseDown={() => setActive(true)}
 			onMouseUp={() => setActive(false)}
 			className={[
-				'w-full h-[24px] px-2 bg-white rounded-[6px]',
+				'w-full h-[11px] px-2 bg-white rounded-[6px]',
 				'flex items-center gap-2 text-[10px] font-baron text-black',
 				'transition-colors select-none',
 				'cursor-pointer', // <-- поинтер на всей строке
@@ -206,25 +206,28 @@ const RangeDual = memo(function RangeDual({
 		}
 	}
 
+	const TRACK_W = 204
+
 	return (
-		<div className={['relative w-full', className].join(' ')}>
+		<div className={['relative w-full mt-2 pl-[6px]', className].join(' ')}>
 			<div
 				ref={trackRef}
-				className='relative h-[16px] flex items-center select-none'
+				className='relative h-[16px] flex items-center select-none justify-center'
+				style={{ width: TRACK_W }}
 				onPointerDown={e => {
 					if (e.target.dataset.thumb) return
 					clickOnTrack(e)
 				}}
 			>
 				{/* базовая линия */}
-				<div className='absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] rounded-[20px] bg-[#CCBEFA]' />
+				<div className='absolute top-1/2 -translate-y-1/2 w-full h-[2px] rounded-[20px] bg-[#CCBEFA]' />
 
 				{/* выделенный диапазон */}
 				<div
 					className='absolute top-1/2 -translate-y-1/2 h-[2px] rounded-[20px] bg-[#BF53EA]'
 					style={{
-						left: `${pMin}%`,
-						width: `${pMax - pMin}%`,
+						left: `${(pMin / 100) * TRACK_W}px`,
+						width: `${((pMax - pMin) / 100) * TRACK_W}px`,
 						transition: 'left .12s ease, width .12s ease',
 					}}
 				/>
@@ -234,8 +237,11 @@ const RangeDual = memo(function RangeDual({
 					type='button'
 					data-thumb='min'
 					aria-label='Минимальная цена'
-					className='absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[10px] h-[10px] rounded-full bg-[#BF53EA] shadow-sm cursor-pointer active:cursor-pointer'
-					style={{ left: `${pMin}%`, transition: 'left .12s ease' }}
+					className='absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[10px] h-[10px] rounded-full bg-[#BF53EA] shadow-sm cursor-pointer'
+					style={{
+						left: `${(pMin / 100) * TRACK_W}px`,
+						transition: 'left .12s ease',
+					}}
 					onPointerDown={startDrag('min')}
 				/>
 
@@ -244,8 +250,11 @@ const RangeDual = memo(function RangeDual({
 					type='button'
 					data-thumb='max'
 					aria-label='Максимальная цена'
-					className='absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[10px] h-[10px] rounded-full bg-[#BF53EA] shadow-sm cursor-pointer active:cursor-pointer'
-					style={{ left: `${pMax}%`, transition: 'left .12s ease' }}
+					className='absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[10px] h-[10px] rounded-full bg-[#BF53EA] shadow-sm cursor-pointer'
+					style={{
+						left: `${(pMax / 100) * TRACK_W}px`,
+						transition: 'left .12s ease',
+					}}
 					onPointerDown={startDrag('max')}
 				/>
 			</div>
@@ -256,7 +265,7 @@ const RangeDual = memo(function RangeDual({
 /* ====================== Мелкие компоненты ====================== */
 function BadgeInput({ label, value, onChange }) {
 	return (
-		<div className='w-[95px] h-[35px] px-[10px] py-[12px] bg-[#EFEBE6] rounded-[10px] inline-flex items-center gap-[5px]'>
+		<div className='w-[105px] h-[35px] px-[10px] py-[12px] bg-[#EFEBE6] rounded-[10px] inline-flex items-center gap-[5px]'>
 			<div className='text-[8px] text-[#B4B4B4] font-baron'>{label}</div>
 			<input
 				type='number'
@@ -338,15 +347,15 @@ export default function SubcategoryOverlay({
 					style={style}
 				>
 					{/* header */}
-					<div className='px-5 pt-4 pb-2 relative top-[2px]'>
+					<div className='px-5 pt-[10px]  relative top-[2px]'>
 						<div className='text-[#625A51] text-lg font-baron lowercase'>
 							фильтры
 						</div>
-						<div className='w-[204px] h-[2px] bg-[#EFEBE6] rounded-[20px] mt-2 mx-auto' />
+						<div className='w-[204px] h-[2px] bg-[#EFEBE6] rounded-[20px] mt-2.5 mx-auto' />
 						<button
 							type='button'
 							onClick={onClose}
-							className='absolute top-5.5 right-4 w-6 h-6 grid place-items-center rounded text-[#625A51] hover:text-[#BD52E9] transition-colors focus:outline-none cursor-pointer'
+							className='absolute top-4 right-5 w-6 h-6 grid place-items-center rounded text-[#625A51] hover:text-[#BD52E9] transition-colors focus:outline-none cursor-pointer'
 							aria-label='Закрыть'
 							title='Закрыть'
 						>
@@ -371,12 +380,12 @@ export default function SubcategoryOverlay({
 
 					{/* body */}
 					<div
-						className='flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-[18px] pb-2 scroll-smooth scroll-hidden'
+						className='flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-[10px] pb-2 scroll-smooth scroll-hidden'
 						onWheelCapture={e => e.stopPropagation()}
 						onTouchMoveCapture={e => e.stopPropagation()}
 					>
 						{/* Цена */}
-						<div className='mt-4'>
+						<div className='mt-3'>
 							<div className='text-black text-[12px] font-baron mb-2'>Цена</div>
 
 							<div className='mt-3 grid grid-cols-2 gap-[10px] '>
@@ -407,16 +416,16 @@ export default function SubcategoryOverlay({
 							/>
 						</div>
 
-						<div className='my-4'>
+						<div className='my-2'>
 							<Divider />
 						</div>
 
 						{/* Тип товара */}
-						<div className='mt-2'>
-							<div className='text-black text-[12px] font-baron mb-2'>
+						<div>
+							<div className='text-black  text-[12px] font-baron mb-2 mx-2'>
 								тип товара
 							</div>
-							<div className='flex flex-col gap-1'>
+							<div className='flex flex-col '>
 								{PRODUCT_TYPES.map(t => (
 									<WhiteCheckRow
 										key={t}
@@ -428,13 +437,13 @@ export default function SubcategoryOverlay({
 							</div>
 						</div>
 
-						<div className='my-4'>
+						<div className='my-2'>
 							<Divider />
 						</div>
 
 						{/* Производитель */}
-						<div className='mt-2'>
-							<div className='text-black text-[12px] font-baron mb-2'>
+						<div>
+							<div className='text-black text-[12px] font-baron mb-2 mx-2'>
 								производитель
 							</div>
 							<div className='flex flex-col gap-1'>
@@ -449,13 +458,13 @@ export default function SubcategoryOverlay({
 							</div>
 						</div>
 
-						<div className='my-4'>
+						<div className='my-2'>
 							<Divider />
 						</div>
 
 						{/* Количество хлопков */}
-						<div className='mt-2'>
-							<div className='text-black text-[12px] font-baron mb-2'>
+						<div>
+							<div className='text-black text-[12px] font-baron mb-2 mx-2'>
 								количество хлопков
 							</div>
 							<div className='flex flex-col gap-1'>
@@ -470,13 +479,13 @@ export default function SubcategoryOverlay({
 							</div>
 						</div>
 
-						<div className='my-4'>
+						<div className='my-2'>
 							<Divider />
 						</div>
 
 						{/* Мощность */}
-						<div className='mt-2'>
-							<div className='text-black text-[12px] font-baron mb-2'>
+						<div>
+							<div className='text-black text-[12px] font-baron mb-2 mx-2'>
 								мощность
 							</div>
 							<div className='flex flex-col gap-1'>
@@ -491,13 +500,13 @@ export default function SubcategoryOverlay({
 							</div>
 						</div>
 
-						<div className='my-4'>
+						<div className='my-2'>
 							<Divider />
 						</div>
 
 						{/* Дополнительно */}
-						<div className='mt-2'>
-							<div className='text-black text-[12px] font-baron mb-2'>
+						<div>
+							<div className='text-black text-[12px] font-baron mb-2 mx-2'>
 								дополнительно
 							</div>
 							<div className='flex flex-col gap-1'>

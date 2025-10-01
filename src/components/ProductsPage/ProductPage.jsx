@@ -1,3 +1,4 @@
+// src/components/ProductsPage/ProductPage.jsx
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
@@ -22,8 +23,8 @@ import SortDropdown from '../ui/SortDropdown'
 const ProductsPage = ({
 	onToggleFilters,
 	filtersOpen,
-	overlayFilters = {}, // применённые
-	overlayFiltersPreview = {}, // превью (для счётчика)
+	overlayFilters = {},
+	overlayFiltersPreview = {},
 	onFiltersCountChange = () => {},
 	onDetailsModeChange,
 	externalSelectedProduct,
@@ -71,7 +72,14 @@ const ProductsPage = ({
 	const shouldShowSlider =
 		!!showSlider && !selectedProduct && !activeSub && !String(search).trim()
 
-	// HOME: применяем ИМЕННО overlayFilters (применённые)
+	// === helpers ===
+	const norm = s =>
+		String(s || '')
+			.trim()
+			.toLowerCase()
+	const PROMO_KEY = 'акции'
+
+	// === HOME ===
 	const homeFiltered = useMemo(
 		() => applyFilters(filtered, overlayFilters),
 		[filtered, overlayFilters]
@@ -100,35 +108,64 @@ const ProductsPage = ({
 		[sections, sortKey]
 	)
 
-	// SUB: тоже применяем overlayFilters
-	const norm = s =>
-		String(s || '')
-			.trim()
-			.toLowerCase()
+	/// === SUB: открытие подкатегории ===
 	const openSubcategory = useCallback(
 		payload => {
+			const norm = s =>
+				String(s || '')
+					.trim()
+					.toLowerCase()
+			const PROMO_KEY = 'акции'
+
 			let title = '',
 				products = []
-			if (typeof payload === 'string') title = payload
-			else if (payload && typeof payload === 'object') {
+			if (typeof payload === 'string') {
+				title = payload
+			} else if (payload && typeof payload === 'object') {
 				title = payload.title || payload.category || ''
-				if (Array.isArray(payload.products) && payload.products.length)
+				if (Array.isArray(payload.products) && payload.products.length) {
 					products = payload.products
+				}
 			}
+
+			const isPromo = norm(title) === PROMO_KEY
+
+			// Если продукты не передали — поднимем из allItems по тайтлу
 			if (!products.length && title) {
 				const t = norm(title)
 				products = allItems.filter(
 					p => norm(p.category) === t || norm(p.subcategory) === t
 				)
 			}
+
+			// СТРАХОВОЧНЫЙ ФИЛЬТР:
+			// - для "акции" — оставить только скидочные
+			// - для остальных — убрать скидочные
+			if (isPromo) {
+				products = products.filter(p => discountedSet.has(p.id))
+			} else {
+				products = products.filter(p => !discountedSet.has(p.id))
+			}
+
 			setSelectedProduct(null)
 			setActiveSub({
 				title: title || 'Категория',
 				products: Array.isArray(products) ? products : [],
 			})
 		},
-		[allItems]
+		[allItems, discountedSet] // ВАЖНО: добавить discountedSet в зависимости!
 	)
+
+	// Промо-секция и "посмотреть ещё" (ТОЛЬКО для HOME/FilterBar)
+	const promoSec = useMemo(
+		() => sectionsSorted.find(s => norm(s.title) === PROMO_KEY),
+		[sectionsSorted]
+	)
+	const promoHasMore = !!promoSec && promoSec.items.length > 5
+	const openPromo = useCallback(() => {
+		if (!promoSec) return
+		openSubcategory({ title: promoSec.title, products: promoSec.items })
+	}, [promoSec, openSubcategory])
 
 	const activeList = useMemo(
 		() => (Array.isArray(activeSub?.products) ? activeSub.products : []),
@@ -143,7 +180,7 @@ const ProductsPage = ({
 		[subFiltered, sortKey]
 	)
 
-	// Счётчик для оверлея считаем от PREVIEW (overlayFiltersPreview)
+	// preview counter (overlayFiltersPreview)
 	const previewFiltered = useMemo(
 		() =>
 			applyFilters(
@@ -181,8 +218,28 @@ const ProductsPage = ({
 
 	const FilterBar = (
 		<div className='relative'>
-			<div className='flex items-center pt-2.5 gap-2 px-2.5'>
-				<div className='text-lg font-baron' />
+			<div className='flex items-start pt-2.5 gap-2 px-2.5'>
+				{/* ЛЕВАЯ КОЛОНКА: "акции" + "посмотреть ещё" (только на HOME) */}
+				<div className='pl-1 flex-1'>
+					{promoSec ? (
+						<div className='flex flex-col gap-1'>
+							<h3 className='text-[18px] lowercase font-baron leading-none text-black'>
+								{promoSec.title}
+							</h3>
+							{promoHasMore && (
+								<button
+									type='button'
+									onClick={openPromo}
+									className='relative top-3 text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'
+								>
+									посмотреть ещё
+								</button>
+							)}
+						</div>
+					) : null}
+				</div>
+
+				{/* ПРАВАЯ КОЛОНКА: фильтр + сортировка */}
 				<div className='ml-auto flex items-center gap-2'>
 					<button
 						type='button'
@@ -224,7 +281,7 @@ const ProductsPage = ({
 							width: '100%',
 						}}
 					>
-						{/* HOME: слайдер + фильтр-кнопка */}
+						{/* HOME: слайдер или фильтр-бар */}
 						{view === 'home' && (
 							<motion.div
 								variants={FX}
@@ -263,15 +320,9 @@ const ProductsPage = ({
 													title={sec.title}
 													products={sec.items}
 													onSelectProduct={openDetails}
-													onOpenSubcategory={payload =>
-														openSubcategory(
-															payload ?? {
-																title: sec.title,
-																products: sec.items,
-															}
-														)
-													}
+													onOpenSubcategory={openSubcategory}
 													loading={status === 'loading'}
+													showHeader={norm(sec.title) !== PROMO_KEY} // у "акции" хедер скрыт
 												/>
 											</motion.div>
 										))}

@@ -15,7 +15,7 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 	}
 
 	return (
-		<div className='mt-auto px-4 pb-4 pt-3 bg-white'>
+		<div className='mt-auto px-2 pb-2 pt-3 bg-white'>
 			<div className='text-center text-[20px] font-extrabold tracking-wide'>
 				<span className='text-[12px] text-[#B4B4B4]'>итого</span>{' '}
 				{fmtPriceRub(total)}
@@ -33,7 +33,7 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 				onClick={handleClick}
 				disabled={!enough}
 				className={[
-					'w-full mt-3 h-[44px] rounded-[12px] text-[15px] font-baron lowercase transition-colors cursor-pointer',
+					'w-[275px] mt-3 h-[50px] rounded-[12px] text-[15px] font-baron lowercase transition-colors cursor-pointer',
 					enough
 						? 'bg-[#a643d3] text-white hover:bg-[#c054eb] active:text-[#BD52E9] active:bg-[#efebe7]'
 						: 'bg-[#efebe7] text-[#bd52e9]',
