@@ -49,11 +49,12 @@ const SearchHeader = () => {
 				onChange={onChange}
 				aria-label='Поиск по товарам'
 				placeholder=' '
-				className={`
+				className={`cursor-text            
+          
           outline-none bg-transparent w-full h-full
-          rounded-[20px]
+          rounded-[20px]  
           pl-11 md:pl-12 pr-3 md:pr-4
-          hover:bg-[#efebe6]
+          hover:bg-[#efebe6] 
         `}
 			/>
 

@@ -38,7 +38,7 @@ export default function SubcategoryPanel({
 		<div className='w-full h-full flex flex-col rounded-b-[20px] bg-white overflow-hidden'>
 			{/* header */}
 			<div className='sticky top-0 z-10 bg-white'>
-				<div className='px-2.5 py-2'>
+				<div>
 					<div className='flex items-start gap-3'>
 						{/* ЛЕВАЯ КОЛОНКА: "акции" + "посмотреть ещё" */}
 						{leftLabel ? (
@@ -60,7 +60,7 @@ export default function SubcategoryPanel({
 
 						{/* СЕРЕДИНА: заголовок текущей подкатегории */}
 						<div className='min-w-0'>
-							<div className='lowercase text-lg font-baron leading-none text-[#625A51]'>
+							<div className='lowercase text-lg font-baron leading-none text-black'>
 								{title}
 							</div>
 						</div>

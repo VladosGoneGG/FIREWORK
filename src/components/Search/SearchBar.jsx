@@ -1,3 +1,4 @@
+// src/components/SearchBar/SearchBar.jsx
 import debounce from 'lodash.debounce'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
@@ -76,7 +77,16 @@ const SearchBar = ({ onOpenModal }) => {
 				aria-label='Поиск по товарам'
 				className='
           outline-none bg-transparent w-full h-full
-          pl-12 pr-16 rounded-[20px] hover:bg-[#efebe6]
+          pl-12 pr-16 rounded-[20px]
+          hover:bg-[#efebe6]
+
+          /* курсор как просили */
+          cursor-text
+          hover:!cursor-pointer
+          focus:!cursor-text
+
+          /* плавная анимация ховера */
+          transition-colors duration-150 ease-out
         '
 			/>
 
@@ -86,7 +96,7 @@ const SearchBar = ({ onOpenModal }) => {
 				alt='Салют на свадьбу'
 				className={`
           absolute left-12 bottom-[8px] -translate-y-1/2 h-[14px]
-          transition-opacity duration-150
+          transition-opacity duration-150 ease-out
           ${localQuery ? 'opacity-0' : 'opacity-100'}
           group-focus-within:opacity-0
           pointer-events-none
@@ -100,8 +110,9 @@ const SearchBar = ({ onOpenModal }) => {
 					onClick={clear}
 					className='
             absolute right-12 top-1/2 -translate-y-1/2
-            w-6 h-6 rounded-full  place-items-center hidden
+            w-6 h-6 rounded-full hidden
             hover:bg-black/5
+            transition-colors duration-150 ease-out
           '
 					aria-label='Очистить'
 					title='Очистить'
@@ -118,7 +129,8 @@ const SearchBar = ({ onOpenModal }) => {
           absolute right-2 top-1/2 -translate-y-1/2
           text-[10px] px-2 py-1 rounded-[10px]
           bg-[#efebe6] hidden hover:bg-[#e6e2dd]
-					font-baron lowercase
+          font-baron lowercase
+          transition-colors duration-150 ease-out
         '
 				title='Открыть глобальный поиск'
 			>

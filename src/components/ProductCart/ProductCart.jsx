@@ -88,7 +88,7 @@ const ProductCart = ({ loading = false }) => {
       '
 		>
 			<CartHeader />
-			<div className='w-[260px] h-[2px] ml-[18px] rounded-[20px] bg-[#efebe6]' />
+			<div className='w-[260px] h-[2px] ml-[15px] rounded-[20px] bg-[#efebe6]' />
 
 			<div
 				className={[

@@ -110,7 +110,7 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 	return (
 		<form
 			onSubmit={handleSubmit(onSubmit, onInvalid)}
-			className='px-4 pb-4 pt-2 bg-white'
+			className=' pb-4 pt-2 bg-white'
 		>
 			{/* Блок: данные клиента */}
 			<div className='text-black text-xs font-baron mb-2'>данные клиента</div>
@@ -213,7 +213,7 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 			</div>
 
 			<div className='mt-2 text-center text-stone-600 text-xs font-baron'>
-				реализация продукции лицам моложе 16 лет — запрещена
+				реализация продукции лицам <br /> моложе 16 лет — запрещена
 			</div>
 
 			{/* Блок: доставка */}

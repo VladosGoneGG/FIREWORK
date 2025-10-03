@@ -1,5 +1,7 @@
+// src/App.jsx
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
+
 import CategoryFilter from './components/CategoryFilter/CategoryFilter'
 import FooterSection from './components/FooterSection/FooterSection'
 import Header from './components/Header/Header'
@@ -9,6 +11,7 @@ import PromoPanel from './components/PromoPanel/PromoPanel'
 import SearchBar from './components/Search/SearchBar'
 import SearchModal from './components/Search/SearchModal'
 import SubcategoryOverlay from './components/SubcategoryOverlay/SubcategoryOverlay'
+
 import useOverlayFilters from './hooks/useOverlayFilters'
 
 const HEADER_H = 140
@@ -33,7 +36,6 @@ function App() {
 	const [appliedFilters, setAppliedFilters] = useState({})
 	const [overlayCount, setOverlayCount] = useState(0)
 
-	// Важно: создаём НОВЫЙ объект, чтобы точно триггерить ре-рендер
 	const applyOverlay = () => setAppliedFilters({ ...normalized })
 	const clearOverlay = () => {
 		resetForm()
@@ -56,7 +58,7 @@ function App() {
 				<main className='flex w-[1240px] justify-center gap-5'>
 					{/* ЛЕВАЯ КОЛОНКА */}
 					<div
-						className={`sticky ${detailsMode ? 'hidden' : 'block'}`}
+						className={`sticky ${detailsMode ? 'hidden' : 'block '}`}
 						style={{ top: HEADER_H }}
 					>
 						<div className='relative w-[240px]' style={{ height: COLUMN_H }}>
@@ -69,16 +71,17 @@ function App() {
 								</>
 							)}
 
+							{/* Панель ВСЕГДА смонтирована — закрытие уезжает вверх плавно */}
 							<SubcategoryOverlay
 								isOpen={filtersOpen}
 								onClose={() => setFiltersOpen(false)}
 								onApply={() => {
 									setIsLanding(false)
-									applyOverlay() // применяем, не закрываем
+									applyOverlay()
 								}}
 								onReset={() => {
 									setIsLanding(false)
-									clearOverlay() // сбрасываем, не закрываем (по желанию можно закрыть)
+									clearOverlay()
 								}}
 								resultsCount={overlayCount}
 								form={form}
@@ -94,7 +97,7 @@ function App() {
 						style={{ width: DETAILS_W }}
 					>
 						<div
-							className='relative z-10 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px] flex flex-col bg-white'
+							className='relative z-10 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px] flex flex_col bg-white'
 							style={{ height: detailsMode ? DETAILS_H : COLUMN_H }}
 						>
 							<div className='flex-1 min-h-0 overflow-y-auto scroll-hidden rounded-[20px] '>
@@ -109,8 +112,8 @@ function App() {
 										setDetailsMode(on)
 									}}
 									onConsumeExternalSelected={() => setSelectedFromSearch(null)}
-									overlayFilters={appliedFilters} // применённые фильтры — показываем их
-									overlayFiltersPreview={normalized} // превью — для счётчика
+									overlayFilters={appliedFilters}
+									overlayFiltersPreview={normalized}
 									onFiltersCountChange={setOverlayCount}
 									filtersOpen={filtersOpen}
 									narrow={!detailsMode}

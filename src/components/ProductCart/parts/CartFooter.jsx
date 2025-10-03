@@ -15,7 +15,7 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 	}
 
 	return (
-		<div className='mt-auto px-2 pb-2 pt-3 bg-white'>
+		<div className='mt-auto px-2.5 pb-2.5 pt-2.5 bg-white'>
 			<div className='text-center text-[20px] font-extrabold tracking-wide'>
 				<span className='text-[12px] text-[#B4B4B4]'>итого</span>{' '}
 				{fmtPriceRub(total)}

@@ -5,6 +5,7 @@ import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary.jsx'
 import NotFoundPage from './components/NotFoundPage/NotFoundPage.jsx'
 import './index.css'
+import WholesalePage from './pages/WholesalePage.jsx'
 import { store } from './store/store.js'
 
 const router = createBrowserRouter([
@@ -13,6 +14,14 @@ const router = createBrowserRouter([
 		element: (
 			<ErrorBoundary>
 				<App />
+			</ErrorBoundary>
+		),
+	},
+	{
+		path: '/wholesale',
+		element: (
+			<ErrorBoundary>
+				<WholesalePage />
 			</ErrorBoundary>
 		),
 	},

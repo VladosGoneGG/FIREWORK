@@ -1,11 +1,12 @@
 // src/components/ProductsPage/ProductPage.jsx
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 import useProductsBoot from '../../hooks/useProductsBoot'
 import useRelated from '../../hooks/useRelated'
 import useSections from '../../hooks/useSections'
+import { setCategory } from '../../store/slices/categoriesSlice'
 import {
 	selectDiscountedProducts,
 	selectFilteredProducts,
@@ -32,6 +33,8 @@ const ProductsPage = ({
 	showSlider = true,
 }) => {
 	useProductsBoot()
+
+	const dispatch = useDispatch()
 
 	const status = useSelector(s => s.products.status)
 	const selected = useSelector(s => s.categories.selectedCategory || 'all')
@@ -117,8 +120,9 @@ const ProductsPage = ({
 					.toLowerCase()
 			const PROMO_KEY = 'акции'
 
-			let title = '',
-				products = []
+			let title = ''
+			let products = []
+
 			if (typeof payload === 'string') {
 				title = payload
 			} else if (payload && typeof payload === 'object') {
@@ -128,23 +132,26 @@ const ProductsPage = ({
 				}
 			}
 
-			const isPromo = norm(title) === PROMO_KEY
+			const t = norm(title)
+			const isPromo = t === PROMO_KEY
 
-			// Если продукты не передали — поднимем из allItems по тайтлу
+			// если список не передали — соберём из всех товаров
 			if (!products.length && title) {
-				const t = norm(title)
 				products = allItems.filter(
 					p => norm(p.category) === t || norm(p.subcategory) === t
 				)
 			}
 
-			// СТРАХОВОЧНЫЙ ФИЛЬТР:
-			// - для "акции" — оставить только скидочные
-			// - для остальных — убрать скидочные
+			// страховка по скидкам: промо — только скидочные, остальные — без скидочных
 			if (isPromo) {
 				products = products.filter(p => discountedSet.has(p.id))
 			} else {
 				products = products.filter(p => !discountedSet.has(p.id))
+			}
+
+			// ⬇️ ВАЖНО: синхронизируем Redux, чтобы клик "все" потом реально сменил selected
+			if (title) {
+				dispatch(setCategory(isPromo ? PROMO_KEY : t))
 			}
 
 			setSelectedProduct(null)
@@ -153,7 +160,7 @@ const ProductsPage = ({
 				products: Array.isArray(products) ? products : [],
 			})
 		},
-		[allItems, discountedSet] // ВАЖНО: добавить discountedSet в зависимости!
+		[allItems, discountedSet, dispatch]
 	)
 
 	// Промо-секция и "посмотреть ещё" (ТОЛЬКО для HOME/FilterBar)
@@ -218,7 +225,7 @@ const ProductsPage = ({
 
 	const FilterBar = (
 		<div className='relative'>
-			<div className='flex items-start pt-2.5 gap-2 px-2.5'>
+			<div className='flex items-start pt-2.5 gap-2 '>
 				{/* ЛЕВАЯ КОЛОНКА: "акции" + "посмотреть ещё" (только на HOME) */}
 				<div className='pl-1 flex-1'>
 					{promoSec ? (
@@ -230,7 +237,7 @@ const ProductsPage = ({
 								<button
 									type='button'
 									onClick={openPromo}
-									className='relative top-3 text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'
+									className='absolute left-20 bottom-1.5  text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'
 								>
 									посмотреть ещё
 								</button>
@@ -264,7 +271,7 @@ const ProductsPage = ({
 			<div
 				ref={anchorRef}
 				className={`relative bg-white rounded-[20px] overflow-hidden mx-auto 
-          w-full max-w-[1200px] px-4 lg:px-3 md:px-2
+          w-full max-w=[1200px] px-4 lg:px-3 md:px-2
           ${selectedProduct ? 'h-[834px]' : 'min-h-[834px]'}`}
 			>
 				{/* ==== ОСНОВНОЙ СЛОЙ ==== */}

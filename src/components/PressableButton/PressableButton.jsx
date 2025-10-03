@@ -1,24 +1,22 @@
-import { useState } from 'react'
-
-const PressableButton = ({ children, className = '', ...props }) => {
-	const [isPressed, setIsPressed] = useState(false)
-
-	const pressedClass = isPressed ? 'scale-98 opacity-80 !text-[#997DF5]' : ''
-
+// src/components/PressableButton/PressableButton.jsx
+const PressableButton = ({
+	className = '',
+	children,
+	type = 'button',
+	...props
+}) => {
 	return (
 		<button
-			className={`${className} 
-        cursor-pointer
-        transform
-        transition-colors transition-transform transition-opacity
-        duration-300 ease-out
-       
-        ${pressedClass}`}
-			onMouseDown={() => setIsPressed(true)}
-			onMouseUp={() => setIsPressed(false)}
-			onMouseLeave={() => setIsPressed(false)}
-			onTouchStart={() => setIsPressed(true)}
-			onTouchEnd={() => setIsPressed(false)}
+			type={type}
+			className={[
+				// базовые стили кнопки-строки для категорий
+				'relative select-none cursor-pointer rounded-[12px]',
+				// плавная анимация только цвета текста и push-эффект
+				'transition-[color,transform] duration-150 ease-out',
+				'transform-gpu active:[transform:scale(0.98)]',
+				'focus:outline-none',
+				className,
+			].join(' ')}
 			{...props}
 		>
 			{children}

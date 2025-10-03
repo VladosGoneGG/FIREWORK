@@ -169,14 +169,82 @@
 */
 @layer components {
 	.btn-firework {
-		@apply text-white   rounded-[10px] w-[220px] h-[50px]
-      bg-firework-radial transition-colors duration-200 cursor-pointer;
+		@apply relative inline-flex items-center justify-center
+           rounded-[10px] text-white
+           transition-[color] duration-150 ease-out
+           cursor-pointer select-none;
+		background-image: radial-gradient(
+			142.27% 173.76% at -13.16% 0%,
+			#1d0353 0%,
+			#c054eb 100%
+		);
+		overflow: hidden;
+		backface-visibility: hidden;
+		will-change: opacity;
 	}
+
+	/* ховер-оверлей (плавно) */
+	.btn-firework::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		background: #c054eb;
+		opacity: 0;
+		transition: opacity 150ms ease-out;
+		pointer-events: none;
+	}
+	.btn-firework:hover::before {
+		opacity: 1;
+	}
+
+	/* актив-оверлей (плавно) */
+	.btn-firework::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		background: #efebe6;
+		opacity: 0;
+		transition: opacity 150ms ease-out;
+		pointer-events: none;
+	}
+	.btn-firework:active::after {
+		opacity: 1;
+	}
+
+	/* ⬅️ ГЛАВНОЕ: на hover текст остаётся белым */
 	.btn-firework:hover {
-		@apply bg-none bg-firework-hover;
+		color: #fff !important;
 	}
+
+	/* при зажатии — как просил */
 	.btn-firework:active {
-		@apply bg-none !text-[#c054eb]  bg-firework-active;
+		color: #bd52e9 !important;
+	}
+
+	/* чтобы псевдо-элементы были изолированы от внешних слоёв */
+	.btn-firework {
+		isolation: isolate;
+	}
+
+	/* ✅ на hover текст кнопки и ВСЕГО содержимого остаётся белым */
+	.btn-firework:hover,
+	.btn-firework:hover * {
+		color: #fff !important;
+	}
+
+	/* ✅ плавная анимация цвета не только у самой кнопки, но и у детей */
+	.btn-firework,
+	.btn-firework * {
+		transition: color 150ms ease-out;
+	}
+
+	/* 🔥 (опционально) если где-то внутри попадётся свой цвет с !important —
+     добиваем повышенной специфичностью для активного состояния */
+	.btn-firework:active,
+	.btn-firework:active * {
+		color: #bd52e9 !important;
 	}
 
 	.btn-firework-filter {
