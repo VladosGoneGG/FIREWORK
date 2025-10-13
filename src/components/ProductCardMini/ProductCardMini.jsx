@@ -67,9 +67,10 @@ function ProductCardMini({ product, onSelect }) {
 			onClick={handleSelect}
 			onKeyDown={onKey}
 			title={name}
-			className='w-[120px]  h-[206px] bg-white'
+			className='w-[120px] h-[206px] bg-white'
 		>
-			<div className='h-full w-full flex flex-col  font-baron'>
+			{/* фиксируем колонковую раскладку на всю высоту */}
+			<div className='h-full w-full flex flex-col font-baron'>
 				{/* Фото 100×100 */}
 				<ProductThumb
 					src={img}
@@ -82,14 +83,15 @@ function ProductCardMini({ product, onSelect }) {
 				<ProductMeta name={name} manufacturer={manufacturer} />
 
 				{/* Параметры */}
-				<div className=' flex  text-[12px] justify-between text-[#625A51]  '>
-					<div className='w-[65px] h-[25px]flex flex-col gap-0.5'>
+				<div className='flex text-[12px] justify-between text-[#625A51] leading-none'>
+					{/* БАГ: тут не хватало пробела после h-[25px] */}
+					<div className='w-[65px] h-[25px] flex flex-col gap-0.5 whitespace-nowrap'>
 						<PriceBlock.Param icon='shots'>{shots ?? '—'}</PriceBlock.Param>
 						<PriceBlock.Param icon='time' title={fmtSecFull(durationSec)}>
 							{renderSec(durationSec)}
 						</PriceBlock.Param>
 					</div>
-					<div className='w-[50px] h-[25px]  flex flex-col '>
+					<div className='w-[50px] h-[25px] flex flex-col whitespace-nowrap'>
 						<PriceBlock.Param icon='caliber'>{caliber ?? '—'}</PriceBlock.Param>
 						<PriceBlock.Param icon='effects'>
 							{effectsCount ?? '—'}
@@ -97,10 +99,9 @@ function ProductCardMini({ product, onSelect }) {
 					</div>
 				</div>
 
-				{/* Цена + кнопка */}
-				<div className=' flex items-end justify-between'>
+				{/* Цена + кнопка — прижимаем вниз, чтобы низ у всех карточек совпадал */}
+				<div className='flex items-end justify-between mt-auto'>
 					<PriceBlock
-						// ВАЖНО: пробрасываем скидку только если она валидная
 						price={price}
 						discountPrice={hasValidDiscount ? discountPrice : null}
 						fmtPrice={fmtPrice}

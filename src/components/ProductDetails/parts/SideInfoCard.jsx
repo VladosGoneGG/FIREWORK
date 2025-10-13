@@ -40,7 +40,7 @@ function SideInfoCard({ product, img }) {
 			</div>
 
 			{/* карточка */}
-			<div className='bg-white p-1.5 flex flex-col items-start relative'>
+			<div className='bg-white px-1.5  flex flex-col items-start relative'>
 				{/* старая цена в углу */}
 				{typeof discountPrice === 'number' && typeof price === 'number' && (
 					<div
@@ -52,18 +52,18 @@ function SideInfoCard({ product, img }) {
 				)}
 
 				<h3
-					className='font-baron leading-tight truncate w-[150px] line-clamp-2 '
+					className='  font-baron leading-tight truncate w-[150px] text-[18px] line-clamp-2 '
 					title={name}
 				>
 					{name}
 				</h3>
-				<div className=' text-[10px] text-[#625a51] font-baron uppercase'>
+				<div className='mt-[5px] text-[10px] text-[#625a51] font-baron uppercase'>
 					<span className='lowercase'>производитель:</span>{' '}
 					{manufacturer || '—'}
 				</div>
 
 				{/* параметры */}
-				<div className='mt-2 ml-1 grid font-baron grid-cols-2 gap-x-4 gap-y-3 text-[12px]'>
+				<div className=' ml-1 mt-2.5  grid font-baron grid-cols-2 gap-x-4 gap-y-3 text-[12px]'>
 					<Param icon={shotsImg}>{shots ?? '—'}</Param>
 					<Param icon={caliberImg}>{caliber ?? '—'}</Param>
 					<Param icon={timeImg} title={fmtSecFull(durationSec)}>
@@ -73,8 +73,8 @@ function SideInfoCard({ product, img }) {
 				</div>
 
 				{/* сертификат */}
-				<div className='mt-2 text-[10px] font-baron lowercase flex items-center gap-2'>
-					<span className='text-[#625a51]'>сертификат</span>
+				<div className='text-[10px] ml-1 mt-[8px] font-baron lowercase flex items-center gap-2'>
+					<span className='text-[#625a51] '>сертификат</span>
 					{certificateUrl ? (
 						<a
 							href={certificateUrl}
@@ -93,12 +93,12 @@ function SideInfoCard({ product, img }) {
 				</div>
 
 				{/* наличие */}
-				<div className='text-[#098D00] text-[13px] lowercase font-baron '>
+				<div className='mt-[5px] ml-1 mb-[10px] text-[#098D00] text-[13px] lowercase font-baron leading-[13px] whitespace-nowrap'>
 					в наличии <span className='text-[13px]'>{inStock}</span> шт
 				</div>
 
 				{/* кнопка */}
-				<div className='mt-3 w-full'>
+				<div className=' w-full'>
 					<PriceQtyButton product={product} unitPrice={unitPrice} />
 				</div>
 			</div>
