@@ -7,7 +7,8 @@ import { setSearchQuery } from '../../store/slices/productsSlice'
 import forwarding from '../../assets/SVG/forwadding.svg'
 import loop from '../../assets/SVG/loop.svg'
 
-const SearchBar = ({ onOpenModal }) => {
+// Модалки больше нет — проп onOpenModal удалён
+const SearchBar = () => {
 	const dispatch = useDispatch()
 	const [localQuery, setLocalQuery] = useState('')
 	const inputRef = useRef(null)
@@ -54,15 +55,11 @@ const SearchBar = ({ onOpenModal }) => {
 			className='
         relative group flex items-center
         border border-[#efebe6] rounded-[20px]
-        w-[665px] h-[50px] bg-white
+        bg-white h-[50px]
+
+        /* АДАПТИВ: поле резиновое, но не шире исходных 665px */
+        w-full max-w-[665px]
       '
-			onClick={e => {
-				// клик по правой части поля откроет модалку
-				const rect = e.currentTarget.getBoundingClientRect()
-				if (e.clientX - rect.left > rect.width - 60) {
-					onOpenModal?.()
-				}
-			}}
 		>
 			<img
 				src={loop}
@@ -103,14 +100,14 @@ const SearchBar = ({ onOpenModal }) => {
         `}
 			/>
 
-			{/* clear */}
+			{/* clear — оставляю ваши стили; сделал видимым на md+, чтобы на мобиле не мешал */}
 			{localQuery && (
 				<button
 					type='button'
 					onClick={clear}
 					className='
-            absolute right-12 top-1/2 -translate-y-1/2
-            w-6 h-6 rounded-full hidden
+            absolute right-3 top-1/2 -translate-y-1/2
+            w-6 h-6 rounded-full md:flex items-center justify-center hidden
             hover:bg-black/5
             transition-colors duration-150 ease-out
           '
@@ -121,21 +118,7 @@ const SearchBar = ({ onOpenModal }) => {
 				</button>
 			)}
 
-			{/* «расширенный» — откроет модалку */}
-			<button
-				type='button'
-				onClick={onOpenModal}
-				className='
-          absolute right-2 top-1/2 -translate-y-1/2
-          text-[10px] px-2 py-1 rounded-[10px]
-          bg-[#efebe6] hidden hover:bg-[#e6e2dd]
-          font-baron lowercase
-          transition-colors duration-150 ease-out
-        '
-				title='Открыть глобальный поиск'
-			>
-				поиск
-			</button>
+			{/* кнопка "поиск" и клики по правой части — УДАЛЕНО, модалки больше нет */}
 		</div>
 	)
 }
