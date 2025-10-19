@@ -72,7 +72,19 @@ const ProductSection = ({
 			)}
 
 			{/* минимум 5 колонок на десктопах */}
-			<div className='grid grid-cols-5 gap-[11px] p-2.5 overflow-visible pb-3'>
+			<div
+				className='  grid
+    [grid-template-columns:repeat(auto-fill,120px)]
+    xl:[grid-template-columns:repeat(5,120px)]
+    justify-center
+    gap-[11px]
+    p-2.5 pb-3 overflow-visible
+
+   
+    md:mx-[-8px] lg:mx-[-12px] xl:mx-[-16px]
+   
+    xl:px-1'
+			>
 				{loading ? (
 					Array.from({ length: 10 }).map((_, i) => (
 						<ProductCardMiniSkeleton key={i} />
@@ -84,8 +96,16 @@ const ProductSection = ({
 								key={p.id}
 								layout='position'
 								initial={{ opacity: 0, y: -8 }}
-								animate={FX_IN}
-								exit={FX_OUT}
+								animate={{
+									opacity: 1,
+									y: 0,
+									transition: { duration: 0.14, ease: 'easeOut' },
+								}}
+								exit={{
+									opacity: 0,
+									y: -8,
+									transition: { duration: 0.12, ease: 'easeIn' },
+								}}
 								style={{ willChange: 'opacity, transform' }}
 							>
 								<ProductCardMini product={p} onSelect={onSelectProduct} />

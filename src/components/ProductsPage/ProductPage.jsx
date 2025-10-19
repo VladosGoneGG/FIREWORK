@@ -209,20 +209,6 @@ const ProductsPage = ({
 		exit: { opacity: 0, transition: { duration: 0.12, ease: 'easeIn' } },
 	}
 
-	useEffect(() => {
-		if (!selectedProduct) return
-		const root = document.documentElement
-		const prevOverflow = root.style.overflow
-		const prevPadRight = root.style.paddingRight
-		const sbw = window.innerWidth - root.clientWidth
-		root.style.overflow = 'hidden'
-		if (sbw > 0) root.style.paddingRight = `${sbw}px`
-		return () => {
-			root.style.overflow = prevOverflow
-			root.style.paddingRight = prevPadRight
-		}
-	}, [selectedProduct])
-
 	const FilterBar = (
 		<div className='relative'>
 			<div className='flex items-start pt-2.5 gap-2 '>
@@ -271,7 +257,7 @@ const ProductsPage = ({
 			<div
 				ref={anchorRef}
 				className={`relative bg-white rounded-[20px] overflow-hidden mx-auto 
-          w-full max-w=[1200px] px-4 lg:px-3 md:px-2
+           w-full max-w-[1200px] px-4 lg:px-3 md:px-2
           ${selectedProduct ? 'h-[834px]' : 'min-h-[834px]'}`}
 			>
 				{/* ==== ОСНОВНОЙ СЛОЙ ==== */}

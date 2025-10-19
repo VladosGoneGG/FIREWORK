@@ -14,11 +14,9 @@ import SubcategoryOverlay from './components/SubcategoryOverlay/SubcategoryOverl
 
 import useOverlayFilters from './hooks/useOverlayFilters'
 
-const HEADER_H = 140
-const CENTER_W = 720
-const DETAILS_W = 1010
-const DETAILS_H = 834
 const COLUMN_H = 834
+const DETAILS_H = 834
+const CENTER_W = 720 // информативный проп для ProductsPage
 
 function App() {
 	const [detailsMode, setDetailsMode] = useState(false)
@@ -50,93 +48,114 @@ function App() {
 		!searchOpen &&
 		!String(searchQuery).trim()
 
+	// 3-колоночный режим: 240 | minmax(449,665) | 295, gap-x = 20
+	const gridNormal = '[grid-template-columns:240px_minmax(449px,665px)_295px]'
+	// Детали: minmax(709,1010) | 295, gap-x = 20
+	const gridDetails = '[grid-template-columns:minmax(709px,925px)_295px]'
+
 	return (
-		<div className='flex flex-col items-center min-h-screen scroll-hidden overflow-y-auto '>
+		<div className='flex flex-col items-center min-h-screen scroll-hidden overflow-y-auto'>
 			<Header rightSlot={<SearchBar />} />
 
-			<div className='flex mt-[20px] w-full justify-center '>
-				<main className='flex w-[1240px] justify-center gap-5'>
-					{/* ЛЕВАЯ КОЛОНКА */}
-					<div
-						className={`sticky ${detailsMode ? 'hidden' : 'block '}`}
-						style={{ top: HEADER_H }}
+			<div className='w-full  px-2.5 overflow-visible'>
+				<div className='overflow-x-auto'>
+					<main
+						className={[
+							'mx-auto w-full ',
+							// Ниже 1024 — горизонтальный скролл, ничего не исчезает
+							detailsMode
+								? 'min-w-[1024px] max-w-[1240px]'
+								: 'min-w-[1024px] max-w-[1240px]',
+							'px-0',
+							'grid items-start gap-x-5 gap-y-5 overflow-visible pt-[20px]',
+							detailsMode ? gridDetails : gridNormal,
+						].join(' ')}
 					>
-						<div className='relative w-[240px]' style={{ height: COLUMN_H }}>
-							{!filtersOpen && (
-								<>
-									<CategoryFilter
-										onAnyCategoryClick={() => setIsLanding(false)}
-									/>
-									<PromoPanel />
-								</>
-							)}
-
-							{/* Панель ВСЕГДА смонтирована — закрытие уезжает вверх плавно */}
-							<SubcategoryOverlay
-								isOpen={filtersOpen}
-								onClose={() => setFiltersOpen(false)}
-								onApply={() => {
-									setIsLanding(false)
-									applyOverlay()
-								}}
-								onReset={() => {
-									setIsLanding(false)
-									clearOverlay()
-								}}
-								resultsCount={overlayCount}
-								form={form}
-								setField={setField}
-								reset={resetForm}
-							/>
-						</div>
-					</div>
-
-					{/* ЦЕНТР */}
-					<div
-						className='scroll-hidden bg-transparent flex flex-col'
-						style={{ width: DETAILS_W }}
-					>
-						<div
-							className='relative z-10 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px] flex flex_col bg-white'
-							style={{ height: detailsMode ? DETAILS_H : COLUMN_H }}
-						>
-							<div className='flex-1 min-h-0 overflow-y-auto scroll-hidden rounded-[20px] '>
-								<ProductsPage
-									externalSelectedProduct={selectedFromSearch}
-									onToggleFilters={() => {
-										setIsLanding(false)
-										setFiltersOpen(v => !v)
-									}}
-									onDetailsModeChange={on => {
-										if (on) setIsLanding(false)
-										setDetailsMode(on)
-									}}
-									onConsumeExternalSelected={() => setSelectedFromSearch(null)}
-									overlayFilters={appliedFilters}
-									overlayFiltersPreview={normalized}
-									onFiltersCountChange={setOverlayCount}
-									filtersOpen={filtersOpen}
-									narrow={!detailsMode}
-									narrowWidth={CENTER_W}
-									showSlider={showSliderOnHome}
-								/>
-							</div>
-						</div>
-
+						{/* ЛЕВАЯ КОЛОНКА — скрываем ТОЛЬКО в режиме деталей */}
 						{!detailsMode && (
-							<div className='mb-[20px] relative z-0 '>
-								<FooterSection />
+							<div className='sticky top-0'>
+								<div
+									className='relative w-[240px]'
+									style={{ height: COLUMN_H }}
+								>
+									{!filtersOpen && (
+										<>
+											<CategoryFilter
+												onAnyCategoryClick={() => setIsLanding(false)}
+											/>
+											<PromoPanel />
+										</>
+									)}
+									<SubcategoryOverlay
+										isOpen={filtersOpen}
+										onClose={() => setFiltersOpen(false)}
+										onApply={() => {
+											setIsLanding(false)
+											applyOverlay()
+										}}
+										onReset={() => {
+											setIsLanding(false)
+											clearOverlay()
+										}}
+										resultsCount={overlayCount}
+										form={form}
+										setField={setField}
+										reset={resetForm}
+									/>
+								</div>
 							</div>
 						)}
-					</div>
 
-					{/* ПРАВАЯ КОЛОНКА */}
-					<aside className='w-80 sticky' style={{ top: HEADER_H }}>
-						<div style={{ height: COLUMN_H }}>
-							<ProductCart />
+						{/* ЦЕНТР — фикс высота, внутренняя прокрутка (скрытая полоса) */}
+						<div className='scroll-hidden bg-transparent flex flex-col w-full overflow-visible pt-[2px] -mt-[2px]'>
+							<div
+								className='relative z-10 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px] flex flex_col bg-white w-full overflow-visible'
+								style={{ height: detailsMode ? 'auto' : COLUMN_H }}
+							>
+								<div
+									className={`flex-1 rounded-[20px] ${
+										detailsMode
+											? 'overflow-visible'
+											: 'min-h-0 overflow-y-auto scroll-hidden'
+									}`}
+								>
+									<ProductsPage
+										externalSelectedProduct={selectedFromSearch}
+										onToggleFilters={() => {
+											setIsLanding(false)
+											setFiltersOpen(v => !v)
+										}}
+										onDetailsModeChange={on => {
+											if (on) setIsLanding(false)
+											setDetailsMode(on)
+										}}
+										onConsumeExternalSelected={() =>
+											setSelectedFromSearch(null)
+										}
+										overlayFilters={appliedFilters}
+										overlayFiltersPreview={normalized}
+										onFiltersCountChange={setOverlayCount}
+										filtersOpen={filtersOpen}
+										narrow={!detailsMode}
+										narrowWidth={CENTER_W}
+										showSlider={showSliderOnHome}
+									/>
+								</div>
+							</div>
+
+							<div className='mb-[20px] relative z-0'>
+								<FooterSection />
+							</div>
 						</div>
-					</aside>
-				</main>
+
+						{/* ПРАВАЯ КОЛОНКА — 295px по макету */}
+						<aside className='sticky top-0'>
+							<div className='w-[295px]' style={{ height: COLUMN_H }}>
+								<ProductCart />
+							</div>
+						</aside>
+					</main>
+				</div>
 			</div>
 
 			<SearchModal

@@ -310,7 +310,7 @@ export default function SubcategoryOverlay({
 							<div className='text-[#625A51] text-lg font-baron lowercase'>
 								фильтры
 							</div>
-							<div className='w-[204px] h-[2px] bg-[#EFEBE6] rounded-[20px] mt-2.5 mx-auto' />
+							<div className='w-[204px] h-[3px] bg-[#EFEBE6] rounded-[20px] mt-2.5 mx-auto' />
 							<button
 								type='button'
 								onClick={onClose}

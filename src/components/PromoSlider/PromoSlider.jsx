@@ -1,3 +1,4 @@
+// src/components/PromoSlider/PromoSlider.jsx
 import { memo, useEffect, useRef, useState } from 'react'
 const DEFAULT_IMAGES = ['/tovar-1.webp', '/tovar-2.webp', '/tovar-3.webp']
 
@@ -12,7 +13,7 @@ const PromoSlider = ({
 	const timerRef = useRef(null)
 
 	useEffect(() => {
-		if (!active) return
+		if (!active || images.length <= 1) return
 		timerRef.current = setInterval(
 			() => setI(prev => (prev + 1) % images.length),
 			intervalMs
@@ -28,11 +29,16 @@ const PromoSlider = ({
 	return (
 		<div
 			className={[
-				'relative w-[640px] h-[300px] rounded-[10px] overflow-hidden mx-auto bg-[#f6f4f2] mt-2.5',
+				// РЕЗИНА: растягиваемся по центру, но не больше макета
+				'relative w-full max-w-[665px] mx-auto rounded-[10px] overflow-hidden bg-[#f6f4f2] mt-2.5',
+				// немного воздуха по краям на узких, на xl убираем (если нужно — можно убрать)
+				'px-0',
 				'select-none',
 				className,
 			].join(' ')}
 			aria-label='Промо-слайдер'
+			// высота считается автоматически по соотношению сторон 640×300 (≈ 64/30)
+			style={{ aspectRatio: '64 / 30' }}
 		>
 			<div
 				className='absolute inset-0 flex'
@@ -70,4 +76,5 @@ const PromoSlider = ({
 		</div>
 	)
 }
+
 export default memo(PromoSlider)
