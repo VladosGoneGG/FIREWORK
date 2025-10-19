@@ -9,10 +9,10 @@ function AddToCartButton({ disabled, onClick }) {
 			disabled={disabled}
 			aria-disabled={disabled}
 			className={[
-				// фикс выравнивания и центрирования
 				'inline-flex items-center justify-center align-middle',
-				// твои размеры и остальное
 				'w-[40px] h-[25px] rounded-[10px] text-[20px] leading-none transition cursor-pointer group',
+				// не даём расти/сжимать сетку
+				'flex-shrink-0',
 				disabled
 					? 'bg-[#e5e2de] text-[#9c9c9c] cursor-not-allowed'
 					: 'bg-[#cbb7ff] hover:bg-purple-500 active:bg-stone-200 active:scale-95',
@@ -22,7 +22,6 @@ function AddToCartButton({ disabled, onClick }) {
 		>
 			<PlusSvg
 				className={[
-					// svg как блок — убираем «хвосты» шрифта
 					'block w-3 h-3 transition-colors',
 					disabled
 						? 'text-[#9c9c9c]'

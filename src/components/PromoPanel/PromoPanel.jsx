@@ -1,12 +1,15 @@
+// src/components/PromoPanel/PromoPanel.jsx
 import promoLeft from '../../assets/SVG/Banner-left.svg'
 
 const PromoPanel = () => {
 	return (
-		<div className='bg-white flex flex-col justify-between items-center mt-[20px] w-[240px] h-[413px] rounded-[20px] shadow-[0_0_10px_0_rgba(0,0,0,0.2)]'>
+		// панель вписывается в ширину трека: w-full
+		<div className='bg-white flex flex-col justify-between items-center mt-[20px] w-full h-[413px] rounded-[20px] shadow-[0_0_10px_0_rgba(0,0,0,0.2)]'>
 			<img
 				src={promoLeft}
 				alt='Промо'
-				className='w-[220px] mt-[10px] h-[331px]'
+				// картинка не шире 220, чтобы на md не вылезать
+				className='w-[220px] mt-[10px] h-[331px] max-w-full'
 			/>
 			<button
 				type='button'

@@ -11,7 +11,7 @@ import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSke
  * - onSelectProduct: (product) => void
  * - onOpenSubcategory: ({ title, products }) => void
  * - loading: boolean
- * - showHeader?: boolean  // можно скрыть хедер, если он уже есть выше по дереву
+ * - showHeader?: boolean
  */
 const ProductSection = ({
 	title,
@@ -56,14 +56,16 @@ const ProductSection = ({
 	return (
 		<section className='space-y-3'>
 			{showHeader && (
-				<div className='flex items-center justify-between'>
-					<h3 className='text-[18px] lowercase font-baron pl-5'>{title}</h3>
+				<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0'>
+					<h3 className='text-[16px] sm:text-[18px] lowercase font-baron pl-5'>
+						{title}
+					</h3>
 
 					{hasMore && (
 						<button
 							type='button'
 							onClick={handleOpenMore}
-							className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer pr-[23px]'
+							className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start pr-2.5'
 						>
 							посмотреть ещё
 						</button>
@@ -71,8 +73,19 @@ const ProductSection = ({
 				</div>
 			)}
 
-			{/* минимум 5 колонок на десктопах */}
-			<div className='grid grid-cols-5 gap-[11px] p-2.5 overflow-visible pb-3'>
+			{/* сетка: фикс-ячейка 120×206; на lg — строго 5 колонок */}
+			<div
+				className='
+          grid
+          [grid-template-columns:repeat(auto-fill,120px)]
+          auto-rows-[206px]
+          justify-center
+          gap-[11px]
+          p-2.5 pb-3 overflow-visible
+
+            
+        '
+			>
 				{loading ? (
 					Array.from({ length: 10 }).map((_, i) => (
 						<ProductCardMiniSkeleton key={i} />

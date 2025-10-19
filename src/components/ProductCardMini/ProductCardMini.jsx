@@ -27,9 +27,10 @@ function ProductCardMini({ product, onSelect }) {
 	const img = images[0]
 	const outOfStock = Number(stock) === 0
 
-	const handleSelect = useCallback(() => {
-		onSelect?.(product)
-	}, [onSelect, product])
+	const handleSelect = useCallback(
+		() => onSelect?.(product),
+		[onSelect, product]
+	)
 
 	const onKey = useCallback(
 		e => {
@@ -41,13 +42,11 @@ function ProductCardMini({ product, onSelect }) {
 		[onSelect, product]
 	)
 
-	// --- НОРМАЛИЗАЦИЯ ЦЕН ---
+	// нормализация цен
 	const p = Number(price)
 	const dp = Number(discountPrice)
 	const hasValidDiscount =
 		Number.isFinite(p) && p > 0 && Number.isFinite(dp) && dp > 0 && dp < p
-
-	// Итоговая цена для корзины
 	const unitPrice = hasValidDiscount ? dp : Number.isFinite(p) ? p : 0
 
 	const add = useCallback(
@@ -67,9 +66,9 @@ function ProductCardMini({ product, onSelect }) {
 			onClick={handleSelect}
 			onKeyDown={onKey}
 			title={name}
-			className='w-[120px] h-[206px] bg-white'
+			className='w-full h-full bg-white'
 		>
-			{/* фиксируем колонковую раскладку на всю высоту */}
+			{/* строгое колонковое расположение; фиксируем высоты зон */}
 			<div className='h-full w-full flex flex-col font-baron'>
 				{/* Фото 100×100 */}
 				<ProductThumb
@@ -79,12 +78,13 @@ function ProductCardMini({ product, onSelect }) {
 					badgeText='Нет в наличии'
 				/>
 
-				{/* Название + производитель */}
-				<ProductMeta name={name} manufacturer={manufacturer} />
+				{/* Имя/производитель — фиксированная высота, чтобы карточки не «прыгали» */}
+				<div className='px-2 h-[34px] overflow-hidden'>
+					<ProductMeta name={name} manufacturer={manufacturer} />
+				</div>
 
-				{/* Параметры */}
+				{/* Параметры — как у тебя: две узкие колонки, фикс высота */}
 				<div className='flex text-[12px] justify-between text-[#625A51] leading-none'>
-					{/* БАГ: тут не хватало пробела после h-[25px] */}
 					<div className='w-[65px] h-[25px] flex flex-col gap-0.5 whitespace-nowrap'>
 						<PriceBlock.Param icon='shots'>{shots ?? '—'}</PriceBlock.Param>
 						<PriceBlock.Param icon='time' title={fmtSecFull(durationSec)}>
@@ -99,8 +99,8 @@ function ProductCardMini({ product, onSelect }) {
 					</div>
 				</div>
 
-				{/* Цена + кнопка — прижимаем вниз, чтобы низ у всех карточек совпадал */}
-				<div className='flex items-end justify-between mt-auto'>
+				{/* Цена + кнопка — прижимаем вниз; фикс высота ряда, чтобы низ совпадал */}
+				<div className='flex items-end justify-between mt-auto h-[28px] px-1'>
 					<PriceBlock
 						price={price}
 						discountPrice={hasValidDiscount ? discountPrice : null}

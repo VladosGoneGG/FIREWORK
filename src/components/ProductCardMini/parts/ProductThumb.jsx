@@ -1,5 +1,4 @@
 // src/components/ProductCardMini/parts/ProductThumb.jsx
-
 export default function ProductThumb({
 	src,
 	alt,
@@ -13,7 +12,7 @@ export default function ProductThumb({
 					src={src}
 					alt={alt}
 					loading='lazy'
-					className='w-full h-full object-contain cursor-pointer'
+					className='w-full h-full object-contain block'
 				/>
 			) : (
 				<div className='grid place-items-center w-full h-full text-xs opacity-60'>

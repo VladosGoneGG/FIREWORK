@@ -13,7 +13,6 @@ import CategoryFilterSkeleton from './CategoryFilterSkeleton'
 const norm = name => (name === 'Все' ? 'all' : String(name || '').toLowerCase())
 
 const CategoryFilter = ({ onAnyCategoryClick }) => {
-	// ← добавили проп
 	const dispatch = useDispatch()
 	const { list, selectedCategory, status } = useSelector(s => s.categories)
 	const [expandedId, setExpandedId] = useState(null)
@@ -30,7 +29,7 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 
 	const handleCategoryClick = useCallback(
 		cat => {
-			onAnyCategoryClick?.() // ← помечаем, что это уже не лендинг
+			onAnyCategoryClick?.()
 			const key = norm(cat.name)
 			dispatch(setCategory(key))
 			dispatch(clearSearchQuery())
@@ -45,23 +44,27 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 
 	const handleSubClick = useCallback(
 		name => {
-			onAnyCategoryClick?.() // ← тоже помечаем
+			onAnyCategoryClick?.()
 			dispatch(setCategory(norm(name)))
 			dispatch(clearSearchQuery())
 		},
 		[dispatch, onAnyCategoryClick]
 	)
 
-	if (status === 'loading') return <CategoryFilterSkeleton />
+	if (status === 'loading') {
+		// ширина из трека → w-full, не 240
+		return <CategoryFilterSkeleton className='w-full' />
+	}
 
 	if (!list?.length) {
 		return (
-			<aside className='w-[240px] bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)]' />
+			<aside className='w-full bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)]' />
 		)
 	}
 
 	return (
-		<aside className='w-[240px] max-h-[401px] bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] font-baron lowercase font-bold '>
+		// ширина берётся от трека: md=220px, xl=240px → тут только w-full
+		<aside className='w-full max-h-[401px] bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] font-baron lowercase font-bold'>
 			<ul className='space-y-1'>
 				{list.map(cat => {
 					const key = norm(cat.name)

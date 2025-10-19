@@ -142,14 +142,14 @@ const ProductsPage = ({
 				)
 			}
 
-			// страховка по скидкам: промо — только скидочные, остальные — без скидочных
+			// страховка по скидкам
 			if (isPromo) {
 				products = products.filter(p => discountedSet.has(p.id))
 			} else {
 				products = products.filter(p => !discountedSet.has(p.id))
 			}
 
-			// ⬇️ ВАЖНО: синхронизируем Redux, чтобы клик "все" потом реально сменил selected
+			// синхронизируем Redux
 			if (title) {
 				dispatch(setCategory(isPromo ? PROMO_KEY : t))
 			}
@@ -163,7 +163,7 @@ const ProductsPage = ({
 		[allItems, discountedSet, dispatch]
 	)
 
-	// Промо-секция и "посмотреть ещё" (ТОЛЬКО для HOME/FilterBar)
+	// Промо-секция и "посмотреть ещё" (только для HOME)
 	const promoSec = useMemo(
 		() => sectionsSorted.find(s => norm(s.title) === PROMO_KEY),
 		[sectionsSorted]
@@ -209,6 +209,7 @@ const ProductsPage = ({
 		exit: { opacity: 0, transition: { duration: 0.12, ease: 'easeIn' } },
 	}
 
+	// lock scroll when details opened
 	useEffect(() => {
 		if (!selectedProduct) return
 		const root = document.documentElement
@@ -225,19 +226,19 @@ const ProductsPage = ({
 
 	const FilterBar = (
 		<div className='relative'>
-			<div className='flex items-start pt-2.5 gap-2 '>
+			<div className='flex flex-col sm:flex-row sm:items-start pt-2.5 gap-2 sm:gap-3'>
 				{/* ЛЕВАЯ КОЛОНКА: "акции" + "посмотреть ещё" (только на HOME) */}
 				<div className='pl-1 flex-1'>
 					{promoSec ? (
 						<div className='flex flex-col gap-1'>
-							<h3 className='text-[18px] lowercase font-baron leading-none text-black'>
+							<h3 className='text-[16px] sm:text-[18px] lowercase font-baron leading-none text-black'>
 								{promoSec.title}
 							</h3>
 							{promoHasMore && (
 								<button
 									type='button'
 									onClick={openPromo}
-									className='absolute left-20 bottom-1.5  text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'
+									className='text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start sm:absolute sm:left-20 sm:bottom-1.5'
 								>
 									посмотреть ещё
 								</button>
@@ -247,12 +248,12 @@ const ProductsPage = ({
 				</div>
 
 				{/* ПРАВАЯ КОЛОНКА: фильтр + сортировка */}
-				<div className='ml-auto flex items-center gap-2'>
+				<div className='sm:ml-auto flex items-center gap-2 sm:gap-2.5'>
 					<button
 						type='button'
 						onClick={onToggleFilters}
 						className={[
-							'w-[75px] h-[25px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
+							'w-[64px] sm:w-[75px] h-[25px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
 							filtersOpen
 								? 'bg-[#EFEBE7] text-[#BD52E9]'
 								: 'btn-firework-filter',
@@ -270,9 +271,10 @@ const ProductsPage = ({
 		<LayoutGroup id='products-page'>
 			<div
 				ref={anchorRef}
-				className={`relative bg-white rounded-[20px] overflow-hidden mx-auto 
-          w-full max-w=[1200px] px-4 lg:px-3 md:px-2
-          ${selectedProduct ? 'h-[834px]' : 'min-h-[834px]'}`}
+				className={`relative bg-white rounded-[20px] overflow-hidden mx-auto
+          w-full max-w-[1200px] 
+          ${selectedProduct ? '' : ''}
+          min-h-[600px] sm:min-h-[700px] lg:min-h-[834px]`}
 			>
 				{/* ==== ОСНОВНОЙ СЛОЙ ==== */}
 				<motion.div layout='position'>
@@ -312,7 +314,7 @@ const ProductsPage = ({
 										initial='initial'
 										animate='enter'
 										exit='exit'
-										className='space-y-6'
+										className='space-y-4 sm:space-y-6'
 									>
 										{sectionsSorted.map(sec => (
 											<motion.div
@@ -329,7 +331,7 @@ const ProductsPage = ({
 													onSelectProduct={openDetails}
 													onOpenSubcategory={openSubcategory}
 													loading={status === 'loading'}
-													showHeader={norm(sec.title) !== PROMO_KEY} // у "акции" хедер скрыт
+													showHeader={norm(sec.title) !== PROMO_KEY}
 												/>
 											</motion.div>
 										))}
