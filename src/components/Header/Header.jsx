@@ -1,5 +1,4 @@
-// src/components/Header/Header.jsx
-import Logo from '../../assets/SVG/LOGO.svg'
+import Logotip from '../Logotip/Logotip'
 
 const Header = ({ rightSlot }) => {
 	return (
@@ -43,13 +42,9 @@ const Header = ({ rightSlot }) => {
 				<div className='mx-auto my-4 h-[2px] rounded-[20px] bg-[#efebe6] w-[min(1200px,calc(100%-40px))]' />
 
 				{/* Нижняя строка: ЛОГОТИП + ПОИСК В ОДНУ СТРОКУ */}
-				<div className='flex items-center  gap-15 px-4'>
+				<div className='flex items-center  gap-15 ml-[79px]'>
 					<a href='/' className='shrink-0'>
-						<img
-							src={Logo}
-							alt='Логотип'
-							className='ml-[64px] h-[40px] w-auto'
-						/>
+						<Logotip />
 					</a>
 
 					{/* Поиск/правый слот — справа, в ту же строку */}
