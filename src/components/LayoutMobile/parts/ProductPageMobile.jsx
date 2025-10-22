@@ -1,3 +1,4 @@
+// src/components/LayoutMobile/parts/ProductPageMobile.jsx
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -5,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import useProductsBoot from '../../../hooks/useProductsBoot'
 import useSections from '../../../hooks/useSections'
 import { setCategory } from '../../../store/slices/categoriesSlice'
+import { openDetails } from '../../../store/slices/detailsSlice'
 import {
 	selectDiscountedProducts,
 	selectFilteredProducts,
@@ -13,12 +15,6 @@ import {
 import { applySort, SORT_KEYS } from '../../../utils/sort'
 import SectionMobile from './SectionMobile'
 
-/**
- * Мобильная страница каталога:
- * - группы по категориям (как на десктопе)
- * - внутри группы — SectionMobile (grid 3→2→1, «посмотреть ещё»)
- * - данные берём из Redux: selectFilteredProducts + selectDiscountedProducts
- */
 const ProductPageMobile = () => {
 	useProductsBoot()
 
@@ -33,14 +29,12 @@ const ProductPageMobile = () => {
 
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
 
-	// helpers
 	const norm = s =>
 		String(s || '')
 			.trim()
 			.toLowerCase()
 	const PROMO_KEY = 'акции'
 
-	// FILTERED как на десктопе (без overlay-фильтров — их у тебя на мобиле пока нет)
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
 		[discountedAll]
@@ -54,7 +48,6 @@ const ProductPageMobile = () => {
 		[filtered, discountedSet]
 	)
 
-	// секции категорий
 	const sections = useSections(homeDiscounted, homeNonDiscounted, selected)
 	const sectionsSorted = useMemo(
 		() =>
@@ -65,7 +58,6 @@ const ProductPageMobile = () => {
 		[sections, sortKey]
 	)
 
-	// открыть подкатегорию (как на десктопе)
 	const openSubcategory = useCallback(
 		payload => {
 			let title = ''
@@ -98,10 +90,6 @@ const ProductPageMobile = () => {
 			if (title) {
 				dispatch(setCategory(isPromo ? PROMO_KEY : t))
 			}
-
-			// В мобильной версии ты можешь открыть отдельный экран/роут для подкатегории.
-			// Здесь просто уводим на выбранную категорию (selectedCategory в Redux уже обновлён).
-			// Дальше SectionMobile покажет нужные товары по селектору.
 		},
 		[allItems, discountedSet, dispatch]
 	)
@@ -112,14 +100,20 @@ const ProductPageMobile = () => {
 		exit: { opacity: 0, transition: { duration: 0.12, ease: 'easeIn' } },
 	}
 
-	// при поиске скрываем заголовки/«акции» как на десктопе — всё уже в selectFilteredProducts
-	useEffect(() => {
-		// здесь можно сбрасывать что-то под поиск на мобиле; пока не требуется
-	}, [search])
+	useEffect(() => {}, [search])
+
+	// Открыть детали через Redux (сохраняем снапшот в слайсе)
+	const openDetailsRedux = useCallback(
+		p => {
+			if (p) dispatch(openDetails(p))
+		},
+		[dispatch]
+	)
 
 	return (
 		<div className='px-3 py-3'>
-			<AnimatePresence mode='wait' initial={false}>
+			{/* один AnimatePresence без mode="wait" */}
+			<AnimatePresence initial={false}>
 				<motion.div
 					key='home-mobile'
 					layout='position'
@@ -141,9 +135,7 @@ const ProductPageMobile = () => {
 							<SectionMobile
 								title={sec.title}
 								products={sec.items}
-								onSelectProduct={() => {
-									/* при необходимости прокинь колбэк из LayoutMobile */
-								}}
+								onSelectProduct={openDetailsRedux} // ← клик по карточке
 								onOpenSubcategory={openSubcategory}
 								loading={status === 'loading'}
 								showHeader={norm(sec.title) !== PROMO_KEY}

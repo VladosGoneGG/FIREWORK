@@ -3,6 +3,7 @@ import throttle from 'lodash.throttle'
 import { loadCart, saveCart } from '../utils/persistCart'
 import cartReducer, { setCart } from './slices/cartSlice'
 import categoriesReducer from './slices/categoriesSlice'
+import detailsReducer from './slices/detailsSlice'
 import productsReducer from './slices/productsSlice'
 
 export const store = configureStore({
@@ -10,6 +11,7 @@ export const store = configureStore({
 		cart: cartReducer,
 		products: productsReducer,
 		categories: categoriesReducer,
+		details: detailsReducer,
 	},
 })
 

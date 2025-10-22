@@ -7,7 +7,7 @@ import PlusMobileSvg from '../../PlusMobileSvg/PlusMobileSvg'
 import PriceBlock from '../../ProductCardMini/parts/PriceBlock'
 import ProductThumb from '../../ProductCardMini/parts/ProductThumb'
 
-function ProductCardMiniMobile({ product /*, onSelect*/ }) {
+function ProductCardMiniMobile({ product, onSelect }) {
 	const dispatch = useDispatch()
 
 	const {
@@ -48,12 +48,16 @@ function ProductCardMiniMobile({ product /*, onSelect*/ }) {
 
 	const handleAdd = useCallback(
 		e => {
-			e.stopPropagation()
+			e.stopPropagation() // важно, чтобы клик по кнопке не открывал детали
 			if (outOfStock) return
 			dispatch(addItem(product))
 		},
 		[dispatch, product, outOfStock]
 	)
+
+	const handleOpen = useCallback(() => {
+		onSelect?.(product) // вот этого раньше не было
+	}, [onSelect, product])
 
 	const currentPrice = Number(discountPrice) || Number(price) || 0
 	const hasDiscount =
@@ -61,10 +65,11 @@ function ProductCardMiniMobile({ product /*, onSelect*/ }) {
 
 	return (
 		<div
+			onClick={handleOpen}
 			className={[
 				'flex flex-row w-full max-w-[360px] h-[100px] justify-between rounded-[20px]',
 				'shadow-[0_0_10px_rgba(0,0,0,0.2)] bg-white px-2.5',
-				'select-none outline-none',
+				'select-none outline-none cursor-pointer', // курсор, но стили не меняем
 				outOfStock ? 'opacity-70' : '',
 			].join(' ')}
 		>

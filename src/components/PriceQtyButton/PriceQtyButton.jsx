@@ -49,7 +49,7 @@ const PriceQtyButton = ({ product, unitPrice, className = '' }) => {
 		})
 
 	// фон контейнера (как у тебя, только без влияния на клики)
-	let bgClass = 'bg-purple-500'
+	let bgClass = 'bg-purple-500 max-[680px]:bg-[#BD52E9]'
 	if (hoverSide === 'left')
 		bgClass = 'bg-gradient-to-r from-violet-300 to-purple-500'
 	else if (hoverSide === 'right')
@@ -66,7 +66,7 @@ const PriceQtyButton = ({ product, unitPrice, className = '' }) => {
 	return (
 		<div
 			className={[
-				'relative w-48 h-11 rounded-[10px] inline-flex justify-center items-center gap-7 px-3',
+				'relative w-48 h-11 rounded-[10px] max-[680px]:rounded-[20px]  inline-flex justify-center items-center gap-7 px-3',
 				bgClass,
 				'transition-[background-color,transform,filter] duration-200 ease-out',
 				tapSide ? 'scale-[0.99]' : 'scale-100',
