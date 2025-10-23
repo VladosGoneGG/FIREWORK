@@ -7,6 +7,7 @@ import ProductDetails from '../../components/ProductDetails/ProductDetails'
 import useMediaQuery from '../../hooks/useMediaQuery'
 import {
 	closeDetails,
+	openDetails,
 	selectSelectedProduct,
 } from '../../store/slices/detailsSlice'
 
@@ -48,6 +49,14 @@ export default function ProductDetailsOverlay() {
 		dispatch(closeDetails())
 	}
 
+	// 👇 Хендлер выбора товара из "добавь в набор"
+	const handleSelectProduct = p => {
+		// Если у тебя openDetails ждёт именно id, сделай так:
+		// dispatch(openDetails({ id: p.id }))
+		// Если ждёт весь объект продукта (часто так и делают), то так:
+		dispatch(openDetails(p))
+	}
+
 	return createPortal(
 		<AnimatePresence>
 			{displayProduct && (
@@ -58,10 +67,9 @@ export default function ProductDetailsOverlay() {
 					exit={{ opacity: 0 }}
 					className={[
 						'fixed inset-0 z-50 bg-white overflow-y-auto',
-						// спрятать скроллбары, но оставить скролл колесом/тачем
-						'[-ms-overflow-style:none]', // IE/Edge
-						'[scrollbar-width:none]', // Firefox
-						'[&::-webkit-scrollbar]:hidden', // WebKit
+						'[-ms-overflow-style:none]',
+						'[scrollbar-width:none]',
+						'[&::-webkit-scrollbar]:hidden',
 					].join(' ')}
 				>
 					<div>
@@ -70,7 +78,7 @@ export default function ProductDetailsOverlay() {
 							related={related}
 							onBack={handleClose}
 							onOpenSubcategory={handleClose}
-							onSelectProduct={() => {}}
+							onSelectProduct={handleSelectProduct}
 						/>
 					</div>
 				</motion.div>

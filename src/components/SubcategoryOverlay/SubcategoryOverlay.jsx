@@ -2,7 +2,6 @@
 import { motion } from 'framer-motion'
 import React, { memo, useCallback } from 'react'
 
-// списки значений
 const PRODUCT_TYPES = ['дым', 'петарды', 'наземный фейерверк']
 const MANUFACTURERS = ['Piroff', 'Joker', 'Maxsem']
 const SHOTS_PRESETS = [1, 2, 3, 4]
@@ -11,7 +10,7 @@ const POWER_LEVELS = ['слабый', 'средний', 'мощный']
 const toArr = v => (Array.isArray(v) ? v : v == null ? [] : [v])
 const nnum = v => (Number.isFinite(Number(v)) ? Number(v) : 0)
 
-/* ====================== ЧЕКБОКС-СТРОКА ====================== */
+/* ===== чекбокс-строка (моб. размер) ===== */
 function WhiteCheckRow({ label, checked, onToggle }) {
 	const [hover, setHover] = React.useState(false)
 	const [active, setActive] = React.useState(false)
@@ -25,13 +24,14 @@ function WhiteCheckRow({ label, checked, onToggle }) {
 
 	let dotSize = 10
 	let dotColor = COLOR_BASE_BG
+
 	if (!checked) {
 		if (hover) {
-			dotSize = 6
+			dotSize = 8 // чуть крупнее на мобе для читаемости
 			dotColor = COLOR_HOVER_CENTER
 		}
 	} else {
-		dotSize = 6
+		dotSize = 8
 		dotColor = hover ? COLOR_HOVER_CHECKED_CENTER : COLOR_CHECKED_CENTER
 	}
 
@@ -60,7 +60,7 @@ function WhiteCheckRow({ label, checked, onToggle }) {
 			onMouseDown={() => setActive(true)}
 			onMouseUp={() => setActive(false)}
 			className={[
-				'w-full h-[11px] px-2 bg-white rounded-[6px]',
+				'w-full h-5 px-2 bg-white rounded-[6px]',
 				'flex items-center gap-2 text-[10px] font-baron text-black',
 				'transition-colors select-none cursor-pointer',
 				active ? 'bg-[#efece7]' : '',
@@ -70,15 +70,15 @@ function WhiteCheckRow({ label, checked, onToggle }) {
 			<span
 				className={[
 					'shrink-0 grid place-items-center',
-					'w-[10px] h-[10px] rounded-full bg-white',
+					'w-[14px] h-[14px] rounded-full bg-white',
 					outerBorderClass,
 				].join(' ')}
 				style={outerBorderStyle}
 			>
 				<span
 					style={{
-						width: 6 <= dotSize ? dotSize : 6,
-						height: 6 <= dotSize ? dotSize : 6,
+						width: Math.max(6, dotSize),
+						height: Math.max(6, dotSize),
 						background: dotColor,
 						borderRadius: '50%',
 						transition:
@@ -91,7 +91,7 @@ function WhiteCheckRow({ label, checked, onToggle }) {
 	)
 }
 
-/* ====================== Двойной слайдер ====================== */
+/* ===== двойной слайдер (204px трек из макета) ===== */
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
 const snap = (v, step, min) => Math.round((v - min) / step) * step + min
 
@@ -105,7 +105,6 @@ const RangeDual = memo(function RangeDual({
 	className = '',
 }) {
 	const trackRef = React.useRef(null)
-
 	const vMin = clamp(
 		Number.isFinite(valueMin) ? valueMin : min,
 		min,
@@ -116,7 +115,6 @@ const RangeDual = memo(function RangeDual({
 		Number.isFinite(valueMin) ? valueMin : min,
 		max
 	)
-
 	const range = max - min
 	const pMin = ((vMin - min) / range) * 100
 	const pMax = ((vMax - min) / range) * 100
@@ -126,19 +124,16 @@ const RangeDual = memo(function RangeDual({
 		const track = trackRef.current
 		if (!track) return
 		const rect = track.getBoundingClientRect()
-
 		const getValFromClientX = clientX => {
 			const x = clamp(clientX - rect.left, 0, rect.width)
 			const raw = min + (x / rect.width) * range
 			return clamp(snap(raw, step, min), min, max)
 		}
-
 		const move = clientX => {
 			const val = getValFromClientX(clientX)
 			if (thumb === 'min') onChange?.(Math.min(val, vMax - step), vMax)
 			else onChange?.(vMin, Math.max(val, vMin + step))
 		}
-
 		const onPointerMove = ev => move(ev.clientX)
 		const onPointerUp = () => {
 			window.removeEventListener('pointermove', onPointerMove)
@@ -170,8 +165,7 @@ const RangeDual = memo(function RangeDual({
 				className='relative h-[16px] flex items-center select-none justify-center'
 				style={{ width: TRACK_W }}
 				onPointerDown={e => {
-					if (e.target.dataset.thumb) return
-					clickOnTrack(e)
+					if (!e.target.dataset.thumb) clickOnTrack(e)
 				}}
 			>
 				<div className='absolute top-1/2 -translate-y-1/2 w-full h-[2px] rounded-[20px] bg-[#CCBEFA]' />
@@ -210,7 +204,7 @@ const RangeDual = memo(function RangeDual({
 	)
 })
 
-/* ====================== Мелкие компоненты ====================== */
+/* ===== мелкие компоненты ===== */
 function BadgeInput({ label, value, onChange }) {
 	return (
 		<div className='w-[105px] h-[35px] px-[10px] py-[12px] bg-[#EFEBE6] rounded-[10px] inline-flex items-center gap-[5px]'>
@@ -221,17 +215,19 @@ function BadgeInput({ label, value, onChange }) {
 				onChange={e =>
 					onChange?.(e.target.value === '' ? '' : Number(e.target.value))
 				}
-				className='flex-1 bg-transparent outline-none text-black text-[12px] font-baron '
+				className='flex-1 bg-transparent outline-none text-black text-[12px] font-baron'
 			/>
 		</div>
 	)
 }
+
 const Divider = () => (
 	<div className='w-[204px] h-[2px] bg-[#EFEBE6] rounded-[20px] mx-auto' />
 )
 
-/* ====================== Основной компонент ====================== */
+/* ===== основной компонент ===== */
 export default function SubcategoryOverlay({
+	variant = 'standalone', // 'mobile' | 'standalone'
 	isOpen,
 	onApply,
 	onReset,
@@ -241,6 +237,7 @@ export default function SubcategoryOverlay({
 	setField,
 	className = '',
 	style = {},
+	embed = false, // для аккордеона
 }) {
 	const priceMin = nnum(form?.price?.min ?? 0)
 	const priceMax = nnum(form?.price?.max ?? 20000)
@@ -264,255 +261,419 @@ export default function SubcategoryOverlay({
 		[form, setField]
 	)
 
-	// держим DOM до завершения закрывающей анимации
 	const [visible, setVisible] = React.useState(isOpen)
 	React.useEffect(() => {
 		if (isOpen) setVisible(true)
 	}, [isOpen])
 
-	// размеры панели (под твои макеты)
+	// размеры по макету
 	const W = 240
 	const H = 834
 
-	return (
-		visible && (
-			// Внешняя теневая обёртка (тень не режется при маске)
+	// === MOBILE VARIANT (без шапки/крестика, точные отступы макета) ===
+	if (variant === 'mobile') {
+		const InnerMobile = (
 			<div
-				className='absolute left-0 top-0 drop-shadow-[0_0_5px_rgba(0,0,0,0.2)] rounded-[20px]'
-				style={{ width: W, height: H, pointerEvents: isOpen ? 'auto' : 'none' }}
+				className={[
+					'w-auto h-[834px] rounded-[20px] flex flex-col',
+					' bg-white ',
+					className,
+				].join(' ')}
+				style={style}
 			>
-				{/* Маска: анимируем ТОЛЬКО высоту 0 → H → 0 (без просветов/дёрганий) */}
+				{/* верхний блок с тонкой полосой как в макете */}
+				<div className='self-stretch px-3.5 flex flex-col gap-[5px]'>
+					{/* тут намеренно НЕТ заголовка и крестика */}
+					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+				</div>
+
+				{/* тело */}
+				<div className='self-stretch px-5 pb-2.5 relative bg-white flex-1 flex flex-col gap-2 overflow-hidden min-h-0'>
+					{/* Цена */}
+					<div className='flex flex-col gap-2'>
+						<div className='text-[#625A51] text-sm font-baron'>Цена</div>
+						<div className='inline-flex items-center gap-2.5'>
+							<BadgeInput
+								label='от'
+								value={form?.price?.min}
+								onChange={v =>
+									setField?.('price.min', v === '' ? '' : Number(v))
+								}
+							/>
+							<BadgeInput
+								label='до'
+								value={form?.price?.max}
+								onChange={v =>
+									setField?.('price.max', v === '' ? '' : Number(v))
+								}
+							/>
+						</div>
+						<RangeDual
+							min={0}
+							max={20000}
+							step={10}
+							valueMin={priceMin}
+							valueMax={priceMax}
+							onChange={onPriceChange}
+							className='mx-[2px]'
+						/>
+					</div>
+
+					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+
+					{/* Тип товара */}
+					<div className='flex flex-col gap-2'>
+						<div className='text-[#625A51] text-base font-baron'>
+							тип товара
+						</div>
+						<div className='flex flex-col gap-1'>
+							{PRODUCT_TYPES.map(t => (
+								<WhiteCheckRow
+									key={t}
+									label={t}
+									checked={toArr(form?.types).includes(t)}
+									onToggle={() => toggleArr('types', t)}
+								/>
+							))}
+						</div>
+					</div>
+
+					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+
+					{/* Производитель */}
+					<div className='flex flex-col gap-2'>
+						<div className='text-[#625A51] text-base font-baron'>
+							ПРоизводитель
+						</div>
+						<div className='flex flex-col gap-1'>
+							{MANUFACTURERS.map(m => (
+								<WhiteCheckRow
+									key={m}
+									label={m}
+									checked={toArr(form?.manufacturers).includes(m)}
+									onToggle={() => toggleArr('manufacturers', m)}
+								/>
+							))}
+						</div>
+					</div>
+
+					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+
+					{/* Кол-во хлопков */}
+					<div className='flex flex-col gap-2'>
+						<div className='text-[#625A51] text-base font-baron'>Хлопки</div>
+						<div className='flex flex-col gap-1'>
+							{SHOTS_PRESETS.map(n => (
+								<WhiteCheckRow
+									key={n}
+									label={String(n)}
+									checked={toArr(form?.shots).includes(n)}
+									onToggle={() => toggleArr('shots', n)}
+								/>
+							))}
+						</div>
+					</div>
+
+					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+
+					{/* Мощность */}
+					<div className='flex flex-col gap-2'>
+						<div className='text-[#625A51] text-base font-baron'>мощность</div>
+						<div className='flex flex-col gap-1'>
+							{POWER_LEVELS.map(p => (
+								<WhiteCheckRow
+									key={p}
+									label={p}
+									checked={toArr(form?.power).includes(p)}
+									onToggle={() => toggleArr('power', p)}
+								/>
+							))}
+						</div>
+					</div>
+
+					{/* Прокрутка, если не влезло */}
+					<div className='flex-1 min-h-0' />
+				</div>
+
+				{/* футер */}
+				<div className='self-stretch flex flex-col items-center gap-2.5 px-2.5'>
+					<div className='text-center text-zinc-300 text-xs font-baron'>
+						найден {resultsCount} товар
+					</div>
+					<div className='w-full inline-flex items-start gap-2.5'>
+						<button
+							type='button'
+							onClick={onReset}
+							className='flex-1 w-[130px] h-[30px]   bg-[#EFEBE6] rounded-[10px] text-black text-sm font-baron cursor-pointer hover:text-[#BD52E9]'
+						>
+							сбросить все
+						</button>
+						<button
+							type='button'
+							onClick={onApply}
+							className='relative flex-1 w-[130px] h-[30px]   rounded-[10px] text-white text-sm font-baron bg-[radial-gradient(ellipse_173.76%_142.27%_at_-13.16%_-0%,_#1D0353_0%,_#C054EB_100%)] overflow-hidden cursor-pointer'
+						>
+							<span className='relative z-10'>показать</span>
+							<span className='absolute inset-0 rounded-[10px] bg-[#BD52E9] opacity-0 transition-opacity duration-300 hover:opacity-100' />
+						</button>
+					</div>
+				</div>
+			</div>
+		)
+
+		if (embed) {
+			return (
+				visible && (
+					<motion.div
+						initial={{ height: 0, opacity: 0, y: -6 }}
+						animate={{
+							height: isOpen ? H : 0,
+							opacity: isOpen ? 1 : 0,
+							y: isOpen ? 0 : -6,
+						}}
+						exit={{ height: 0, opacity: 0, y: -6 }}
+						transition={{
+							height: { duration: 0.22, ease: 'easeOut' },
+							opacity: { duration: 0.18 },
+							y: { duration: 0.18 },
+						}}
+						className='relative w-auto rounded-[20px] overflow-hidden'
+						onAnimationComplete={() => {
+							if (!isOpen) setVisible(false)
+						}}
+					>
+						{InnerMobile}
+					</motion.div>
+				)
+			)
+		}
+
+		// mobile без аккордеона — просто блок
+		return visible ? InnerMobile : null
+	}
+
+	// === STANDALONE (старое поведение с заголовком/крестиком) ===
+	const InnerStandalone = (
+		<div
+			className={[
+				'w-[240px] h-[834px] rounded-[20px] flex flex-col',
+				className,
+			].join(' ')}
+			style={style}
+		>
+			{/* header */}
+			<div className='px-5 pt-[10px] relative top-[2px]'>
+				<div className='text-[#625A51] text-lg font-baron lowercase'>
+					фильтры
+				</div>
+				<div className='w-[204px] h-[3px] bg-[#EFEBE6] rounded-[20px] mt-2.5 mx-auto' />
+				<button
+					type='button'
+					onClick={onClose}
+					className='absolute top-4 right-5 w-6 h-6 grid place-items-center rounded text-[#625A51] hover:text-[#BD52E9] transition-colors focus:outline-none cursor-pointer'
+					aria-label='Закрыть'
+					title='Закрыть'
+				>
+					<svg
+						width='20'
+						height='20'
+						viewBox='0 0 20 20'
+						fill='none'
+						xmlns='http://www.w3.org/2000/svg'
+						className='pointer-events-none'
+					>
+						<path
+							d='M14.0625 5.9375L5.9375 14.0625M5.9375 5.9375L14.0625 14.0625'
+							stroke='currentColor'
+							strokeWidth='2'
+							strokeLinecap='round'
+							strokeLinejoin='round'
+						/>
+					</svg>
+				</button>
+			</div>
+
+			{/* body */}
+			<div
+				className='flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-[10px] pb-2 scroll-smooth scroll-hidden'
+				onWheelCapture={e => e.stopPropagation()}
+				onTouchMoveCapture={e => e.stopPropagation()}
+			>
+				<div className='mt-3'>
+					<div className='text-black text-[12px] font-baron mb-2'>Цена</div>
+					<div className='mt-3 grid grid-cols-2 gap-[10px]'>
+						<BadgeInput
+							label='от'
+							value={form?.price?.min}
+							onChange={v => setField?.('price.min', v === '' ? '' : Number(v))}
+						/>
+						<BadgeInput
+							label='до'
+							value={form?.price?.max}
+							onChange={v => setField?.('price.max', v === '' ? '' : Number(v))}
+						/>
+					</div>
+					<RangeDual
+						min={0}
+						max={20000}
+						step={10}
+						valueMin={priceMin}
+						valueMax={priceMax}
+						onChange={onPriceChange}
+						className='mx-[2px]'
+					/>
+				</div>
+
+				<div className='my-2'>
+					<Divider />
+				</div>
+
+				<div>
+					<div className='text-black text-[12px] font-baron mb-2 mx-2'>
+						тип товара
+					</div>
+					<div className='flex flex-col'>
+						{PRODUCT_TYPES.map(t => (
+							<WhiteCheckRow
+								key={t}
+								label={t}
+								checked={toArr(form?.types).includes(t)}
+								onToggle={() => toggleArr('types', t)}
+							/>
+						))}
+					</div>
+				</div>
+
+				<div className='my-2'>
+					<Divider />
+				</div>
+
+				<div>
+					<div className='text-black text-[12px] font-baron mb-2 mx-2'>
+						производитель
+					</div>
+					<div className='flex flex-col gap-1'>
+						{MANUFACTURERS.map(m => (
+							<WhiteCheckRow
+								key={m}
+								label={m}
+								checked={toArr(form?.manufacturers).includes(m)}
+								onToggle={() => toggleArr('manufacturers', m)}
+							/>
+						))}
+					</div>
+				</div>
+
+				<div className='my-2'>
+					<Divider />
+				</div>
+
+				<div>
+					<div className='text-black text-[12px] font-baron mb-2 mx-2'>
+						количество хлопков
+					</div>
+					<div className='flex flex-col gap-1'>
+						{SHOTS_PRESETS.map(n => (
+							<WhiteCheckRow
+								key={n}
+								label={String(n)}
+								checked={toArr(form?.shots).includes(n)}
+								onToggle={() => toggleArr('shots', n)}
+							/>
+						))}
+					</div>
+				</div>
+
+				<div className='my-2'>
+					<Divider />
+				</div>
+
+				<div>
+					<div className='text-black text-[12px] font-baron mb-2 mx-2'>
+						мощность
+					</div>
+					<div className='flex flex-col gap-1'>
+						{POWER_LEVELS.map(p => (
+							<WhiteCheckRow
+								key={p}
+								label={p}
+								checked={toArr(form?.power).includes(p)}
+								onToggle={() => toggleArr('power', p)}
+							/>
+						))}
+					</div>
+				</div>
+			</div>
+
+			{/* footer */}
+			<div className='px-2.5 pb-3 pt-2'>
+				<div className='text-center text-zinc-300 text-[8px] font-baron'>
+					найдено {resultsCount} товар(ов)
+				</div>
+				<div className='flex gap-2 mt-2'>
+					<button
+						type='button'
+						onClick={onReset}
+						className='w-1/2 h-[25px] px-[5px] py-[4px] bg-[#EFEBE6] rounded-[10px] text-[10px] font-baron cursor-pointer hover:text-[#BD52E9]'
+					>
+						сбросить все
+					</button>
+					<button
+						type='button'
+						onClick={onApply}
+						className='relative w-1/2 h-[25px] cursor-pointer px-[5px] py-[4px] rounded-[10px] text-white text-[10px] font-baron bg-[radial-gradient(ellipse_173.76%_142.27%_at_-13.16%_-0%,_#1D0353_0%,_#C054EB_100%)] overflow-hidden'
+					>
+						<span className='relative z-10'>показать</span>
+						<span className='absolute inset-0 rounded-[10px] bg-[#BD52E9] opacity-0 transition-opacity duration-300 hover:opacity-100' />
+					</button>
+				</div>
+			</div>
+		</div>
+	)
+
+	if (embed) {
+		return (
+			visible && (
 				<motion.div
-					initial={false}
-					animate={{
-						height: isOpen ? H : 0,
-						opacity: isOpen ? 1 : 0, // лёгкое затухание вместе с высотой
-					}}
+					initial={{ height: 0, opacity: 0, y: -6 }}
+					animate={{ height: isOpen ? H : 0, opacity: isOpen ? 1 : 0 }}
+					exit={{ height: 0, opacity: 0, y: -6 }}
 					transition={{
-						height: { duration: isOpen ? 0.18 : 0.25, ease: 'easeOut' },
-						opacity: { duration: isOpen ? 0.18 : 0.2, ease: 'easeOut' },
+						height: { duration: 0.22, ease: 'easeOut' },
+						opacity: { duration: 0.18 },
+						y: { duration: 0.18 },
 					}}
+					className='relative w-[240px] bg-white rounded-[20px] overflow-hidden'
 					onAnimationComplete={() => {
 						if (!isOpen) setVisible(false)
 					}}
-					className='relative w-[240px] bg-white rounded-[20px] overflow-hidden'
-					style={{ willChange: 'height, opacity', ...style }}
 				>
-					{/* Фиксированная внутренняя обёртка высотой H — контент не «сплющивается» */}
-					<div
-						className={[
-							'w-[240px] h-[834px] rounded-[20px]',
-							'flex flex-col',
-						].join(' ')}
-					>
-						{/* header */}
-						<div className='px-5 pt-[10px]  relative top-[2px]'>
-							<div className='text-[#625A51] text-lg font-baron lowercase'>
-								фильтры
-							</div>
-							<div className='w-[204px] h-[3px] bg-[#EFEBE6] rounded-[20px] mt-2.5 mx-auto' />
-							<button
-								type='button'
-								onClick={onClose}
-								className='absolute top-4 right-5 w-6 h-6 grid place-items-center rounded text-[#625A51] hover:text-[#BD52E9] transition-colors focus:outline-none cursor-pointer'
-								aria-label='Закрыть'
-								title='Закрыть'
-							>
-								<svg
-									width='20'
-									height='20'
-									viewBox='0 0 20 20'
-									fill='none'
-									xmlns='http://www.w3.org/2000/svg'
-									className='pointer-events-none'
-								>
-									<path
-										d='M14.0625 5.9375L5.9375 14.0625M5.9375 5.9375L14.0625 14.0625'
-										stroke='currentColor'
-										strokeWidth='2'
-										strokeLinecap='round'
-										strokeLinejoin='round'
-									/>
-								</svg>
-							</button>
-						</div>
-
-						{/* body */}
-						<div
-							className='flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-[10px] pb-2 scroll-smooth scroll-hidden'
-							onWheelCapture={e => e.stopPropagation()}
-							onTouchMoveCapture={e => e.stopPropagation()}
-						>
-							{/* Цена */}
-							<div className='mt-3'>
-								<div className='text-black text-[12px] font-baron mb-2'>
-									Цена
-								</div>
-								<div className='mt-3 grid grid-cols-2 gap-[10px] '>
-									<BadgeInput
-										label='от'
-										value={form?.price?.min}
-										onChange={v =>
-											setField?.('price.min', v === '' ? '' : Number(v))
-										}
-									/>
-									<BadgeInput
-										label='до'
-										value={form?.price?.max}
-										onChange={v =>
-											setField?.('price.max', v === '' ? '' : Number(v))
-										}
-									/>
-								</div>
-								<RangeDual
-									min={0}
-									max={20000}
-									step={10}
-									valueMin={priceMin}
-									valueMax={priceMax}
-									onChange={onPriceChange}
-									className='mx-[2px]'
-								/>
-							</div>
-
-							<div className='my-2'>
-								<Divider />
-							</div>
-
-							{/* Тип товара */}
-							<div>
-								<div className='text-black  text-[12px] font-baron mb-2 mx-2'>
-									тип товара
-								</div>
-								<div className='flex flex-col'>
-									{PRODUCT_TYPES.map(t => (
-										<WhiteCheckRow
-											key={t}
-											label={t}
-											checked={toArr(form?.types).includes(t)}
-											onToggle={() => toggleArr('types', t)}
-										/>
-									))}
-								</div>
-							</div>
-
-							<div className='my-2'>
-								<Divider />
-							</div>
-
-							{/* Производитель */}
-							<div>
-								<div className='text-black text-[12px] font-baron mb-2 mx-2'>
-									производитель
-								</div>
-								<div className='flex flex-col gap-1'>
-									{MANUFACTURERS.map(m => (
-										<WhiteCheckRow
-											key={m}
-											label={m}
-											checked={toArr(form?.manufacturers).includes(m)}
-											onToggle={() => toggleArr('manufacturers', m)}
-										/>
-									))}
-								</div>
-							</div>
-
-							<div className='my-2'>
-								<Divider />
-							</div>
-
-							{/* Количество хлопков */}
-							<div>
-								<div className='text-black text-[12px] font-baron mb-2 mx-2'>
-									количество хлопков
-								</div>
-								<div className='flex flex-col gap-1'>
-									{SHOTS_PRESETS.map(n => (
-										<WhiteCheckRow
-											key={n}
-											label={String(n)}
-											checked={toArr(form?.shots).includes(n)}
-											onToggle={() => toggleArr('shots', n)}
-										/>
-									))}
-								</div>
-							</div>
-
-							<div className='my-2'>
-								<Divider />
-							</div>
-
-							{/* Мощность */}
-							<div>
-								<div className='text-black text-[12px] font-baron mb-2 mx-2'>
-									мощность
-								</div>
-								<div className='flex flex-col gap-1'>
-									{POWER_LEVELS.map(p => (
-										<WhiteCheckRow
-											key={p}
-											label={p}
-											checked={toArr(form?.power).includes(p)}
-											onToggle={() => toggleArr('power', p)}
-										/>
-									))}
-								</div>
-							</div>
-
-							<div className='my-2'>
-								<Divider />
-							</div>
-
-							{/* Дополнительно */}
-							<div>
-								<div className='text-black text-[12px] font-baron mb-2 mx-2'>
-									дополнительно
-								</div>
-								<div className='flex flex-col gap-1'>
-									<WhiteCheckRow
-										label='только в наличии'
-										checked={!!form?.inStockOnly}
-										onToggle={() =>
-											setField?.('inStockOnly', !form?.inStockOnly)
-										}
-									/>
-									<WhiteCheckRow
-										label='есть сертификат'
-										checked={!!form?.hasCertificate}
-										onToggle={() =>
-											setField?.('hasCertificate', !form?.hasCertificate)
-										}
-									/>
-								</div>
-							</div>
-						</div>
-
-						{/* footer */}
-						<div className='px-2.5 pb-3 pt-2'>
-							<div className='text-center text-zinc-300 text-[8px] font-baron'>
-								найдено {resultsCount} товар(ов)
-							</div>
-							<div className='flex gap-2 mt-2'>
-								<button
-									type='button'
-									onClick={onReset}
-									className='w-1/2 h-[25px] px-[5px] py-[4px] bg-[#EFEBE6] rounded-[10px] text-[10px] font-baron cursor-pointer hover:text-[#BD52E9]'
-								>
-									сбросить все
-								</button>
-								<button
-									type='button'
-									onClick={onApply}
-									className='relative w-1/2 h-[25px] cursor-pointer px-[5px] py-[4px] rounded-[10px] text-white text-[10px] font-baron bg-[radial-gradient(ellipse_173.76%_142.27%_at_-13.16%_-0%,_#1D0353_0%,_#C054EB_100%)] overflow-hidden'
-								>
-									<span className='relative z-10'>показать</span>
-									<span className='absolute inset-0 rounded-[10px] bg-[#BD52E9] opacity-0 transition-opacity duration-300 hover:opacity-100' />
-								</button>
-							</div>
-						</div>
-					</div>
+					{InnerStandalone}
 				</motion.div>
-			</div>
+			)
 		)
-	)
+	}
+
+	return visible ? (
+		<div
+			className='absolute left-0 top-0 drop-shadow-[0_0_5px_rgba(0,0,0,0.2)] rounded-[20px]'
+			style={{ width: W, height: H, pointerEvents: isOpen ? 'auto' : 'none' }}
+		>
+			<motion.div
+				initial={false}
+				animate={{ height: isOpen ? H : 0, opacity: isOpen ? 1 : 0 }}
+				transition={{
+					height: { duration: isOpen ? 0.18 : 0.25, ease: 'easeOut' },
+					opacity: { duration: isOpen ? 0.18 : 0.2, ease: 'easeOut' },
+				}}
+				onAnimationComplete={() => {
+					if (!isOpen) setVisible(false)
+				}}
+				className='relative w-[240px] bg-white rounded-[20px] overflow-hidden'
+				style={{ willChange: 'height, opacity' }}
+			>
+				{InnerStandalone}
+			</motion.div>
+		</div>
+	) : null
 }

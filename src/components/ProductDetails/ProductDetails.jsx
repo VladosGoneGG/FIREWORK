@@ -20,9 +20,9 @@ const ProductDetails = ({
 
 	return (
 		<section className='bg-white rounded-[20px] w-full min-h-[834px] h-auto overflow-visible flex flex-col'>
-			<div className='p-2.5 flex flex-col gap-[50px] h-full'>
+			{/* ⬇️ было h-full — из-за этого mt-auto снизу не срабатывал */}
+			<div className='p-2.5 flex flex-col justify-between min-h-[834px]'>
 				{/* верх: медиа + правая колонка */}
-				{/* ≤680px — колонкой; ≥681px — в строку и тянем по высоте, чтобы низ совпадал */}
 				<div className='flex flex-col min-[681px]:flex-row gap-2.5 flex-none min-[681px]:items-stretch'>
 					<MediaBlock img={fireworksSvg} name={product.name} onBack={onBack} />
 					<SideInfoCard product={product} img={img} inStock={inStock} />

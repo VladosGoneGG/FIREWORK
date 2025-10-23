@@ -7,7 +7,6 @@ const LayoutMobile = () => {
 		<div className='bg-white w-auto min-h-[100vh]'>
 			<HeaderMobile />
 			<SliderMobile />
-
 			<ProductPageMobile />
 		</div>
 	)
