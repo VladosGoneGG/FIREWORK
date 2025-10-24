@@ -15,7 +15,13 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 	}
 
 	return (
-		<div className='mt-auto px-2.5 pb-2.5 pt-2.5 bg-white'>
+		<div
+			className={[
+				'mt-auto px-2.5 pb-2.5 pt-2.5 bg-white',
+				// ≤1040px — центрируем контент и кнопку
+				'max-[1040px]:text-center',
+			].join(' ')}
+		>
 			<div className='text-center text-[20px] font-extrabold tracking-wide'>
 				<span className='text-[12px] text-[#B4B4B4]'>итого</span>{' '}
 				{fmtPriceRub(total)}
@@ -34,6 +40,8 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 				disabled={!enough}
 				className={[
 					'w-[275px] mt-3 h-[50px] rounded-[12px] text-[15px] font-baron lowercase transition-colors cursor-pointer',
+					// центр кнопки на мобильном
+					'max-[1040px]:mx-auto',
 					enough
 						? 'bg-[#a643d3] text-white hover:bg-[#c054eb] active:text-[#BD52E9] active:bg-[#efebe7]'
 						: 'bg-[#efebe7] text-[#bd52e9]',

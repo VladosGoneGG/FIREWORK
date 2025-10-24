@@ -1,4 +1,3 @@
-// src/store/slices/cartSlice.js
 import { createSlice } from '@reduxjs/toolkit'
 
 export const initialCartState = {
@@ -6,10 +5,7 @@ export const initialCartState = {
 	total: 0,
 }
 
-// Всегда берём цену в таком порядке:
-// 1) item.unitPrice (если уже сохранена в корзине)
-// 2) item.discountPrice
-// 3) item.price
+//  Цена за единицу
 const getUnit = (it = {}) => {
 	const n = v => (typeof v === 'number' ? v : Number(v))
 	if (!Number.isNaN(n(it.unitPrice))) return n(it.unitPrice)
@@ -17,8 +13,12 @@ const getUnit = (it = {}) => {
 	return n(it.price) || 0
 }
 
+// ⬇️ тут главное исправление: qty = Number(...) || 1
 const calcTotal = items =>
-	items.reduce((sum, it) => sum + getUnit(it) * (it.quantity || 1), 0)
+	items.reduce((sum, it) => {
+		const qty = Number(it?.quantity) || 1
+		return sum + getUnit(it) * qty
+	}, 0)
 
 const cartSlice = createSlice({
 	name: 'cart',
@@ -27,9 +27,8 @@ const cartSlice = createSlice({
 		addItem(state, { payload }) {
 			const idx = state.items.findIndex(i => i.id === payload.id)
 			if (idx >= 0) {
-				state.items[idx].quantity += 1
+				state.items[idx].quantity = (Number(state.items[idx].quantity) || 1) + 1
 			} else {
-				// Фиксируем unitPrice на момент добавления — UI и total будут консистентны
 				state.items.push({
 					...payload,
 					unitPrice: getUnit(payload),
@@ -53,7 +52,6 @@ const cartSlice = createSlice({
 			state.items = []
 			state.total = 0
 		},
-		// гидратация из localStorage
 		setCart(state, { payload }) {
 			return payload && typeof payload === 'object' ? payload : state
 		},
