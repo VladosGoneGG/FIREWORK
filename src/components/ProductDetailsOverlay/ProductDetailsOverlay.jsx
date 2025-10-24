@@ -22,6 +22,7 @@ export default function ProductDetailsOverlay() {
 
 	const product = useSelector(selectSelectedProduct)
 	const allItems = useSelector(s => s.products.items || [])
+	const searchQuery = useSelector(s => s.products.searchQuery || '') // 👈 добавили
 
 	const [stickyProduct, setStickyProduct] = useState(null)
 
@@ -33,6 +34,14 @@ export default function ProductDetailsOverlay() {
 		if (!isMobile && (product || stickyProduct)) handleClose()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isMobile])
+
+	// 👇 если на мобиле начинаем вводить поиск — закрываем детали
+	useEffect(() => {
+		if (isMobile && searchQuery.trim() !== '') {
+			handleClose()
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isMobile, searchQuery])
 
 	const displayProduct = isMobile ? product || stickyProduct : null
 
@@ -49,12 +58,8 @@ export default function ProductDetailsOverlay() {
 		dispatch(closeDetails())
 	}
 
-	// 👇 Хендлер выбора товара из "добавь в набор"
 	const handleSelectProduct = p => {
-		// Если у тебя openDetails ждёт именно id, сделай так:
-		// dispatch(openDetails({ id: p.id }))
-		// Если ждёт весь объект продукта (часто так и делают), то так:
-		dispatch(openDetails(p))
+		dispatch(openDetails(p)) // или openDetails({ id: p.id }) если у тебя так
 	}
 
 	return createPortal(
