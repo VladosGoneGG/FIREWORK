@@ -275,7 +275,7 @@ export default function SubcategoryOverlay({
 		const InnerMobile = (
 			<div
 				className={[
-					'w-auto h-[834px] rounded-[20px] flex flex-col',
+					'w-auto h-[834px]  flex flex-col',
 					' bg-white ',
 					className,
 				].join(' ')}
@@ -400,21 +400,23 @@ export default function SubcategoryOverlay({
 					<div className='text-center text-zinc-300 text-xs font-baron'>
 						найден {resultsCount} товар
 					</div>
-					<div className='w-full inline-flex items-start gap-2.5'>
+
+					<div className='w-[272px] inline-flex items-start gap-2.5'>
 						<button
 							type='button'
 							onClick={onReset}
-							className='flex-1 w-[130px] h-[30px]   bg-[#EFEBE6] rounded-[10px] text-black text-sm font-baron cursor-pointer hover:text-[#BD52E9]'
+							className='w-[130px] h-[30px] pb-0.5 bg-[#EFEBE6] rounded-[10px] text-black text-[14px] font-baron cursor-pointer hover:text-[#BD52E9] flex justify-center items-center'
 						>
 							сбросить все
 						</button>
+
 						<button
 							type='button'
 							onClick={onApply}
-							className='relative flex-1 w-[130px] h-[30px]   rounded-[10px] text-white text-sm font-baron bg-[radial-gradient(ellipse_173.76%_142.27%_at_-13.16%_-0%,_#1D0353_0%,_#C054EB_100%)] overflow-hidden cursor-pointer'
+							className='relative w-[130px] h-[30px] pb-0.5 rounded-[10px] text-white text-[14px] font-baron bg-[radial-gradient(ellipse_173.76%_142.27%_at_-13.16%_-0%,_#1D0353_0%,_#C054EB_100%)] overflow-hidden cursor-pointer flex justify-center items-center group'
 						>
 							<span className='relative z-10'>показать</span>
-							<span className='absolute inset-0 rounded-[10px] bg-[#BD52E9] opacity-0 transition-opacity duration-300 hover:opacity-100' />
+							<span className='absolute inset-0 rounded-[10px] bg-[#BD52E9] opacity-0 transition-opacity duration-300 pointer-events-none group-hover:opacity-100' />
 						</button>
 					</div>
 				</div>
@@ -437,7 +439,7 @@ export default function SubcategoryOverlay({
 							opacity: { duration: 0.18 },
 							y: { duration: 0.18 },
 						}}
-						className='relative w-auto rounded-[20px] overflow-hidden'
+						className='relative w-auto  overflow-hidden'
 						onAnimationComplete={() => {
 							if (!isOpen) setVisible(false)
 						}}

@@ -155,7 +155,7 @@ const BurgerMobile = () => {
 								key='drawer'
 								className={[
 									'fixed top-0 left-0 h-full w-96',
-									'bg-[#EFEBE6] px-2 pt-11',
+									'bg-[#EFEBE6] px-2 pt-1',
 									'shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]',
 									'overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
 									'subpixel-antialiased',

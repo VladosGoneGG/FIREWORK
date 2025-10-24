@@ -3,22 +3,24 @@ import { memo } from 'react'
 
 function IconCartMobile({ count = 0, onClick }) {
 	const safeCount = Number.isFinite(Number(count)) ? Number(count) : 0
+	const hasItems = safeCount > 0
 
 	return (
 		<button
 			type='button'
 			onClick={onClick}
 			className={[
-				'relative group w-[50px] h-[50px] rounded-[20px]',
+				'relative group w-[50px] h-[50px] rounded-[20px] cursor-pointer',
 				'active:-translate-y-[2px] transition-transform duration-150',
-				'text-[#BD52E9] hover:text-white', // цвет корзины (path использует currentColor)
+				// цвет path через currentColor:
+				hasItems ? 'text-white' : 'text-[#BD52E9] hover:text-white',
 				'bg-transparent p-0 m-0 border-0',
 				'focus:outline-none',
 			].join(' ')}
 			aria-label='Открыть корзину'
 			title='Открыть корзину'
 		>
-			{/* Внутренний контейнер с обрезкой и скруглением — только для фона и иконки */}
+			{/* контейнер с обрезкой и скруглением — фон + иконка */}
 			<span className='absolute inset-0 rounded-[20px] overflow-hidden'>
 				<svg
 					className='block w-full h-full'
@@ -30,16 +32,19 @@ function IconCartMobile({ count = 0, onClick }) {
 					{/* базовый белый фон */}
 					<rect width='50' height='50' rx='20' fill='white' />
 
-					{/* hover-градиент поверх белого */}
+					{/* градиент: постоянно включён, если есть товары; иначе только на hover */}
 					<rect
 						width='50'
 						height='50'
 						rx='20'
-						className='opacity-0 transition-opacity duration-150 group-hover:opacity-100'
+						className={[
+							'transition-opacity duration-150',
+							hasItems ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+						].join(' ')}
 						fill='url(#paint0_radial_cart)'
 					/>
 
-					{/* корзина: currentColor → фиолетовый, на hover станет белой */}
+					{/* корзина: currentColor → см. класс кнопки */}
 					<path
 						fillRule='evenodd'
 						clipRule='evenodd'
@@ -64,20 +69,30 @@ function IconCartMobile({ count = 0, onClick }) {
 				</svg>
 			</span>
 
-			{/* Бейдж: только на hover, не обрезается, сидит над углом */}
-			<span
-				className={[
-					'absolute -top-[2px] -right-[2px] z-20',
-					'w-[18px] h-[18px] rounded-full bg-white',
-					'grid place-items-center',
-					'shadow-[0px_1px_3px_rgba(0,0,0,0.15)]',
-					'text-[11px] leading-none font-baron',
-					'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
-				].join(' ')}
-				aria-hidden='true'
-			>
-				<span style={{ color: '#C054EB' }}>{safeCount}</span>
-			</span>
+			{/* Бейдж: показываем если есть товары, на краю, как настраивал */}
+			{hasItems && (
+				<span
+					className={[
+						'absolute -top-[2px] -right-[2px] z-20',
+						'w-[18px] h-[18px] rounded-full bg-white',
+						'grid place-items-center',
+						'shadow-[0px_1px_3px_rgba(0,0,0,0.15)]',
+						'text-[11px] leading-none font-baron',
+						'transition-opacity duration-150',
+					].join(' ')}
+					aria-hidden='true'
+				>
+					<span
+						style={{
+							color:
+								'radial-gradient(142.27% 173.76% at -13.16%  -0.00%, rgb(29, 3, 83) 0%, rgb(192, 84, 235) 100%)',
+							fontSize: '12px',
+						}}
+					>
+						{safeCount}
+					</span>
+				</span>
+			)}
 		</button>
 	)
 }

@@ -4,7 +4,7 @@ import BurgerMobile from './BurgerMobile'
 
 const HeaderMobile = () => {
 	return (
-		<header className='flex flex-row items-end justify-between w-full h-[104px] bg-[#efebe6] pb-[10px] rounded-bl-[30px] rounded-br-[10px] sticky'>
+		<header className='flex flex-row items-end justify-between w-full h-[62px] bg-[#efebe6] pb-[10px] rounded-bl-[30px] rounded-br-[10px] sticky'>
 			<div className='w-full flex items-center justify-between'>
 				<div className='ml-[10px]'>
 					<BurgerMobile />
