@@ -6,11 +6,17 @@ export const initialCartState = {
 }
 
 //  Цена за единицу
+const normNum = v => {
+	if (typeof v === 'number') return v
+	const s = String(v ?? '').replace(/[^\d]/g, '') // только цифры
+	return s ? Number(s) : 0
+}
 const getUnit = (it = {}) => {
-	const n = v => (typeof v === 'number' ? v : Number(v))
-	if (!Number.isNaN(n(it.unitPrice))) return n(it.unitPrice)
-	if (!Number.isNaN(n(it.discountPrice))) return n(it.discountPrice)
-	return n(it.price) || 0
+	const u = normNum(it.unitPrice)
+	if (u) return u
+	const d = normNum(it.discountPrice)
+	if (d) return d
+	return normNum(it.price)
 }
 
 // ⬇️ тут главное исправление: qty = Number(...) || 1

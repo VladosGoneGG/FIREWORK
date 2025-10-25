@@ -4,11 +4,9 @@ import { fmtPriceRub } from '../../../utils/format'
 import Qty from './Qty'
 
 const CartItem = ({ item, onDec, onInc }) => {
-	// 1) Цена за единицу (с учётом акции)
+	const toNum = v => (typeof v === 'number' ? v : Number(v) || 0)
 	const unitPrice =
-		typeof item?.discountPrice === 'number'
-			? item.discountPrice
-			: item?.price || 0
+		toNum(item?.unitPrice) || toNum(item?.discountPrice) || toNum(item?.price)
 
 	// 2) Количество
 	const qty = Math.max(1, item.quantity || 1)
@@ -23,7 +21,7 @@ const CartItem = ({ item, onDec, onInc }) => {
 		item.price > item.discountPrice
 
 	return (
-		<div className='flex items-center gap-3'>
+		<div className='flex items-center gap-3 max-[1040px]:mt-2.5'>
 			<div className='w-[70px] h-[70px] rounded-[10px] overflow-hidden bg-[#f6f4f2] flex-shrink-0'>
 				{item.images?.[0] ? (
 					<img

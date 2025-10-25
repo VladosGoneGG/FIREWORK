@@ -1,5 +1,5 @@
 // src/components/ProductCardMini/ProductCardMiniMobile.jsx
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { addItem } from '../../../store/slices/cartSlice'
 import { fmtPrice, fmtSecFull, renderSec } from '../../../utils/format'
@@ -32,6 +32,17 @@ function ProductCardMiniMobile({ product, onSelect }) {
 		return Number.isFinite(n) ? n : null
 	}
 
+	const [pressed, setPressed] = useState(false)
+	const pressTimer = useRef(null)
+
+	const handleAddClick = e => {
+		handleAdd(e) // твоя логика добавления
+		// короткая "вспышка" активного стиля
+		clearTimeout(pressTimer.current)
+		setPressed(true)
+		pressTimer.current = setTimeout(() => setPressed(false), 180)
+	}
+
 	const stockCount = num(stock)
 	const outOfStock = Number.isFinite(stockCount) ? stockCount <= 0 : false
 
@@ -46,17 +57,26 @@ function ProductCardMiniMobile({ product, onSelect }) {
 		? `${displayQty} шт.`
 		: packLabel || null
 
+	const toNum = v => {
+		const s = String(v ?? '').replace(/[^\d]/g, '') // оставляем только цифры
+		return s ? Number(s) : 0
+	}
+	const calcUnit = p => {
+		// приоритет как и в корзине: скидка -> price
+		const d = toNum(p?.discountPrice)
+		const base = toNum(p?.price)
+		return d || base
+	}
 	const handleAdd = useCallback(
 		e => {
-			e.stopPropagation() // важно, чтобы клик по кнопке не открывал детали
+			e.stopPropagation()
 			if (outOfStock) return
-			dispatch(addItem(product))
+			dispatch(addItem({ ...product, unitPrice: calcUnit(product) }))
 		},
 		[dispatch, product, outOfStock]
 	)
-
 	const handleOpen = useCallback(() => {
-		onSelect?.(product) // вот этого раньше не было
+		onSelect?.(product)
 	}, [onSelect, product])
 
 	const currentPrice = Number(discountPrice) || Number(price) || 0
@@ -69,7 +89,8 @@ function ProductCardMiniMobile({ product, onSelect }) {
 			className={[
 				'flex flex-row w-full max-w-[360px] h-[100px] justify-between rounded-[20px]',
 				'shadow-[0_0_10px_rgba(0,0,0,0.2)] bg-white px-2.5',
-				'select-none outline-none cursor-pointer', // курсор, но стили не меняем
+				'select-none outline-none cursor-pointer',
+				'min-w-0', // ✅ важно, чтобы внутренняя флекс-верстка могла сжиматься
 				outOfStock ? 'opacity-70' : '',
 			].join(' ')}
 		>
@@ -97,10 +118,12 @@ function ProductCardMiniMobile({ product, onSelect }) {
 			</div>
 
 			{/* контент */}
-			<div className='flex flex-col justify-between w-[230px] h-[100px] pl-2'>
+			{/* ⬇️ было w-[230px] → делаем гибким, чтобы не наезжало */}
+			<div className='flex flex-col justify-between flex-1 min-w-0 h-[100px] pl-2'>
 				{/* заголовок + бейдж */}
 				<div className='flex justify-between items-start h-[27px]'>
-					<ul className='max-w-[170px]'>
+					{/* ⬇️ добавили min-w-0, чтобы текст корректно обрезался и не толкал рядом стоящее */}
+					<ul className='max-w-[170px] min-w-0'>
 						<li className='leading-[14px]'>
 							<p className='font-barlow text-[12px] pt-2.5 text-black line-clamp-1'>
 								{name || '—'}
@@ -114,7 +137,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 					</ul>
 
 					{badgeText && (
-						<div className='w-[49px] h-[22px] mt-[10px] bg-[#098d00]/70 rounded-[10px] flex justify-center items-end overflow-hidden'>
+						<div className='w-[49px] h-[22px] mt-[10px] bg-[#098d00]/70 rounded-[10px] flex justify-center items-end overflow-hidden shrink-0'>
 							<div className='text-white text-[17px] font-baron'>
 								{Number.isFinite(stockCount) ? stockCount : packCount}
 							</div>
@@ -126,8 +149,9 @@ function ProductCardMiniMobile({ product, onSelect }) {
 				</div>
 
 				{/* характеристики + цена */}
-				<div className='flex items-end justify-between mb-2.5 h-[60px] text-[12px] text-[#625A51] font-baron'>
-					<div className='grid grid-cols-2 gap-x-2 gap-y-1 max-w-[160px] [&_svg]:w-5 [&_svg]:h-5 [&_img]:w-5 [&_img]:h-5'>
+				<div className='flex items-end justify-between mb-2.5 h-[60px] text-[12px] text-[#625A51] font-baron min-w-0'>
+					{/* ⬇️ делаем блок характеристик гибким, чтобы он сжимался, а не залезал на цену */}
+					<div className='flex-1 min-w-0 grid grid-cols-2 gap-x-2 gap-y-1 max-w-[160px] [&_svg]:w-5 [&_svg]:h-5 [&_img]:w-5 [&_img]:h-5'>
 						<div className='flex items-center h-6 gap-1 leading-none tabular-nums'>
 							<PriceBlock.Param icon='shots'>{shots ?? '—'}</PriceBlock.Param>
 						</div>
@@ -148,20 +172,27 @@ function ProductCardMiniMobile({ product, onSelect }) {
 						</div>
 					</div>
 
-					<div className='flex flex-col items-end'>
+					{/* ⬇️ правая колонка с ценой/кнопкой — фиксируем, чтобы её не расплющивало */}
+					<div className='flex flex-col items-end shrink-0'>
 						{hasDiscount && (
 							<div className='mb-[2px] text-[14px] font-baron lowercase line-through text-[#BD52E9] font-bold'>
 								{fmtPrice(price)}
 							</div>
 						)}
 						<button
-							onClick={handleAdd}
+							onClick={handleAddClick}
 							disabled={outOfStock || !currentPrice}
+							aria-pressed={pressed}
 							className={[
 								'group w-[79px] h-[27px] pb-[1px] rounded-2xl inline-flex justify-center items-center gap-[5px] cursor-pointer',
 								'shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]',
-								'text-white bg-[#bd52e9] active:bg-[#EFEBE6] active:text-[#625A51]',
+								// базовые цвета
 								'transition-colors duration-150',
+								// было: 'text-white bg-[#bd52e9] active:bg-[#EFEBE6] active:text-[#625A51]'
+								// стало: те же цвета, но включаем на клик через state
+								pressed
+									? 'bg-[#EFEBE6] text-[#625A51]'
+									: 'bg-[#bd52e9] text-white',
 							].join(' ')}
 							aria-label='Добавить в корзину'
 							title={outOfStock ? 'Нет в наличии' : 'Добавить в корзину'}

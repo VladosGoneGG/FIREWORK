@@ -5,16 +5,12 @@ import SearchBar from '../../Search/SearchBar'
 import MobileCartAccordionItems from './MobileCartAccordionItems'
 import ProductCartMobile from './ProductCartMobile'
 
-const PANEL_MAX_H = 520
-const PANEL_MIN_H = 260
-const PANEL_VH = 0.68
-
 const BottomBarMobile = () => {
 	const [open, setOpen] = useState(false)
 	const toggle = () => setOpen(v => !v)
 	const close = () => setOpen(false)
 
-	// лок скролла body при открытой панели
+	// Лочим скролл body при открытии панели
 	useEffect(() => {
 		if (!open) return
 		const prev = document.body.style.overflow
@@ -24,21 +20,21 @@ const BottomBarMobile = () => {
 		}
 	}, [open])
 
+	// Базовая «как раньше» высота плитки
 	const targetHeight = useMemo(() => {
 		const vh = typeof window !== 'undefined' ? window.innerHeight : 800
-		const h = Math.round(vh * PANEL_VH)
-		return Math.max(PANEL_MIN_H, Math.min(PANEL_MAX_H, h))
+		return Math.round(vh * 0.68)
 	}, [])
 
 	return (
 		<>
-			{/* затемняющий фон поверх страницы */}
+			{/* затемняющий фон */}
 			<AnimatePresence>
 				{open && (
 					<motion.div
 						key='cart-backdrop'
 						className='fixed inset-0 bg-black/30'
-						style={{ zIndex: 95 }} // фон ниже бара (бар z-[100])
+						style={{ zIndex: 95 }}
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
@@ -47,11 +43,10 @@ const BottomBarMobile = () => {
 				)}
 			</AnimatePresence>
 
-			{/* сам бар + аккордеон */}
+			{/* нижняя панель */}
 			<div
 				className='fixed inset-x-2.5 z-[100]'
 				style={{ bottom: 'max(10px, env(safe-area-inset-bottom))' }}
-				// предотвращаем закрытие при кликах внутри бара
 				onClick={e => e.stopPropagation()}
 			>
 				<motion.div
@@ -75,7 +70,7 @@ const BottomBarMobile = () => {
 						</div>
 					</div>
 
-					{/* контент корзины в том же фоне */}
+					{/* контент корзины */}
 					<AnimatePresence initial={false}>
 						{open && (
 							<motion.div

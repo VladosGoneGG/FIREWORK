@@ -30,10 +30,6 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 				</span>
 			</div>
 
-			<div className='lowercase mt-1 text-center text-[12px] text-[#625A51] font-baron'>
-				минимальный заказ от: {fmtPriceRub(minOrder)}руб.
-			</div>
-
 			<button
 				type='button'
 				onClick={handleClick}

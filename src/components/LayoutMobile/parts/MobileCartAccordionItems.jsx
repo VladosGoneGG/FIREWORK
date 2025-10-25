@@ -1,12 +1,18 @@
 // src/components/LayoutMobile/parts/MobileCartAccordionItems.jsx
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { removeItem, updateQuantity } from '../../../store/slices/cartSlice'
+import sucessSvg from '../../../assets/SVG/sucess.svg'
+import {
+	clearCart,
+	removeItem,
+	updateQuantity,
+} from '../../../store/slices/cartSlice'
+import { buildOrderPayload, sendOrder } from '../../../utils/orderApi'
+import CheckoutForm from '../../ProductCart/CheckoutForm'
 import CartFooter from '../../ProductCart/parts/CartFooter'
 import CartItem from '../../ProductCart/parts/CartItem'
 
 const MIN_ORDER = 4800
-
 const selectCartItems = s => s?.cart?.items || []
 
 const num = v => (typeof v === 'number' ? v : Number(v) || 0)
@@ -42,12 +48,64 @@ function MobileCartAccordionItems({ height = 360, onClose }) {
 		[dispatch]
 	)
 
-	const handleContinue = () => {
-		onClose?.()
+	const formRef = useRef(null)
+	const [showForm, setShowForm] = useState(false)
+	const [success, setSuccess] = useState(false)
+
+	// ВАЖНО: это прокручиваемый список внутри «плитки»
+	const listScrollRef = useRef(null)
+	// Якорь прямо перед формой — скроллим к нему
+	const formAnchorRef = useRef(null)
+
+	const smoothScrollToForm = () => {
+		// если есть отдельный якорь — используем его
+		if (formAnchorRef.current) {
+			formAnchorRef.current.scrollIntoView({
+				behavior: 'smooth',
+				block: 'nearest',
+			})
+			return
+		}
+		// иначе просто доскроллим список вниз
+		const el = listScrollRef.current
+		if (el) {
+			el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+		}
+	}
+
+	const handleContinue = async () => {
+		// Первый клик — показать форму и прокрутить к ней
+		if (!showForm) {
+			setShowForm(true)
+			// даём React дорисовать форму, затем — фокус и скролл
+			requestAnimationFrame(() => {
+				formRef.current?.focusFirst?.()
+				// ещё один кадр — для надёжности, если картинки/шрифты подтянулись
+				requestAnimationFrame(smoothScrollToForm)
+			})
+			return
+		}
+
+		// Форма уже видна — валидируем и отправляем
+		const ok = await formRef.current?.validate?.()
+		if (ok) formRef.current?.submit?.()
+	}
+
+	const handleOrderSubmitted = async formData => {
+		const payload = buildOrderPayload(formData, { items, total })
+		await sendOrder(payload)
+		setSuccess(true)
+		setShowForm(false)
+
+		const t = setTimeout(() => {
+			dispatch(clearCart())
+			setSuccess(false)
+			onClose?.()
+		}, 3000)
+		return () => clearTimeout(t)
 	}
 
 	return (
-		// Внешний контейнер: добавили нижний отступ 10px (pb-2.5)
 		<div className='w-full pb-2.5'>
 			<div
 				className={[
@@ -55,16 +113,25 @@ function MobileCartAccordionItems({ height = 360, onClose }) {
 					'shadow-[0_5px_20px_rgba(0,0,0,0.18)]',
 					'overflow-hidden flex flex-col font-baron',
 				].join(' ')}
-				// плитка на 10px ниже исходной высоты
 				style={{ height: Math.max(0, (Number(height) || 0) - 10) }}
 			>
-				{/* «хэндл» сверху */}
-				<div className='pt-2 pb-2.5 px-3'>
-					<div className='mx-auto w-10 h-[4px] bg-[#efebe6] rounded-full' />
+				{/* заголовок + разделитель (твои стили) */}
+				<div className='px-3 pt-2'>
+					<div className='text-sm text-start font-baron lowercase py-2'>
+						корзина
+					</div>
+					<div className='w-full h-[2px] bg-[#efebe6] rounded-full' />
 				</div>
 
-				{/* список товаров */}
-				<div className='flex-1 min-h-0 overflow-y-auto px-3 pb-3 space-y-3 scroll-hidden'>
+				{/* список товаров — ВАЖНО: ref на прокрутку */}
+				<div
+					ref={listScrollRef}
+					className={[
+						'flex-1 min-h-0 overflow-y-auto px-3 pb-3 space-y-3 scroll-hidden relative',
+						success ? 'pointer-events-none' : 'pointer-events-auto',
+					].join(' ')}
+					aria-hidden={success}
+				>
 					{items.length === 0 ? (
 						<div className='opacity-60 text-sm text-center font-baron lowercase py-2'>
 							корзина пуста
@@ -79,7 +146,29 @@ function MobileCartAccordionItems({ height = 360, onClose }) {
 							/>
 						))
 					)}
+
+					{/* успех поверх списка */}
+					{success && (
+						<div className='absolute inset-0 flex justify-center items-center bg-white p-6 z-10 pointer-events-auto'>
+							<div className='flex flex-col gap-[24px] justify-center items-center'>
+								<img src={sucessSvg} alt='Успех' />
+								<div className='text-[12px] font-baron text-stone-700'>
+									как только заказ будет собран, вам придёт SMS-оповещение
+								</div>
+							</div>
+						</div>
+					)}
 				</div>
+
+				{/* якорь для скролла — ровно перед формой */}
+				{showForm && !success && <div ref={formAnchorRef} />}
+
+				{/* форма — сразу под списком */}
+				{showForm && !success && items.length > 0 && (
+					<div className='px-2'>
+						<CheckoutForm ref={formRef} onSubmitted={handleOrderSubmitted} />
+					</div>
+				)}
 
 				<CartFooter
 					total={total}
