@@ -35,23 +35,23 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 				onClick={handleClick}
 				disabled={!enough}
 				className={[
-					'w-[275px] mt-3 h-[50px] rounded-[12px] text-[15px] font-baron lowercase transition-colors cursor-pointer',
-					// центр кнопки на мобильном
+					'w-[275px] mt-3 h-[50px] rounded-[12px] text-[15px] font-baron lowercase transition-colors',
 					'max-[1040px]:mx-auto',
+					'disabled:cursor-not-allowed',
 					enough
-						? 'bg-[#a643d3] text-white hover:bg-[#c054eb] active:text-[#BD52E9] active:bg-[#efebe7]'
-						: 'bg-[#efebe7] text-[#bd52e9]',
+						? 'btn-firework isolate text-white' // градиент + ховер/актив из твоего CSS
+						: 'bg-[#efebe7] text-[#bd52e9]', // пассивная кнопка без оверлеев
 				].join(' ')}
 				aria-label={enough ? 'продолжить' : 'добавьте ещё'}
 				title={enough ? 'продолжить' : 'добавьте ещё'}
 			>
 				{enough ? (
-					'продолжить'
+					<span className='relative z-[1]'>продолжить</span>
 				) : (
-					<>
+					<span className='relative z-[1]'>
 						не хватает ещё {fmtPriceRub(missing)}
 						<span className='text-[10px] ml-1'>руб.</span>
-					</>
+					</span>
 				)}
 			</button>
 		</div>

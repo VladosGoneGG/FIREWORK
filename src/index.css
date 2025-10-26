@@ -275,6 +275,29 @@
 		mask: radial-gradient(circle, #000 100%, transparent 100%) content-box;
 		will-change: opacity;
 	}
+
+	/* 1) Изолируем стек для кнопки */
+	.btn-firework {
+		isolation: isolate;
+	}
+
+	/* 2) Текст/иконки всегда выше оверлеев */
+	.btn-firework > * {
+		position: relative;
+		z-index: 1;
+	}
+
+	/* 3) Ховер/актив оверлеи — под содержимым */
+	.btn-firework::before,
+	.btn-firework::after {
+		z-index: 0;
+	}
+
+	/* 4) Если используешь pressTint из PressableButton — тоже уводим ниже */
+	.btn-firework > span[aria-hidden='true'] {
+		z-index: 0 !important;
+	}
+
 	.no-scrollbar::-webkit-scrollbar {
 		display: none;
 	}

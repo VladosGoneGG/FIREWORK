@@ -11,17 +11,16 @@ const PromoPanel = () => {
 			<button
 				type='button'
 				className='
-          mb-2.5 w-[220px] h-[50px]
-          rounded-[10px] text-[15px] font-baron tracking-wide lowercase
-          transition-colors duration-150 ease-out cursor-pointer
-          bg-[#a643d3] text-white
-          hover:bg-[#c054eb]
-          active:bg-[#efebe6] active:text-[#BD52E9]
-        '
+    mb-2.5 w-[220px] h-[50px]
+    rounded-[10px] text-[15px] font-baron tracking-wide lowercase
+    transition-colors duration-150 ease-out cursor-pointer
+    btn-firework
+    isolate
+  '
 				aria-label='рассчитать стоимость'
 				title='рассчитать стоимость'
 			>
-				рассчитать стоимость
+				<span className='relative z-[1]'>рассчитать стоимость</span>
 			</button>
 		</div>
 	)
