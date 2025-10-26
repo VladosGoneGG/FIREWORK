@@ -1,5 +1,5 @@
 // src/components/LayoutMobile/parts/BottomBarMobile.jsx
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useState } from 'react'
 import SearchBar from '../../Search/SearchBar'
 import MobileCartAccordionItems from './MobileCartAccordionItems'

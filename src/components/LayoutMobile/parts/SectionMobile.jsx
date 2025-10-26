@@ -1,5 +1,5 @@
 // src/components/LayoutMobile/parts/SectionMobile.jsx
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import ProductCardMiniMobile from './ProductCardMiniMobile'
 

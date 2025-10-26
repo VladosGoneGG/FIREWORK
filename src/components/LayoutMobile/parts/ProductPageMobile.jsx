@@ -1,5 +1,5 @@
 // src/components/LayoutMobile/parts/ProductPageMobile.jsx
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
