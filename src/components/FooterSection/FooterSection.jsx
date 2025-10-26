@@ -8,10 +8,7 @@ const FooterSection = () => {
 				<div>
 					<ul className='uppercase flex flex-col gap-[10px]'>
 						<li className='hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'>
-							контакты
-						</li>
-						<li className='hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'>
-							условия доставки
+							<Link to='/contacts'>контакты</Link>
 						</li>
 						<li className='hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'>
 							<Link to='/wholesale'>оптовикам</Link>
@@ -20,8 +17,8 @@ const FooterSection = () => {
 				</div>
 				<div>
 					<ul className='uppercase flex flex-col gap-[10px]'>
-						<li>сертификат профессионального пиротехника</li>
 						<li>ип федяков иван владимирович</li>
+						<li>сертификат профессионального пиротехника</li>
 						<li className='text-[#d2cecb]'>
 							г. нижний новгород, ул. лоцманская 2а
 						</li>

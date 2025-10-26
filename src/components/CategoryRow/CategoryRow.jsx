@@ -8,7 +8,7 @@ const CategoryRow = ({ cat, active, onClick }) => {
 			pressScale={0.98}
 			pressTint={false}
 			variant='ghost'
-			className={`flex items-center gap-4 my-[5px] w-[220px] h-[30px] text-[12px] rounded-[12px] text-left
+			className={`flex items-center gap-4 my-[5px] w-[220px] h-[30px] text-[12px] rounded-[12px] text-left 
     ${
 			active
 				? 'text-firework-red font-medium'

@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary.jsx'
 import NotFoundPage from './components/NotFoundPage/NotFoundPage.jsx'
 
+import ContactsPage from './components/ContactsPage/ContactsPage.jsx'
 import ResponsiveRoot from './components/ResponsiveRoot/ResponsiveRoot.jsx'
 import './index.css'
 import WholesalePage from './pages/WholesalePage.jsx'
@@ -23,6 +24,14 @@ const router = createBrowserRouter([
 		element: (
 			<ErrorBoundary>
 				<WholesalePage />
+			</ErrorBoundary>
+		),
+	},
+	{
+		path: '/contacts',
+		element: (
+			<ErrorBoundary>
+				<ContactsPage />
 			</ErrorBoundary>
 		),
 	},

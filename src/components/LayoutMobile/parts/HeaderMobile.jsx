@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import CursorSvg from '../../CursorSvg/CursorSvg'
 import Logotip from '../../Logotip/Logotip'
 import BurgerMobile from './BurgerMobile'
@@ -10,7 +11,9 @@ const HeaderMobile = () => {
 					<BurgerMobile />
 				</div>
 				<div>
-					<Logotip />
+					<Link to='/'>
+						<Logotip />
+					</Link>
 				</div>
 				<div>
 					<div className=' flex items-center mr-[10px] gap-2.5'>
