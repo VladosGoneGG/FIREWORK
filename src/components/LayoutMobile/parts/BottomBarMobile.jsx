@@ -1,6 +1,6 @@
 // src/components/LayoutMobile/parts/BottomBarMobile.jsx
 import { AnimatePresence, motion } from 'framer-motion'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import SearchBar from '../../Search/SearchBar'
 import MobileCartAccordionItems from './MobileCartAccordionItems'
 import ProductCartMobile from './ProductCartMobile'
@@ -10,7 +10,7 @@ const BottomBarMobile = () => {
 	const toggle = () => setOpen(v => !v)
 	const close = () => setOpen(false)
 
-	// лок скролла body при открытой панели
+	// блокировка скролла body при открытии
 	useEffect(() => {
 		if (!open) return
 		const prev = document.body.style.overflow
@@ -20,47 +20,22 @@ const BottomBarMobile = () => {
 		}
 	}, [open])
 
-	// вычисляем высоту «плитки» из фактической высоты окна
-	const getTileHeight = useCallback(() => {
-		const vh = typeof window !== 'undefined' ? window.innerHeight : 800
-
-		// базовая доля экрана «как раньше»
-		const base = Math.round(vh * 0.68)
-
-		// нижний безопасный зазор под бар/жесты
-		const safeGap = 20
-
-		// жёсткие пределы, чтобы на очень маленьких экранах не ломалось
-		const minH = 240 // минимум «плитки»
-		const maxH = Math.max(360, vh - 70 - safeGap) // не выше окна минус шапка бара (70px) и зазор
-
-		return Math.max(minH, Math.min(base, maxH))
-	}, [])
-
-	// текущее значение высоты
-	const [targetHeight, setTargetHeight] = useState(() => getTileHeight())
-
-	// пересчитываем на resize/orientationchange и при открытии панели
+	// 🔒 безопасный таргет высоты (по умолчанию 520), пересчёт после монтирования и на ресайзах
+	const [targetHeight, setTargetHeight] = useState(520)
 	useEffect(() => {
-		const onResize = () => setTargetHeight(getTileHeight())
-		window.addEventListener('resize', onResize)
-		window.addEventListener('orientationchange', onResize)
-		return () => {
-			window.removeEventListener('resize', onResize)
-			window.removeEventListener('orientationchange', onResize)
+		const calc = () => {
+			const vh = typeof window !== 'undefined' ? window.innerHeight : 800
+			// твоя прежняя логика, но безопасно и с клипом
+			const h = Math.round(vh * 0.68)
+			setTargetHeight(Math.max(260, Math.min(800, h)))
 		}
-	}, [getTileHeight])
-
-	// на случай «толчка» после открытия (клавиатура/адресная строка)
-	useEffect(() => {
-		if (!open) return
-		const id = setTimeout(() => setTargetHeight(getTileHeight()), 60)
-		return () => clearTimeout(id)
-	}, [open, getTileHeight])
+		calc()
+		window.addEventListener('resize', calc, { passive: true })
+		return () => window.removeEventListener('resize', calc)
+	}, [])
 
 	return (
 		<>
-			{/* затемняющий фон */}
 			<AnimatePresence>
 				{open && (
 					<motion.div
@@ -75,7 +50,6 @@ const BottomBarMobile = () => {
 				)}
 			</AnimatePresence>
 
-			{/* нижняя панель */}
 			<div
 				className='fixed inset-x-2.5 z-[100]'
 				style={{ bottom: 'max(10px, env(safe-area-inset-bottom))' }}
@@ -92,7 +66,6 @@ const BottomBarMobile = () => {
 					transition={{ type: 'tween', duration: 0.22, ease: 'easeOut' }}
 					style={{ overflow: 'hidden' }}
 				>
-					{/* верхняя полоса */}
 					<div className='h-[70px] flex items-center gap-2.5'>
 						<div className='flex-1 min-w-0'>
 							<SearchBar />
@@ -102,7 +75,6 @@ const BottomBarMobile = () => {
 						</div>
 					</div>
 
-					{/* контент корзины */}
 					<AnimatePresence initial={false}>
 						{open && (
 							<motion.div
