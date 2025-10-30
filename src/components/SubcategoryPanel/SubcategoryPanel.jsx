@@ -1,112 +1,121 @@
 // src/components/SubcategoryPanel/SubcategoryPanel.jsx
-import { useMemo } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { memo, useMemo } from 'react'
+import ProductCardMiniMobile from '../LayoutMobile/parts/ProductCardMiniMobile'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 import SortDropdown from '../ui/SortDropdown'
 
 /**
  * Props:
- * - title: string                      // заголовок текущей подкатегории
- * - leftLabel?: string | ReactNode     // метка слева (например, "акции")
- * - leftLabelMoreText?: string         // текст кнопки под меткой (по умолчанию "посмотреть ещё")
- * - onLeftLabelMore?: () => void       // клик по "посмотреть ещё"
+ * - title: string
  * - products: array
- * - onSelectProduct: (p) => void
- * - onOpenFilters: () => void
- * - filtersOpen: boolean
+ * - onSelectProduct: (product) => void
+ * - onOpenFilters?: () => void
+ * - filtersOpen?: boolean
  * - sortKey?: string
- * - onChangeSort?: (v) => void
+ * - onChangeSort?: (key) => void
+ * - mobile?: boolean   // если true — рисуем мобильные карточки и мобильную сетку
  */
-export default function SubcategoryPanel({
-	title,
-	leftLabel,
-	leftLabelMoreText = 'посмотреть ещё',
-	onLeftLabelMore,
+const SubcategoryPanel = memo(function SubcategoryPanel({
+	title = 'Категория',
 	products = [],
 	onSelectProduct,
 	onOpenFilters,
 	filtersOpen = false,
 	sortKey,
 	onChangeSort,
+	mobile = false,
 }) {
 	const items = useMemo(
 		() => (Array.isArray(products) ? products : []),
 		[products]
 	)
-	const isEmpty = items.length === 0
+
+	const FX = {
+		initial: { opacity: 0, y: -8 },
+		enter: {
+			opacity: 1,
+			y: 0,
+			transition: { duration: 0.14, ease: 'easeOut' },
+		},
+		exit: { opacity: 0, y: -8, transition: { duration: 0.12, ease: 'easeIn' } },
+	}
 
 	return (
-		<div className='w-full h-full flex flex-col rounded-b-[20px] bg-white overflow-hidden'>
-			{/* header */}
-			<div className='sticky top-0 z-10 bg-white'>
-				<div>
-					<div className='flex items-start gap-3'>
-						{/* ЛЕВАЯ КОЛОНКА: "акции" + "посмотреть ещё" */}
-						{leftLabel ? (
-							<div className='pl-1 flex flex-col gap-1 shrink-0'>
-								<h3 className='text-[18px] lowercase font-baron leading-none text-black'>
-									{leftLabel}
-								</h3>
-								{typeof onLeftLabelMore === 'function' && (
-									<button
-										type='button'
-										onClick={onLeftLabelMore}
-										className='text-[10px] text-black lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'
-									>
-										{leftLabelMoreText}
-									</button>
-								)}
-							</div>
-						) : null}
+		<section className='space-y-3'>
+			{/* Хедер */}
+			<div className='flex items-center justify-between'>
+				<h3 className='text-[18px] lowercase font-baron pl-5'>{title}</h3>
 
-						{/* СЕРЕДИНА: заголовок текущей подкатегории */}
-						<div className='min-w-0'>
-							<div className='lowercase text-lg font-baron leading-none text-black'>
-								{title}
-							</div>
-						</div>
-
-						{/* ПРАВАЯ КОЛОНКА: фильтр и сортировка */}
-						<div className='ml-auto flex items-center gap-2'>
-							<button
-								type='button'
-								onClick={onOpenFilters}
-								aria-pressed={filtersOpen}
-								title='Открыть фильтры'
-								className={[
-									'w-[75px] h-[25px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
-									filtersOpen
-										? 'bg-[#EFEBE7] text-[#BD52E9]'
-										: 'btn-firework-filter',
-								].join(' ')}
-							>
-								<span>фильтр</span>
-							</button>
-
-							{typeof sortKey !== 'undefined' &&
-								typeof onChangeSort === 'function' && (
-									<SortDropdown value={sortKey} onChange={onChangeSort} />
-								)}
-						</div>
-					</div>
+				{/* правый блок: фильтр + сортировка */}
+				<div className='ml-auto flex items-center gap-2 pr-[18px]'>
+					{onOpenFilters && (
+						<button
+							type='button'
+							onClick={onOpenFilters}
+							className={[
+								// скрываем кнопку на ширине < 1040px
+								'hidden min-[1040px]:inline-flex',
+								// БАЗА: фиксируем центрирование вне зависимости от темы/сост.
+								'w-[75px] h-[25px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
+								'items-center justify-center text-center select-none',
+								'focus:outline-none',
+								// Состояние
+								filtersOpen
+									? 'bg-[#EFEBE6] text-[#BD52E9]'
+									: 'btn-firework-filter',
+								// Последним повторим выравнивание — на случай, если внутри btn-firework-filter есть свои justify-*
+								'justify-center',
+							].join(' ')}
+						>
+							<span className='block w-full text-center leading-none pointer-events-none'>
+								фильтр
+							</span>
+						</button>
+					)}
+					{typeof sortKey !== 'undefined' &&
+						typeof onChangeSort === 'function' && (
+							<SortDropdown value={sortKey} onChange={onChangeSort} />
+						)}
 				</div>
 			</div>
 
-			{/* контент */}
-			{isEmpty ? (
-				<div className='flex-1 grid place-items-center text-sm text-[#625a51]'>
-					В этой подкатегории пока ничего не найдено
-				</div>
-			) : (
-				<div className='flex-1 grid grid-cols-5 p-2.5 gap-2.5 overflow-y-auto scroll-hidden'>
+			{/* Контент */}
+			<div
+				className={
+					mobile
+						? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[10px] justify-items-center md:justify-items-stretch px-2'
+						: 'grid [grid-template-columns:repeat(auto-fill,120px)] xl:[grid-template-columns:repeat(5,120px)] justify-center gap-[11px] p-2.5 pb-3 overflow-visible md:mx-[-8px] lg:mx-[-12px] xl:mx-[-16px] xl:px-1'
+				}
+			>
+				<AnimatePresence initial={false} mode='sync'>
 					{items.map(p => (
-						<ProductCardMini
-							key={p.id}
-							product={p}
-							onSelect={onSelectProduct}
-						/>
+						<motion.div
+							key={p.id ?? `${p.name}-${p.category}-${p.subcategory}`}
+							layout='position'
+							initial={FX.initial}
+							animate={FX.enter}
+							exit={FX.exit}
+							style={{ willChange: 'opacity, transform' }}
+							className={mobile ? 'w-full max-w-[360px]' : undefined}
+						>
+							{mobile ? (
+								<ProductCardMiniMobile product={p} onSelect={onSelectProduct} />
+							) : (
+								<ProductCardMini product={p} onSelect={onSelectProduct} />
+							)}
+						</motion.div>
 					))}
+				</AnimatePresence>
+			</div>
+
+			{!items.length && (
+				<div className='text-center text-neutral-400 py-8'>
+					Ничего не найдено
 				</div>
 			)}
-		</div>
+		</section>
 	)
-}
+})
+
+export default SubcategoryPanel

@@ -1,35 +1,95 @@
-// mockProducts.js
+// src/store/mock/mockProducts.js
 import fullBlockSvg from '../../public/SVG/full-block.svg'
 
-// === фабрика товара (должна быть объявлена ДО использования) ===
+// справочники для моков
+const MFR = ['PIROFF', 'Joker', 'Maxsem', 'РусСалют', 'Fieria']
+const IGNITIONS = ['терочный', 'ударный', 'фитильный']
+const VIEWS_GENERIC = [
+	'жуки',
+	'лента',
+	'треугольник',
+	'чесночок',
+	'шарик',
+	'хлопушка',
+]
+const SIZES = ['маленький', 'большой']
+const POWERS = ['слабый', 'мощный']
+const PETARDA_SHOTS = [1, 2, 3, 4, 50, 100]
+
+const pick = arr => arr[Math.floor(Math.random() * arr.length)]
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a
+
+// === фабрика товара ===
 const makeProduct = (id, name, category, subcategory, overrides = {}) => {
-	const basePrice = Math.floor(Math.random() * 3000) + 500 // 500..3499
+	const basePrice = rnd(500, 3499)
 	const hasDiscount = Math.random() > 0.5
 	let discountPrice = null
-
 	if (hasDiscount) {
-		const discountPct = 0.1 + Math.random() * 0.3 // 10%..40%
+		const discountPct = 0.1 + Math.random() * 0.3
 		discountPrice = Math.max(1, Math.floor(basePrice * (1 - discountPct)))
 		if (discountPrice >= basePrice) discountPrice = basePrice - 1
 	}
 
+	// базовые поля по умолчанию
+	const manufacturer = pick(MFR)
+	const ignitionType = pick(IGNITIONS)
+	const view = pick(VIEWS_GENERIC)
+	const size = pick(SIZES)
+	const power = pick(POWERS)
+
+	// shots и duration:
+	// - для ПЕТАРД — из списка пресетов (чтобы фильтр «1/2/3/4/50/100» реально работал)
+	// - иначе — произвольное значение
+	const isPetardy = String(category).toLowerCase() === 'петарды'
+	const shots = isPetardy ? pick(PETARDA_SHOTS) : rnd(10, 120)
+	const durationSec = rnd(20, 120)
+
+	// теги: минимально полезные
+	const tags = Array.from(
+		new Set(
+			[
+				category,
+				subcategory,
+				manufacturer,
+				ignitionType,
+				view,
+				size,
+				power,
+				...String(name)
+					.toLowerCase()
+					.split(/[^\p{L}\p{N}\-]+/u),
+			]
+				.map(s =>
+					String(s || '')
+						.trim()
+						.toLowerCase()
+				)
+				.filter(Boolean)
+		)
+	)
+
 	return {
 		id,
 		name,
-		manufacturer: 'PIROFF',
-		category, // строка категории (низкий регистр, см. ниже)
-		subcategory, // строка подкатегории
-		shots: Math.floor(Math.random() * 100) + 10,
+		manufacturer,
+		category,
+		subcategory,
+		shots,
 		caliber: (Math.random() * 1.5 + 0.8).toFixed(1),
-		durationSec: Math.floor(Math.random() * 80) + 20,
-		effectsCount: Math.floor(Math.random() * 10) + 1,
+		durationSec,
+		effectsCount: rnd(1, 10),
 		certificateUrl: './certs/salut100.pdf',
-		stock: Math.floor(Math.random() * 50) + 1,
+		stock: rnd(1, 50),
 		price: basePrice,
-		discountPrice, // либо число, либо null
+		discountPrice,
 		images: [fullBlockSvg],
 		video: null,
 		description: 'Описание товара: яркие спецэффекты и насыщенные цвета.',
+		ignitionType,
+		view,
+		size,
+		power,
+		tags,
 		...overrides,
 	}
 }
@@ -68,11 +128,17 @@ let id = 1
 	}
 })
 
-// петарды
+// петарды — здесь shots из PETARDA_SHOTS
 ;['мини', 'средние', 'мощные', 'ленты / корсары'].forEach(sub => {
 	for (let i = 0; i < 5; i++) {
 		mockProducts.push(
-			makeProduct(id++, `Петарда — ${sub} #${i + 1}`, 'петарды', sub)
+			makeProduct(
+				id++,
+				`Петарда — ${sub} #${i + 1}`,
+				'петарды',
+				sub,
+				{ shots: pick(PETARDA_SHOTS) } // гарантируем совпадение с пресетами
+			)
 		)
 	}
 })
@@ -109,7 +175,7 @@ let id = 1
 	}
 })
 
-// ракеты и фестивальные шары (единая категория)
+// ракеты и фестивальные шары
 ;[
 	'ракеты — малые',
 	'ракеты — средние',

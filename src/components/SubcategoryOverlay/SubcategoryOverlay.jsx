@@ -1,16 +1,27 @@
 // src/components/SubcategoryOverlay/SubcategoryOverlay.jsx
 import { motion } from 'framer-motion'
-import React, { memo, useCallback } from 'react'
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 
-const PRODUCT_TYPES = ['дым', 'петарды', 'наземный фейерверк']
-const MANUFACTURERS = ['Piroff', 'Joker', 'Maxsem']
-const SHOTS_PRESETS = [1, 2, 3, 4]
-const POWER_LEVELS = ['слабый', 'средний', 'мощный']
+// Глобальные фильтры
+import {
+	applyNow,
+	resetForm,
+	selectFiltersForm,
+	selectPreviewCount,
+	setField as setFieldAction,
+} from '../../store/slices/filtersSlice'
 
+// Данные каталога (для динамических списков)
 const toArr = v => (Array.isArray(v) ? v : v == null ? [] : [v])
 const nnum = v => (Number.isFinite(Number(v)) ? Number(v) : 0)
+const norm = s =>
+	String(s || '')
+		.trim()
+		.toLowerCase()
+		.replaceAll('ё', 'е')
 
-/* ===== чекбокс-строка (моб. размер) ===== */
+// ===== чекбокс-строка (моб. размер) =====
 function WhiteCheckRow({ label, checked, onToggle }) {
 	const [hover, setHover] = React.useState(false)
 	const [active, setActive] = React.useState(false)
@@ -22,29 +33,27 @@ function WhiteCheckRow({ label, checked, onToggle }) {
 	const COLOR_HOVER_CHECKED_CENTER = '#BD52E9'
 	const COLOR_HOVER_CHECKED_BORDER = 'rgba(153,125,245,0.5)'
 
-	let dotSize = 10
-	let dotColor = COLOR_BASE_BG
+	// фиксированный размер центральной точки
+	const INNER = 8
 
+	// «чуть» уменьшаем обводку: тонкое кольцо 1.5px на hover/active
+	const borderPx = (checked && hover) || active ? 2.5 : 2
+
+	// внешний круг ровно вплотную к точке (без просвета)
+	const OUTER = INNER + 2 * borderPx
+
+	// цвет точки
+	let dotColor = COLOR_BASE_BG
 	if (!checked) {
-		if (hover) {
-			dotSize = 8 // чуть крупнее на мобе для читаемости
-			dotColor = COLOR_HOVER_CENTER
-		}
+		dotColor = hover ? COLOR_HOVER_CENTER : COLOR_BASE_BG
 	} else {
-		dotSize = 8
 		dotColor = hover ? COLOR_HOVER_CHECKED_CENTER : COLOR_CHECKED_CENTER
 	}
 
-	let outerBorderClass = 'border-0'
-	let outerBorderStyle = {}
-	if (checked && hover) {
-		outerBorderClass = 'border-2'
-		outerBorderStyle.borderColor = COLOR_HOVER_CHECKED_BORDER
-	}
-	if (active) {
-		outerBorderClass = 'border-2'
-		outerBorderStyle.borderColor = COLOR_ACTIVE_BORDER
-	}
+	// цвет кольца
+	let ringColor = 'transparent'
+	if (checked && hover) ringColor = COLOR_HOVER_CHECKED_BORDER
+	if (active) ringColor = COLOR_ACTIVE_BORDER
 
 	return (
 		<button
@@ -67,31 +76,37 @@ function WhiteCheckRow({ label, checked, onToggle }) {
 			].join(' ')}
 			title={label}
 		>
+			{/* внешний круг: фон как у подложки, чтобы не было белого ореола */}
 			<span
-				className={[
-					'shrink-0 grid place-items-center',
-					'w-[14px] h-[14px] rounded-full bg-white',
-					outerBorderClass,
-				].join(' ')}
-				style={outerBorderStyle}
+				className='shrink-0 grid place-items-center rounded-full'
+				style={{
+					width: OUTER,
+					height: OUTER,
+					background: COLOR_BASE_BG,
+					borderStyle: 'solid',
+					borderWidth: borderPx,
+					borderColor: ringColor,
+				}}
 			>
+				{/* центральная точка — фикс 8px */}
 				<span
 					style={{
-						width: Math.max(6, dotSize),
-						height: Math.max(6, dotSize),
+						width: INNER,
+						height: INNER,
 						background: dotColor,
 						borderRadius: '50%',
 						transition:
-							'width .12s ease, height .12s ease, background-color .12s ease, background .12s ease',
+							'background-color .12s ease, background .12s ease, border-color .12s ease',
 					}}
 				/>
 			</span>
+
 			<span className='truncate'>{label}</span>
 		</button>
 	)
 }
 
-/* ===== двойной слайдер (204px трек из макета) ===== */
+// ===== двойной слайдер (204px трек) =====
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
 const snap = (v, step, min) => Math.round((v - min) / step) * step + min
 
@@ -168,35 +183,29 @@ const RangeDual = memo(function RangeDual({
 					if (!e.target.dataset.thumb) clickOnTrack(e)
 				}}
 			>
-				<div className='absolute top-1/2 -translate-y-1/2 w-full h-[2px] rounded-[20px] bg-[#CCBEFA]' />
+				<div className='absolute top-1/2 -translate-y-1/2 w/full h-[2px] rounded-[20px] bg-[#CCBEFA]' />
 				<div
 					className='absolute top-1/2 -translate-y-1/2 h-[2px] rounded-[20px] bg-[#BF53EA]'
 					style={{
-						left: `${(pMin / 100) * TRACK_W}px`,
-						width: `${((pMax - pMin) / 100) * TRACK_W}px`,
+						left: `${pMin}%`,
+						width: `${pMax - pMin}%`,
 						transition: 'left .12s ease, width .12s ease',
 					}}
 				/>
 				<button
 					type='button'
 					data-thumb='min'
-					aria-label='Минимальная цена'
+					aria-label='Минимум'
 					className='absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[10px] h-[10px] rounded-full bg-[#BF53EA] shadow-sm cursor-pointer'
-					style={{
-						left: `${(pMin / 100) * TRACK_W}px`,
-						transition: 'left .12s ease',
-					}}
+					style={{ left: `${pMin}%`, transition: 'left .12s ease' }}
 					onPointerDown={startDrag('min')}
 				/>
 				<button
 					type='button'
 					data-thumb='max'
-					aria-label='Максимальная цена'
+					aria-label='Максимум'
 					className='absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[10px] h-[10px] rounded-full bg-[#BF53EA] shadow-sm cursor-pointer'
-					style={{
-						left: `${(pMax / 100) * TRACK_W}px`,
-						transition: 'left .12s ease',
-					}}
+					style={{ left: `${pMax}%`, transition: 'left .12s ease' }}
 					onPointerDown={startDrag('max')}
 				/>
 			</div>
@@ -204,7 +213,7 @@ const RangeDual = memo(function RangeDual({
 	)
 })
 
-/* ===== мелкие компоненты ===== */
+// ===== мелкие компоненты =====
 function BadgeInput({ label, value, onChange }) {
 	return (
 		<div className='w-[105px] h-[35px] px-[10px] py-[12px] bg-[#EFEBE6] rounded-[10px] inline-flex items-center gap-[5px]'>
@@ -225,6 +234,146 @@ const Divider = () => (
 	<div className='w-[204px] h-[2px] bg-[#EFEBE6] rounded-[20px] mx-auto' />
 )
 
+// ===== Редактор тегов (textarea 232×≥65, чипы сверху) =====
+// ===== Редактор тегов: "одно поле" (чипы + ввод внутри) =====
+const TagsEditor = ({ value = [], onChange }) => {
+	const [input, setInput] = useState('')
+	const boxRef = useRef(null)
+	const inputRef = useRef(null)
+
+	const items = useMemo(() => (Array.isArray(value) ? value : []), [value])
+
+	const toNorm = useCallback(
+		t =>
+			String(t ?? '')
+				.trim()
+				.toLowerCase()
+				.replaceAll('ё', 'е'),
+		[]
+	)
+
+	const parseTokens = useCallback(
+		s => {
+			const parts = String(s)
+				.split(/[,\n\r;]+/g)
+				.map(toNorm)
+				.filter(Boolean)
+			const uniq = []
+			const seen = new Set()
+			for (const p of parts) {
+				if (!seen.has(p)) {
+					seen.add(p)
+					uniq.push(p)
+				}
+			}
+			return uniq
+		},
+		[toNorm]
+	)
+
+	const commit = useCallback(
+		raw => {
+			const tokens = parseTokens(raw)
+			if (!tokens.length) return
+			const base = Array.isArray(value) ? value : []
+			const seen = new Set(base.map(toNorm))
+			const merged = [...base]
+			for (const tk of tokens)
+				if (!seen.has(tk)) {
+					seen.add(tk)
+					merged.push(tk)
+				}
+			onChange?.(merged)
+			setInput('')
+			// вернуть фокус
+			requestAnimationFrame(() => inputRef.current?.focus())
+		},
+		[value, onChange, parseTokens, toNorm]
+	)
+
+	const remove = useCallback(
+		tag => {
+			const next = (value || []).filter(x => toNorm(x) !== toNorm(tag))
+			onChange?.(next)
+			requestAnimationFrame(() => inputRef.current?.focus())
+		},
+		[value, onChange, toNorm]
+	)
+
+	const onKeyDown = e => {
+		if (e.key === 'Enter' || e.key === ',') {
+			e.preventDefault()
+			commit(input)
+		} else if (e.key === 'Backspace' && input === '' && items.length) {
+			// удалить последний тег
+			e.preventDefault()
+			remove(items[items.length - 1])
+		}
+	}
+
+	const onPaste = e => {
+		const txt = (e.clipboardData || window.clipboardData)?.getData('text') || ''
+		if (!txt) return
+		e.preventDefault()
+		commit((input + ',' + txt).replace(/,+/g, ','))
+	}
+
+	const onBlur = () => {
+		if (input.trim()) commit(input)
+	}
+
+	return (
+		<div
+			ref={boxRef}
+			className='w-[232px] min-h-[65px] px-2 py-1 bg-transparent rounded-[10px] 
+                 text-[10px] font-baron text-black 
+                 inline-flex flex-wrap items-start gap-[5px] content-start'
+			onClick={() => inputRef.current?.focus()}
+			role='group'
+			aria-label='Редактор тегов'
+		>
+			{items.map(tag => (
+				<div
+					key={tag}
+					className='h-5 px-1.5 bg-violet-300 rounded-[10px] 
+                     flex justify-center items-center gap-[5px]'
+				>
+					<div className='text-Black text-[10px] font-baron'>{tag}</div>
+					<button
+						type='button'
+						aria-label='Удалить тег'
+						onClick={() => remove(tag)}
+						className='w-2.5 h-2.5 grid place-items-center rounded hover:bg-black/10'
+					>
+						<svg width='10' height='10' viewBox='0 0 20 20' fill='none'>
+							<path
+								d='M14.0625 5.9375L5.9375 14.0625M5.9375 5.9375L14.0625 14.0625'
+								stroke='black'
+								strokeWidth='2'
+								strokeLinecap='round'
+								strokeLinejoin='round'
+							/>
+						</svg>
+					</button>
+				</div>
+			))}
+
+			{/* Поле ввода — без рамок, растёт внутри, одна область с чипами */}
+			<input
+				ref={inputRef}
+				value={input}
+				onChange={e => setInput(e.target.value)}
+				onKeyDown={onKeyDown}
+				onPaste={onPaste}
+				onBlur={onBlur}
+				placeholder={items.length ? '' : 'введите теги'}
+				className='flex-1 min-w-[80px] h-5 bg-transparent outline-none 
+                   text-[10px] font-baron placeholder:text-[#625A51]/60'
+			/>
+		</div>
+	)
+}
+
 /* ===== основной компонент ===== */
 export default function SubcategoryOverlay({
 	variant = 'standalone', // 'mobile' | 'standalone'
@@ -232,20 +381,65 @@ export default function SubcategoryOverlay({
 	onApply,
 	onReset,
 	onClose,
-	resultsCount = 0,
-	form,
-	setField,
+	// resultsCount игнорируем, считаем из стора
 	className = '',
 	style = {},
 	embed = false, // для аккордеона
 }) {
+	const dispatch = useDispatch()
+
+	const form = useSelector(selectFiltersForm)
+	const previewCount = useSelector(selectPreviewCount)
+	const items = useSelector(s => s.products.items || [])
+
+	const deriveOptions = useCallback(
+		field =>
+			Array.from(new Set(items.map(p => norm(p?.[field])).filter(Boolean))),
+		[items]
+	)
+
+	const PRODUCT_TYPES = useMemo(
+		() =>
+			Array.from(new Set(items.map(p => norm(p?.category)).filter(Boolean))),
+		[items]
+	)
+	const MANUFACTURERS = useMemo(
+		() => deriveOptions('manufacturer'),
+		[deriveOptions]
+	)
+	const IGNITIONS = useMemo(
+		() => deriveOptions('ignitionType'),
+		[deriveOptions]
+	)
+	const VIEWS = useMemo(() => deriveOptions('view'), [deriveOptions])
+	const SIZES = useMemo(() => deriveOptions('size'), [deriveOptions])
+	const POWERS = useMemo(() => deriveOptions('power'), [deriveOptions])
+
+	const SHOTS_PRESETS = [1, 2, 3, 4, 50, 100]
+
 	const priceMin = nnum(form?.price?.min ?? 0)
 	const priceMax = nnum(form?.price?.max ?? 20000)
 
+	const timeMin = nnum(form?.time?.min ?? 0)
+	const timeMax = nnum(form?.time?.max ?? 120)
+
+	const setField = useCallback(
+		(path, value) => dispatch(setFieldAction({ path, value })),
+		[dispatch]
+	)
+
 	const onPriceChange = useCallback(
 		(lo, hi) => {
-			setField?.('price.min', Math.max(0, Math.floor(lo)))
-			setField?.('price.max', Math.max(0, Math.floor(hi)))
+			setField('price.min', Math.max(0, Math.floor(lo)))
+			setField('price.max', Math.max(0, Math.floor(hi)))
+		},
+		[setField]
+	)
+
+	const onTimeChange = useCallback(
+		(lo, hi) => {
+			setField('time.min', Math.max(0, Math.floor(lo)))
+			setField('time.max', Math.max(0, Math.floor(hi)))
 		},
 		[setField]
 	)
@@ -256,7 +450,7 @@ export default function SubcategoryOverlay({
 			const next = arr.includes(val)
 				? arr.filter(x => x !== val)
 				: [...arr, val]
-			setField?.(field, next)
+			setField(field, next)
 		},
 		[form, setField]
 	)
@@ -270,25 +464,38 @@ export default function SubcategoryOverlay({
 	const W = 240
 	const H = 834
 
-	// === MOBILE VARIANT (без шапки/крестика, точные отступы макета) ===
+	// === MOBILE VARIANT ===
 	if (variant === 'mobile') {
 		const InnerMobile = (
 			<div
 				className={[
-					'w-auto h-[834px]  flex flex-col',
-					' bg-white ',
+					'w-auto h-[834px] flex flex-col',
+					'bg-white',
 					className,
 				].join(' ')}
 				style={style}
 			>
-				{/* верхний блок с тонкой полосой как в макете */}
+				{/* верхняя тонкая полоска */}
 				<div className='self-stretch px-3.5 flex flex-col gap-[5px]'>
-					{/* тут намеренно НЕТ заголовка и крестика */}
 					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 				</div>
 
-				{/* тело */}
-				<div className='self-stretch px-5 pb-2.5 relative bg-white flex-1 flex flex-col gap-2 overflow-hidden min-h-0'>
+				{/* ТЕЛО: теперь скроллируемое (как на десктопе) */}
+				<div
+					className={[
+						'self-stretch px-5 pb-2.5 relative bg-white flex-1 min-h-0',
+						'overflow-y-auto overscroll-contain touch-pan-y scroll-smooth',
+						'[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+					].join(' ')}
+					onWheelCapture={e => e.stopPropagation()}
+					onTouchMoveCapture={e => e.stopPropagation()}
+				>
+					{/* Теги */}
+					<TagsEditor
+						value={toArr(form?.tags)}
+						onChange={next => setField('tags', next)}
+					/>
+
 					{/* Цена */}
 					<div className='flex flex-col gap-2'>
 						<div className='text-[#625A51] text-sm font-baron'>Цена</div>
@@ -296,16 +503,12 @@ export default function SubcategoryOverlay({
 							<BadgeInput
 								label='от'
 								value={form?.price?.min}
-								onChange={v =>
-									setField?.('price.min', v === '' ? '' : Number(v))
-								}
+								onChange={v => setField('price.min', v === '' ? '' : Number(v))}
 							/>
 							<BadgeInput
 								label='до'
 								value={form?.price?.max}
-								onChange={v =>
-									setField?.('price.max', v === '' ? '' : Number(v))
-								}
+								onChange={v => setField('price.max', v === '' ? '' : Number(v))}
 							/>
 						</div>
 						<RangeDual
@@ -331,7 +534,7 @@ export default function SubcategoryOverlay({
 								<WhiteCheckRow
 									key={t}
 									label={t}
-									checked={toArr(form?.types).includes(t)}
+									checked={toArr(form?.types).map(norm).includes(t)}
 									onToggle={() => toggleArr('types', t)}
 								/>
 							))}
@@ -343,14 +546,14 @@ export default function SubcategoryOverlay({
 					{/* Производитель */}
 					<div className='flex flex-col gap-2'>
 						<div className='text-[#625A51] text-base font-baron'>
-							ПРоизводитель
+							производитель
 						</div>
 						<div className='flex flex-col gap-1'>
 							{MANUFACTURERS.map(m => (
 								<WhiteCheckRow
 									key={m}
 									label={m}
-									checked={toArr(form?.manufacturers).includes(m)}
+									checked={toArr(form?.manufacturers).map(norm).includes(m)}
 									onToggle={() => toggleArr('manufacturers', m)}
 								/>
 							))}
@@ -359,9 +562,26 @@ export default function SubcategoryOverlay({
 
 					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 
-					{/* Кол-во хлопков */}
+					{/* Тип воспламенения */}
 					<div className='flex flex-col gap-2'>
-						<div className='text-[#625A51] text-base font-baron'>Хлопки</div>
+						<div className='text-[#625A51] text-base font-baron'>тип</div>
+						<div className='flex flex-col gap-1'>
+							{IGNITIONS.map(t => (
+								<WhiteCheckRow
+									key={t}
+									label={t}
+									checked={toArr(form?.ignitionType).map(norm).includes(t)}
+									onToggle={() => toggleArr('ignitionType', t)}
+								/>
+							))}
+						</div>
+					</div>
+
+					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+
+					{/* Хлопки */}
+					<div className='flex flex-col gap-2'>
+						<div className='text-[#625A51] text-base font-baron'>хлопки</div>
 						<div className='flex flex-col gap-1'>
 							{SHOTS_PRESETS.map(n => (
 								<WhiteCheckRow
@@ -380,31 +600,95 @@ export default function SubcategoryOverlay({
 					<div className='flex flex-col gap-2'>
 						<div className='text-[#625A51] text-base font-baron'>мощность</div>
 						<div className='flex flex-col gap-1'>
-							{POWER_LEVELS.map(p => (
+							{POWERS.map(p => (
 								<WhiteCheckRow
 									key={p}
 									label={p}
-									checked={toArr(form?.power).includes(p)}
+									checked={toArr(form?.power).map(norm).includes(p)}
 									onToggle={() => toggleArr('power', p)}
 								/>
 							))}
 						</div>
 					</div>
 
-					{/* Прокрутка, если не влезло */}
-					<div className='flex-1 min-h-0' />
+					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+
+					{/* Вид */}
+					<div className='flex flex-col gap-2'>
+						<div className='text-[#625A51] text-base font-baron'>вид</div>
+						<div className='flex flex-col gap-1'>
+							{VIEWS.map(v => (
+								<WhiteCheckRow
+									key={v}
+									label={v}
+									checked={toArr(form?.view).map(norm).includes(v)}
+									onToggle={() => toggleArr('view', v)}
+								/>
+							))}
+						</div>
+					</div>
+
+					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+
+					{/* Размеры */}
+					<div className='flex flex-col gap-2'>
+						<div className='text-[#625A51] text-base font-baron'>размер</div>
+						<div className='flex flex-col gap-1'>
+							{SIZES.map(s => (
+								<WhiteCheckRow
+									key={s}
+									label={s}
+									checked={toArr(form?.size).map(norm).includes(s)}
+									onToggle={() => toggleArr('size', s)}
+								/>
+							))}
+						</div>
+					</div>
+
+					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+
+					{/* Время работы (как цена) */}
+					<div className='flex flex-col gap-2 mb-2'>
+						<div className='text-[#625A51] text-sm font-baron'>
+							время работы, сек
+						</div>
+						<div className='inline-flex items-center gap-2.5'>
+							<BadgeInput
+								label='от'
+								value={form?.time?.min}
+								onChange={v => setField('time.min', v === '' ? '' : Number(v))}
+							/>
+							<BadgeInput
+								label='до'
+								value={form?.time?.max}
+								onChange={v => setField('time.max', v === '' ? '' : Number(v))}
+							/>
+						</div>
+						<RangeDual
+							min={0}
+							max={120}
+							step={1}
+							valueMin={timeMin}
+							valueMax={timeMax}
+							onChange={onTimeChange}
+							className='mx-[2px]'
+						/>
+					</div>
 				</div>
 
-				{/* футер */}
+				{/* футер (вне скролла, как и было) */}
 				<div className='self-stretch flex flex-col items-center gap-2.5 px-2.5'>
 					<div className='text-center text-zinc-300 text-xs font-baron'>
-						найден {resultsCount} товар
+						найдено {previewCount} товар(ов)
 					</div>
 
 					<div className='w-[272px] inline-flex items-start gap-2.5'>
 						<button
 							type='button'
-							onClick={onReset}
+							onClick={() => {
+								dispatch(resetForm())
+								onReset?.()
+							}}
 							className='w-[130px] h-[30px] pb-0.5 bg-[#EFEBE6] rounded-[10px] text-black text-[14px] font-baron cursor-pointer hover:text-[#BD52E9] flex justify-center items-center'
 						>
 							сбросить все
@@ -412,7 +696,10 @@ export default function SubcategoryOverlay({
 
 						<button
 							type='button'
-							onClick={onApply}
+							onClick={() => {
+								dispatch(applyNow())
+								onApply?.()
+							}}
 							className='relative w-[130px] h-[30px] pb-0.5 rounded-[10px] text-white text-[14px] font-baron bg-[radial-gradient(ellipse_173.76%_142.27%_at_-13.16%_-0%,_#1D0353_0%,_#C054EB_100%)] overflow-hidden cursor-pointer flex justify-center items-center group'
 						>
 							<span className='relative z-10'>показать</span>
@@ -439,7 +726,7 @@ export default function SubcategoryOverlay({
 							opacity: { duration: 0.18 },
 							y: { duration: 0.18 },
 						}}
-						className='relative w-auto  overflow-hidden'
+						className='relative w-auto overflow-hidden'
 						onAnimationComplete={() => {
 							if (!isOpen) setVisible(false)
 						}}
@@ -450,11 +737,10 @@ export default function SubcategoryOverlay({
 			)
 		}
 
-		// mobile без аккордеона — просто блок
 		return visible ? InnerMobile : null
 	}
 
-	// === STANDALONE (старое поведение с заголовком/крестиком) ===
+	// === STANDALONE (десктоп) ===
 	const InnerStandalone = (
 		<div
 			className={[
@@ -476,14 +762,7 @@ export default function SubcategoryOverlay({
 					aria-label='Закрыть'
 					title='Закрыть'
 				>
-					<svg
-						width='20'
-						height='20'
-						viewBox='0 0 20 20'
-						fill='none'
-						xmlns='http://www.w3.org/2000/svg'
-						className='pointer-events-none'
-					>
+					<svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
 						<path
 							d='M14.0625 5.9375L5.9375 14.0625M5.9375 5.9375L14.0625 14.0625'
 							stroke='currentColor'
@@ -495,33 +774,44 @@ export default function SubcategoryOverlay({
 				</button>
 			</div>
 
-			{/* body */}
+			{/* body (как было — скролл) */}
 			<div
 				className='flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-[10px] pb-2 scroll-smooth scroll-hidden'
 				onWheelCapture={e => e.stopPropagation()}
 				onTouchMoveCapture={e => e.stopPropagation()}
 			>
+				{/* …весь твой контент без изменений… */}
+				<div className='mt-3'>
+					<TagsEditor
+						value={toArr(form?.tags)}
+						onChange={next => setField('tags', next)}
+					/>
+				</div>
+
 				<div className='mt-3'>
 					<div className='text-black text-[12px] font-baron mb-2'>Цена</div>
 					<div className='mt-3 grid grid-cols-2 gap-[10px]'>
 						<BadgeInput
 							label='от'
 							value={form?.price?.min}
-							onChange={v => setField?.('price.min', v === '' ? '' : Number(v))}
+							onChange={v => setField('price.min', v === '' ? '' : Number(v))}
 						/>
 						<BadgeInput
 							label='до'
 							value={form?.price?.max}
-							onChange={v => setField?.('price.max', v === '' ? '' : Number(v))}
+							onChange={v => setField('price.max', v === '' ? '' : Number(v))}
 						/>
 					</div>
 					<RangeDual
 						min={0}
 						max={20000}
 						step={10}
-						valueMin={priceMin}
-						valueMax={priceMax}
-						onChange={onPriceChange}
+						valueMin={nnum(form?.price?.min ?? 0)}
+						valueMax={nnum(form?.price?.max ?? 20000)}
+						onChange={(lo, hi) => {
+							setField('price.min', Math.max(0, Math.floor(lo)))
+							setField('price.max', Math.max(0, Math.floor(hi)))
+						}}
 						className='mx-[2px]'
 					/>
 				</div>
@@ -539,7 +829,7 @@ export default function SubcategoryOverlay({
 							<WhiteCheckRow
 								key={t}
 								label={t}
-								checked={toArr(form?.types).includes(t)}
+								checked={toArr(form?.types).map(norm).includes(t)}
 								onToggle={() => toggleArr('types', t)}
 							/>
 						))}
@@ -559,8 +849,26 @@ export default function SubcategoryOverlay({
 							<WhiteCheckRow
 								key={m}
 								label={m}
-								checked={toArr(form?.manufacturers).includes(m)}
+								checked={toArr(form?.manufacturers).map(norm).includes(m)}
 								onToggle={() => toggleArr('manufacturers', m)}
+							/>
+						))}
+					</div>
+				</div>
+
+				<div className='my-2'>
+					<Divider />
+				</div>
+
+				<div>
+					<div className='text-black text-[12px] font-baron mb-2 mx-2'>тип</div>
+					<div className='flex flex-col gap-1'>
+						{IGNITIONS.map(t => (
+							<WhiteCheckRow
+								key={t}
+								label={t}
+								checked={toArr(form?.ignitionType).map(norm).includes(t)}
+								onToggle={() => toggleArr('ignitionType', t)}
 							/>
 						))}
 					</div>
@@ -595,34 +903,112 @@ export default function SubcategoryOverlay({
 						мощность
 					</div>
 					<div className='flex flex-col gap-1'>
-						{POWER_LEVELS.map(p => (
+						{POWERS.map(p => (
 							<WhiteCheckRow
 								key={p}
 								label={p}
-								checked={toArr(form?.power).includes(p)}
+								checked={toArr(form?.power).map(norm).includes(p)}
 								onToggle={() => toggleArr('power', p)}
 							/>
 						))}
 					</div>
+				</div>
+
+				<div className='my-2'>
+					<Divider />
+				</div>
+
+				<div>
+					<div className='text-black text-[12px] font-baron mb-2 mx-2'>вид</div>
+					<div className='flex flex-col gap-1'>
+						{VIEWS.map(v => (
+							<WhiteCheckRow
+								key={v}
+								label={v}
+								checked={toArr(form?.view).map(norm).includes(v)}
+								onToggle={() => toggleArr('view', v)}
+							/>
+						))}
+					</div>
+				</div>
+
+				<div className='my-2'>
+					<Divider />
+				</div>
+
+				<div>
+					<div className='text-black text-[12px] font-baron mb-2 mx-2'>
+						размер
+					</div>
+					<div className='flex flex-col gap-1'>
+						{SIZES.map(s => (
+							<WhiteCheckRow
+								key={s}
+								label={s}
+								checked={toArr(form?.size).map(norm).includes(s)}
+								onToggle={() => toggleArr('size', s)}
+							/>
+						))}
+					</div>
+				</div>
+
+				<div className='my-2'>
+					<Divider />
+				</div>
+
+				<div>
+					<div className='text-black text-[12px] font-baron mb-2 mx-2'>
+						время работы, сек
+					</div>
+					<div className='mt-3 grid grid-cols-2 gap-[10px]'>
+						<BadgeInput
+							label='от'
+							value={form?.time?.min}
+							onChange={v => setField('time.min', v === '' ? '' : Number(v))}
+						/>
+						<BadgeInput
+							label='до'
+							value={form?.time?.max}
+							onChange={v => setField('time.max', v === '' ? '' : Number(v))}
+						/>
+					</div>
+					<RangeDual
+						min={0}
+						max={120}
+						step={1}
+						valueMin={nnum(form?.time?.min ?? 0)}
+						valueMax={nnum(form?.time?.max ?? 120)}
+						onChange={(lo, hi) => {
+							setField('time.min', Math.max(0, Math.floor(lo)))
+							setField('time.max', Math.max(0, Math.floor(hi)))
+						}}
+						className='mx-[2px]'
+					/>
 				</div>
 			</div>
 
 			{/* footer */}
 			<div className='px-2.5 pb-3 pt-2'>
 				<div className='text-center text-zinc-300 text-[8px] font-baron'>
-					найдено {resultsCount} товар(ов)
+					найдено {previewCount} товар(ов)
 				</div>
 				<div className='flex gap-2 mt-2'>
 					<button
 						type='button'
-						onClick={onReset}
+						onClick={() => {
+							dispatch(resetForm())
+							onReset?.()
+						}}
 						className='w-1/2 h-[25px] px-[5px] py-[4px] bg-[#EFEBE6] rounded-[10px] text-[10px] font-baron cursor-pointer hover:text-[#BD52E9]'
 					>
 						сбросить все
 					</button>
 					<button
 						type='button'
-						onClick={onApply}
+						onClick={() => {
+							dispatch(applyNow())
+							onApply?.()
+						}}
 						className='relative w-1/2 h-[25px] cursor-pointer px-[5px] py-[4px] rounded-[10px] text-white text-[10px] font-baron bg-[radial-gradient(ellipse_173.76%_142.27%_at_-13.16%_-0%,_#1D0353_0%,_#C054EB_100%)] overflow-hidden'
 					>
 						<span className='relative z-10'>показать</span>
@@ -641,8 +1027,8 @@ export default function SubcategoryOverlay({
 					animate={{ height: isOpen ? H : 0, opacity: isOpen ? 1 : 0 }}
 					exit={{ height: 0, opacity: 0, y: -6 }}
 					transition={{
-						height: { duration: 0.22, ease: 'easeOut' },
-						opacity: { duration: 0.18 },
+						height: { duration: isOpen ? 0.18 : 0.25, ease: 'easeOut' },
+						opacity: { duration: isOpen ? 0.18 : 0.2, ease: 'easeOut' },
 						y: { duration: 0.18 },
 					}}
 					className='relative w-[240px] bg-white rounded-[20px] overflow-hidden'

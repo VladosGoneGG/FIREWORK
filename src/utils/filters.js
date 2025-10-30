@@ -1,110 +1,189 @@
 // src/utils/filters.js
 
 const norm = s =>
-	String(s ?? '')
+	String(s || '')
 		.trim()
 		.toLowerCase()
 		.replaceAll('ё', 'е')
-		.replace(/\s+/g, ' ')
 
-const hasVal = v => v !== null && v !== undefined && String(v).trim() !== ''
+const toArr = v => (Array.isArray(v) ? v : v == null ? [] : [v])
+const toSet = v => new Set(toArr(v).map(norm))
 
-const inRange = (val, range = {}) => {
-	if (val === null || val === undefined) return false
-	const { min, max } = range
-	if (hasVal(min) && Number(val) < Number(min)) return false
-	if (hasVal(max) && Number(val) > Number(max)) return false
+// shots: как договорились в UI
+// 1,2,3,4 — точное совпадение
+// 50 — диапазон [50..99]
+// 100 — >= 100
+function shotsMatch(selected, value) {
+	if (!selected || selected.size === 0) return true
+	const n = Number(value) || 0
+	if (selected.has('1') || selected.has(1)) if (n === 1) return true
+	if (selected.has('2') || selected.has(2)) if (n === 2) return true
+	if (selected.has('3') || selected.has(3)) if (n === 3) return true
+	if (selected.has('4') || selected.has(4)) if (n === 4) return true
+	if (selected.has('50') || selected.has(50))
+		if (n >= 50 && n < 100) return true
+	if (selected.has('100') || selected.has(100)) if (n >= 100) return true
+	return false
+}
+
+function inRange(val, min, max, userBounded = false) {
+	const v = Number(val)
+	if (!Number.isFinite(v)) {
+		// если пользователь ХОТЬ ЧТО-ТО задал по диапазону — без значения товар не проходит
+		return userBounded ? false : true
+	}
+	if (Number.isFinite(min) && v < min) return false
+	if (Number.isFinite(max) && v > max) return false
 	return true
 }
 
+// Извлекаем «цену для сравнения»: сначала скидочная, потом обычная.
+function getComparablePrice(p) {
+	const d = Number(p?.discountPrice)
+	const base = Number(p?.price)
+	if (Number.isFinite(d) && d > 0) return d
+	if (Number.isFinite(base) && base > 0) return base
+	return NaN
+}
+
+// Теги: требуем, чтобы ВСЕ введенные теги были найдены у товара
+function tagsMatch(requiredTags, product) {
+	const required = toArr(requiredTags).map(norm).filter(Boolean)
+	if (!required.length) return true
+
+	// Источники тегов товара: product.tags или derive из семантики
+	const productTagsRaw = toArr(product?.tags)
+	let productTags = productTagsRaw.length
+		? productTagsRaw.map(norm)
+		: [
+				product?.name,
+				product?.manufacturer,
+				product?.category,
+				product?.subcategory,
+				product?.view,
+				product?.ignitionType,
+				product?.size,
+				product?.power,
+		  ]
+				.flatMap(x => String(x || '').split(/[^\p{L}\p{N}\-]+/u))
+				.map(norm)
+				.filter(Boolean)
+
+	const bag = new Set(productTags)
+	return required.every(t => bag.has(t))
+}
+
 /**
- * Применяет ТОЛЬКО заданные поля.
- * Поддержка:
- * - name, manufacturer, category, subcategory (строки)
- * - shots/caliber/durationSec/effectsCount/price (диапазоны)
- * - caliberText (строка-подстрока для калибра, альтернатива диапазону)
- * - hasCertificate (true -> certificateUrl truthy)
- * - inStockOnly (true -> stock > 0)
+ * Главная функция фильтрации
+ * @param {Array} items
+ * @param {Object} form — структура из SubcategoryOverlay:
+ * {
+ *   tags: string[],
+ *   types: string[],            // по category
+ *   manufacturers: string[],
+ *   ignitionType: string[],
+ *   shots: (1|2|3|4|50|100)[],
+ *   power: string[],            // 'слабый' | 'мощный'
+ *   view: string[],
+ *   size: string[],             // 'маленький' | 'большой'
+ *   price: { min, max },
+ *   time: { min, max }          // по durationSec
+ * }
  */
-export function applyAdvancedFilter(products = [], filters = {}) {
-	if (!Array.isArray(products) || products.length === 0) return []
-	if (
-		!filters ||
-		typeof filters !== 'object' ||
-		Object.keys(filters).length === 0
-	) {
-		return products
-	}
+export function applyAdvancedFilter(items, form = {}) {
+	const list = Array.isArray(items) ? items : []
+	if (!list.length) return list
 
-	const nameQ = hasVal(filters.name) ? norm(filters.name) : ''
-	const manufQ = hasVal(filters.manufacturer) ? norm(filters.manufacturer) : ''
-	const catQ = hasVal(filters.category) ? norm(filters.category) : ''
-	const subcatQ = hasVal(filters.subcategory) ? norm(filters.subcategory) : ''
-	const caliberTextQ = hasVal(filters.caliberText)
-		? norm(filters.caliberText)
-		: ''
-	const stockOnly = Boolean(filters.inStockOnly)
-	const certOnly = Boolean(filters.hasCertificate)
+	// Подготовили выбранные множества
+	const selTypes = toSet(form.types)
+	const selMfr = toSet(form.manufacturers)
+	const selIgnition = toSet(form.ignitionType)
+	const selPower = toSet(form.power)
+	const selView = toSet(form.view)
+	const selSize = toSet(form.size)
 
-	const shotsR = filters.shots
-	const caliberR = filters.caliber
-	const durationR = filters.durationSec
-	const effectsR = filters.effectsCount
-	const priceR = filters.price
+	const selShots = new Set(toArr(form.shots)) // для кастомной функции
 
-	return products.filter(p => {
-		// name/manufacturer contains
-		if (nameQ) {
-			const hit =
-				norm(p.name).includes(nameQ) ||
-				norm(p.manufacturer || '').includes(nameQ)
-			if (!hit) return false
+	const priceMin = Number(form?.price?.min)
+	const priceMax = Number(form?.price?.max)
+	const timeMin = Number(form?.time?.min)
+	const timeMax = Number(form?.time?.max)
+
+	const priceUserBounded =
+		Number.isFinite(priceMin) || Number.isFinite(priceMax)
+	const timeUserBounded = Number.isFinite(timeMin) || Number.isFinite(timeMax)
+
+	return list.filter(p => {
+		// 1) Цена
+		const price = getComparablePrice(p)
+		if (
+			!inRange(
+				price,
+				Number.isFinite(priceMin) ? priceMin : undefined,
+				Number.isFinite(priceMax) ? priceMax : undefined,
+				priceUserBounded
+			)
+		) {
+			return false
 		}
 
-		if (manufQ) {
-			if (!norm(p.manufacturer || '').includes(manufQ)) return false
+		// 2) Время работы (durationSec)
+		if (
+			!inRange(
+				p?.durationSec,
+				Number.isFinite(timeMin) ? timeMin : undefined,
+				Number.isFinite(timeMax) ? timeMax : undefined,
+				timeUserBounded
+			)
+		) {
+			return false
 		}
 
-		if (catQ && norm(p.category) !== catQ) return false
-		if (subcatQ && norm(p.subcategory) !== subcatQ) return false
-
-		// numeric ranges
-		if (shotsR && (hasVal(shotsR.min) || hasVal(shotsR.max))) {
-			if (!inRange(p.shots, shotsR)) return false
+		// 3) Типы (по category)
+		if (selTypes.size) {
+			const cat = norm(p?.category)
+			if (!selTypes.has(cat)) return false
 		}
 
-		// caliber: либо диапазон, либо подстрока (если задан caliberText)
-		if (caliberR && (hasVal(caliberR.min) || hasVal(caliberR.max))) {
-			const val = parseFloat(p.caliber)
-			if (!inRange(val, caliberR)) return false
-		}
-		if (caliberTextQ) {
-			if (!norm(p.caliber).includes(caliberTextQ)) return false
+		// 4) Производитель
+		if (selMfr.size) {
+			const m = norm(p?.manufacturer)
+			if (!selMfr.has(m)) return false
 		}
 
-		if (durationR && (hasVal(durationR.min) || hasVal(durationR.max))) {
-			if (!inRange(p.durationSec, durationR)) return false
+		// 5) Тип воспламенения
+		if (selIgnition.size) {
+			const t = norm(p?.ignitionType)
+			if (!selIgnition.has(t)) return false
 		}
 
-		if (effectsR && (hasVal(effectsR.min) || hasVal(effectsR.max))) {
-			if (!inRange(p.effectsCount, effectsR)) return false
+		// 6) Хлопки
+		if (!shotsMatch(selShots, p?.shots)) return false
+
+		// 7) Мощность
+		if (selPower.size) {
+			const pw = norm(p?.power)
+			if (!selPower.has(pw)) return false
 		}
 
-		if (priceR && (hasVal(priceR.min) || hasVal(priceR.max))) {
-			const price = hasVal(p.discountPrice)
-				? Number(p.discountPrice)
-				: Number(p.price)
-			if (!inRange(price, priceR)) return false
+		// 8) Вид
+		if (selView.size) {
+			const v = norm(p?.view)
+			if (!selView.has(v)) return false
 		}
 
-		if (stockOnly) {
-			if (!p.stock || Number(p.stock) <= 0) return false
+		// 9) Размер
+		if (selSize.size) {
+			const s = norm(p?.size)
+			if (!selSize.has(s)) return false
 		}
 
-		if (certOnly) {
-			if (!p.certificateUrl) return false
-		}
+		// 10) Теги (все должны присутствовать)
+		if (!tagsMatch(form?.tags, p)) return false
 
 		return true
 	})
 }
+
+// совместимость со старыми импортами
+export const applyFilters = applyAdvancedFilter

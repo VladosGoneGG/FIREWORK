@@ -4,16 +4,48 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { setSearchQuery } from '../../store/slices/productsSlice'
 
+// Found-поток
+import { setCategorySmart } from '../../store/slices/categoriesSlice'
+import { clearApplied, setShowFound } from '../../store/slices/filtersSlice'
+
 import forwarding from '../../assets/SVG/forwadding.svg'
 import loop from '../../assets/SVG/loop.svg'
 
-const SearchBar = ({ onOpenModal, className = '' }) => {
+const SearchBar = ({ className = '' }) => {
 	const dispatch = useDispatch()
 	const [localQuery, setLocalQuery] = useState('')
 	const inputRef = useRef(null)
 
-	const debounced = useMemo(
-		() => debounce(q => dispatch(setSearchQuery(q)), 300),
+	// debounce диспатча строки поиска
+	const debouncedSetQuery = useMemo(
+		() =>
+			debounce(q => {
+				dispatch(setSearchQuery(q))
+			}, 300),
+		[dispatch]
+	)
+
+	// переключение Found-сцены + синхронизация категории
+	const toggleFound = useCallback(
+		q => {
+			const has = !!String(q).trim()
+			if (has) {
+				// включаем Found, сбрасываем любые глобальные применённые фильтры
+				dispatch(clearApplied())
+				dispatch(setShowFound(true))
+				// чтобы контентная часть не «липла» к подкатегории — ставим "all"
+				dispatch(setCategorySmart('all'))
+				try {
+					window.dispatchEvent(
+						new CustomEvent('nav:category-picked', {
+							detail: { category: 'all' },
+						})
+					)
+				} catch {}
+			} else {
+				dispatch(setShowFound(false))
+			}
+		},
 		[dispatch]
 	)
 
@@ -21,17 +53,21 @@ const SearchBar = ({ onOpenModal, className = '' }) => {
 		e => {
 			const val = e.target.value
 			setLocalQuery(val)
-			debounced(val)
+			debouncedSetQuery(val)
+			toggleFound(val)
 		},
-		[debounced]
+		[debouncedSetQuery, toggleFound]
 	)
 
 	const clear = useCallback(() => {
 		setLocalQuery('')
+		debouncedSetQuery.cancel()
 		dispatch(setSearchQuery(''))
+		dispatch(setShowFound(false))
 		inputRef.current?.focus()
-	}, [dispatch])
+	}, [dispatch, debouncedSetQuery])
 
+	// глобальная горячая клавиша: "/" — фокус в поиск
 	useEffect(() => {
 		const onKey = e => {
 			if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
@@ -46,7 +82,7 @@ const SearchBar = ({ onOpenModal, className = '' }) => {
 		return () => window.removeEventListener('keydown', onKey)
 	}, [])
 
-	useEffect(() => () => debounced.cancel(), [debounced])
+	useEffect(() => () => debouncedSetQuery.cancel(), [debouncedSetQuery])
 
 	return (
 		<div
@@ -54,14 +90,9 @@ const SearchBar = ({ onOpenModal, className = '' }) => {
 				'relative group flex items-center',
 				'border border-[#efebe6] rounded-[20px]',
 				'h-[50px] bg-white',
-				'w-full min-w-0', // ← РЕЗИНА: никаких w-[665px]
-				// 'max-[1040px]:max-w-[600px]'   // ← удалить жёсткий max-width
+				'w-full min-w-0',
 				className,
 			].join(' ')}
-			onClick={e => {
-				const rect = e.currentTarget.getBoundingClientRect()
-				if (e.clientX - rect.left > rect.width - 60) onOpenModal?.()
-			}}
 		>
 			<img
 				src={loop}
@@ -80,7 +111,7 @@ const SearchBar = ({ onOpenModal, className = '' }) => {
 					'hover:bg-[#efebe6] max-[1040px]:hover:bg-transparent',
 					'cursor-text hover:!cursor-pointer focus:!cursor-text',
 					'transition-colors duration-150 ease-out',
-					'min-w-0', // ← важно, чтобы поле тоже сжималось
+					'min-w-0',
 				].join(' ')}
 			/>
 
@@ -97,28 +128,18 @@ const SearchBar = ({ onOpenModal, className = '' }) => {
 				].join(' ')}
 			/>
 
-			{/* clear (скрыт по макету) */}
+			{/* очистка (по макету скрыта, но оставил поведение) */}
 			{localQuery && (
 				<button
 					type='button'
 					onClick={clear}
-					className='absolute right-12 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full hidden hover:bg-black/5 transition-colors duration-150 ease-out'
+					className='absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full hidden hover:bg-black/5 transition-colors duration-150 ease-out'
 					aria-label='Очистить'
 					title='Очистить'
 				>
 					×
 				</button>
 			)}
-
-			{/* «расширенный» — модалка */}
-			<button
-				type='button'
-				onClick={onOpenModal}
-				className='absolute right-2 top-1/2 -translate-y-1/2 text-[10px] px-2 py-1 rounded-[10px] bg-[#efebe6] hidden hover:bg-[#e6e2dd] font-baron lowercase transition-colors duration-150 ease-out'
-				title='Открыть глобальный поиск'
-			>
-				поиск
-			</button>
 		</div>
 	)
 }

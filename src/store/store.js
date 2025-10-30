@@ -4,6 +4,7 @@ import { loadCart, saveCart } from '../utils/persistCart'
 import cartReducer, { setCart } from './slices/cartSlice'
 import categoriesReducer from './slices/categoriesSlice'
 import detailsReducer from './slices/detailsSlice'
+import filtersReducer from './slices/filtersSlice'
 import productsReducer from './slices/productsSlice'
 
 export const store = configureStore({
@@ -12,6 +13,7 @@ export const store = configureStore({
 		products: productsReducer,
 		categories: categoriesReducer,
 		details: detailsReducer,
+		filters: filtersReducer,
 	},
 })
 

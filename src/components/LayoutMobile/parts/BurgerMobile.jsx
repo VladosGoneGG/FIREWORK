@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 
-import { setCategory } from '../../../store/slices/categoriesSlice'
+import { setCategorySmart } from '../../../store/slices/categoriesSlice'
+import { clearApplied } from '../../../store/slices/filtersSlice'
 import {
 	resetFilters,
 	selectFilteredProducts,
@@ -22,13 +23,22 @@ const norm = s =>
 		.trim()
 		.toLowerCase()
 
-function useCategories() {
+/** Категории и их подкатегории из каталога */
+function useCategoryTree() {
 	const items = useSelector(s => s.products.items || [])
 	return useMemo(() => {
-		const set = new Set()
-		items.forEach(p => p?.category && set.add(norm(p.category)))
-		const arr = Array.from(set)
-		return ['all', ...arr.filter(c => c !== 'all')]
+		const map = new Map()
+		for (const p of items) {
+			const cat = norm(p?.category)
+			const sub = (p?.subcategory ?? '').toString().trim()
+			if (!cat) continue
+			if (!map.has(cat)) map.set(cat, new Set())
+			if (sub) map.get(cat).add(sub)
+		}
+		const list = [{ key: 'all', title: 'все', subs: [] }]
+		for (const [cat, subs] of map)
+			list.push({ key: cat, title: cat, subs: [...subs] })
+		return list
 	}, [items])
 }
 
@@ -61,14 +71,37 @@ const BurgerMobile = () => {
 	const [open, setOpen] = useState(false)
 	const [filtersOpen, setFiltersOpen] = useState(false)
 
-	const categories = useCategories()
+	// АККОРДЕОН: какая категория раскрыта (как на десктопе)
+	const [expandedId, setExpandedId] = useState(null)
+
+	const categories = useCategoryTree()
 	const resultsCount = useSelector(selectFilteredProducts).length
 	const storeFilters = useSelector(selectFilters)
 
+	const selectedKey = useSelector(s =>
+		String(s.categories.selectedCategory || 'all')
+			.trim()
+			.toLowerCase()
+	)
+
 	const [form, setForm] = useState(() => mapStoreToForm(storeFilters))
+	useEffect(() => setForm(mapStoreToForm(storeFilters)), [storeFilters])
+
+	// Авто-раскрытие родителя, если выбран саб
 	useEffect(() => {
-		setForm(mapStoreToForm(storeFilters))
-	}, [storeFilters])
+		if (selectedKey === 'all') {
+			setExpandedId(null)
+			return
+		}
+		// найти родителя по сабу
+		for (const cat of categories) {
+			if (cat.key === 'all') continue
+			if (cat.key === selectedKey || cat.subs.map(norm).includes(selectedKey)) {
+				setExpandedId(cat.key)
+				break
+			}
+		}
+	}, [selectedKey, categories])
 
 	const setField = useCallback((path, value) => {
 		setForm(prev => {
@@ -94,15 +127,59 @@ const BurgerMobile = () => {
 		setOpen(false)
 	}, [])
 
-	const pickCategory = useCallback(
-		c => {
-			dispatch(setCategory(c === 'all' ? 'all' : c))
+	// «все» — как раньше: применяем и закрываем
+	const pickAllAndClose = useCallback(() => {
+		dispatch(clearApplied())
+		dispatch(setCategorySmart('all'))
+		try {
+			window.scrollTo({ top: 0, behavior: 'smooth' })
+		} catch {}
+		handleClose()
+		window.dispatchEvent(
+			new CustomEvent('nav:category-picked', { detail: { category: 'all' } })
+		)
+	}, [dispatch, handleClose])
+
+	// Клик по категории: для 'all' — применить, иначе просто раскрыть/свернуть аккордеон
+	const onCategoryClick = useCallback(
+		cat => {
+			if (cat.key === 'all') {
+				pickAllAndClose()
+				return
+			}
+			setExpandedId(prev => (prev === cat.key ? null : cat.key))
+			// Также отмечаем выбор категории в Redux (как на десктопе)
+			dispatch(setCategorySmart(cat.key))
+			try {
+				window.dispatchEvent(
+					new CustomEvent('nav:category-picked', {
+						detail: { category: cat.key },
+					})
+				)
+			} catch {}
+		},
+		[dispatch, pickAllAndClose]
+	)
+
+	// Клик по сабу — применяем, закрываем, уведомляем страницу (как на десктопе)
+	const pickSubcategory = useCallback(
+		subTitle => {
+			const title = String(subTitle || '').trim()
+			if (!title) return
+			dispatch(clearApplied())
+			dispatch(setCategorySmart(title))
+			try {
+				window.scrollTo({ top: 0, behavior: 'smooth' })
+			} catch {}
 			handleClose()
+			window.dispatchEvent(
+				new CustomEvent('nav:open-subcategory', { detail: { title } })
+			)
 		},
 		[dispatch, handleClose]
 	)
 
-	// Лочим скролл body при открытом меню
+	// Лочим body-scroll при открытом меню
 	useEffect(() => {
 		if (!open) return
 		const prev = document.body.style.overflow
@@ -115,12 +192,92 @@ const BurgerMobile = () => {
 	const onApplyFilters = useCallback(() => {
 		dispatch(setFilters(form))
 		setFiltersOpen(false)
-		setOpen(false) // закрываем меню, чтобы сразу увидеть список
+		setOpen(false)
 	}, [dispatch, form])
 
 	const onResetFilters = useCallback(() => {
 		dispatch(resetFilters())
 	}, [dispatch])
+
+	// === Рендер ===
+
+	// Список категорий с АККОРДЕОНОМ (без стрелок), активная категория — красная
+	const renderAccordion = () => (
+		<div className='self-stretch p-3.5 bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)] flex flex-col gap-[2px]'>
+			{categories.map(cat => {
+				const isAll = cat.key === 'all'
+				const subs = cat.subs || []
+				const subKeys = subs.map(norm)
+				const isActiveCat =
+					selectedKey === cat.key || subKeys.includes(selectedKey)
+				const isOpen = !isAll && expandedId === cat.key
+
+				return (
+					<div key={cat.key} className='w-full'>
+						{/* Ряд категории */}
+						<button
+							type='button'
+							onClick={() => onCategoryClick(cat)}
+							aria-current={isActiveCat ? 'true' : 'false'}
+							data-active={isActiveCat ? 'true' : 'false'}
+							className='w-full h-7 rounded-[10px] inline-flex justify-start items-center gap-4'
+						>
+							{/* «плитки» у категорий оставляем как было в бургер-меню */}
+							<div className='w-7 h-7 bg-white rounded-[5px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]' />
+							<div
+								className={[
+									'flex-1 text-left text-sm font-baron capitalize',
+									isActiveCat
+										? 'text-firework-red font-medium'
+										: 'text-[#333] hover:text-firework-red',
+								].join(' ')}
+							>
+								{cat.title}
+							</div>
+							{/* стрелок нет */}
+						</button>
+
+						{/* Блок подкатегорий (как на десктопе — аккордеон) */}
+						<AnimatePresence initial={false}>
+							{isOpen && !!subs.length && (
+								<motion.ul
+									key={`${cat.key}-subs`}
+									initial={{ height: 0, opacity: 0 }}
+									animate={{ height: 'auto', opacity: 1 }}
+									exit={{ height: 0, opacity: 0 }}
+									transition={{ duration: 0.18, ease: 'easeOut' }}
+									className='pl-9 mt-1 space-y-1 overflow-hidden'
+								>
+									{subs.map(sub => {
+										const subKey = norm(sub)
+										const isActiveSub = selectedKey === subKey
+										return (
+											<li key={sub}>
+												<button
+													type='button'
+													onClick={() => pickSubcategory(sub)}
+													aria-current={isActiveSub ? 'true' : 'false'}
+													data-active={isActiveSub ? 'true' : 'false'}
+													className={[
+														'w-[190px] h-[30px] font-baron lowercase text-left rounded-[8px] text-[12px] px-2',
+														isActiveSub
+															? 'bg-violet-400/50 text-[#997DF5] font-medium'
+															: 'text-gray-700 hover:text-firework-red',
+													].join(' ')}
+												>
+													{sub}
+												</button>
+											</li>
+										)
+									})}
+								</motion.ul>
+							)}
+						</AnimatePresence>
+					</div>
+				)
+			})}
+		</div>
+	)
 
 	return (
 		<>
@@ -134,7 +291,7 @@ const BurgerMobile = () => {
 				<BurgerSvg />
 			</button>
 
-			{/* Портал поверх всего */}
+			{/* Портал */}
 			{createPortal(
 				<AnimatePresence>
 					{open && (
@@ -180,22 +337,8 @@ const BurgerMobile = () => {
 								</button>
 
 								<div className='max-w-[335px] px-2.5 mt-1 space-y-2.5'>
-									{/* Категории */}
-									<div className='self-stretch p-3.5 bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)] flex flex-col gap-[5px]'>
-										{categories.map(cat => (
-											<button
-												key={cat}
-												type='button'
-												onClick={() => pickCategory(cat)}
-												className='self-stretch h-7 rounded-[10px] inline-flex justify-start items-center gap-4'
-											>
-												<div className='w-7 h-7 bg-white rounded-[5px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]' />
-												<div className='flex-1 text-black text-left text-sm font-baron capitalize'>
-													{cat === 'all' ? 'все' : cat}
-												</div>
-											</button>
-										))}
-									</div>
+									{/* Категории с аккордеоном (как десктоп) */}
+									{renderAccordion()}
 
 									{/* Фильтры (аккордеон) */}
 									<div className='self-stretch px-2.5 py-3.5 bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]'>
@@ -210,7 +353,7 @@ const BurgerMobile = () => {
 											<div
 												className={[
 													'w-4 h-4 transition-transform duration-200',
-													filtersOpen ? 'rotate-90' : 'rotate-0', // открыто: вниз, закрыто: вверх
+													filtersOpen ? 'rotate-90' : 'rotate-0',
 												].join(' ')}
 											>
 												<svg
@@ -221,14 +364,13 @@ const BurgerMobile = () => {
 													xmlns='http://www.w3.org/2000/svg'
 												>
 													<path
-														d='M5.29303 14.364C5.10556 14.1765 5.00024 13.9222 5.00024 13.657C5.00024 13.3918 5.10556 13.1375 5.29303 12.95L10.243 8.00001L5.29303 3.05001C5.11087 2.86141 5.01008 2.60881 5.01236 2.34661C5.01463 2.08442 5.1198 1.8336 5.30521 1.64819C5.49062 1.46279 5.74143 1.35762 6.00363 1.35534C6.26583 1.35306 6.51843 1.45386 6.70703 1.63601L12.364 7.29301C12.5515 7.48054 12.6568 7.73485 12.6568 8.00001C12.6568 8.26518 12.5515 8.51949 12.364 8.70701L6.70703 14.364C6.5195 14.5515 6.2652 14.6568 6.00003 14.6568C5.73487 14.6568 5.48056 14.5515 5.29303 14.364Z'
+														d='M5.293 14.364a.999.999 0 010-1.414L10.243 8 5.293 3.05A.999.999 0 016.707 1.636l5.657 5.657a1 1 0 010 1.414L6.707 14.364a.999.999 0 01-1.414 0z'
 														fill='black'
 													/>
 												</svg>
 											</div>
 										</button>
 
-										{/* Анимация высоты + обрезка краёв */}
 										<AnimatePresence initial={false}>
 											{filtersOpen && (
 												<motion.div
@@ -254,7 +396,7 @@ const BurgerMobile = () => {
 										</AnimatePresence>
 									</div>
 
-									{/* Футер внутри панели */}
+									{/* Футер */}
 									<div className='self-stretch p-2.5 space-y-5'>
 										<div className='flex flex-col gap-2.5'>
 											<div className='text-[#625a51] text-sm font-baron lowercase cursor-pointer'>
