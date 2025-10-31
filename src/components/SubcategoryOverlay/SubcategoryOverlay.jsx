@@ -34,10 +34,10 @@ function WhiteCheckRow({ label, checked, onToggle }) {
 	const COLOR_HOVER_CHECKED_BORDER = 'rgba(153,125,245,0.5)'
 
 	// фиксированный размер центральной точки
-	const INNER = 8
+	const INNER = 7.6
 
 	// «чуть» уменьшаем обводку: тонкое кольцо 1.5px на hover/active
-	const borderPx = (checked && hover) || active ? 2.5 : 2
+	const borderPx = (checked && hover) || active ? 2 : 2
 
 	// внешний круг ровно вплотную к точке (без просвета)
 	const OUTER = INNER + 2 * borderPx
@@ -476,7 +476,7 @@ export default function SubcategoryOverlay({
 				style={style}
 			>
 				{/* верхняя тонкая полоска */}
-				<div className='self-stretch px-3.5 flex flex-col gap-[5px]'>
+				<div className='self-stretch  flex flex-col gap-[5px]'>
 					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 				</div>
 
@@ -495,7 +495,7 @@ export default function SubcategoryOverlay({
 						value={toArr(form?.tags)}
 						onChange={next => setField('tags', next)}
 					/>
-
+					<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 					{/* Цена */}
 					<div className='flex flex-col gap-2'>
 						<div className='text-[#625A51] text-sm font-baron'>Цена</div>
@@ -522,7 +522,7 @@ export default function SubcategoryOverlay({
 						/>
 					</div>
 
-					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+					<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 
 					{/* Тип товара */}
 					<div className='flex flex-col gap-2'>
@@ -541,7 +541,7 @@ export default function SubcategoryOverlay({
 						</div>
 					</div>
 
-					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+					<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 
 					{/* Производитель */}
 					<div className='flex flex-col gap-2'>
@@ -560,7 +560,7 @@ export default function SubcategoryOverlay({
 						</div>
 					</div>
 
-					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+					<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 
 					{/* Тип воспламенения */}
 					<div className='flex flex-col gap-2'>
@@ -577,7 +577,7 @@ export default function SubcategoryOverlay({
 						</div>
 					</div>
 
-					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+					<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 
 					{/* Хлопки */}
 					<div className='flex flex-col gap-2'>
@@ -594,7 +594,7 @@ export default function SubcategoryOverlay({
 						</div>
 					</div>
 
-					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+					<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 
 					{/* Мощность */}
 					<div className='flex flex-col gap-2'>
@@ -611,7 +611,7 @@ export default function SubcategoryOverlay({
 						</div>
 					</div>
 
-					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+					<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 
 					{/* Вид */}
 					<div className='flex flex-col gap-2'>
@@ -628,7 +628,7 @@ export default function SubcategoryOverlay({
 						</div>
 					</div>
 
-					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+					<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 
 					{/* Размеры */}
 					<div className='flex flex-col gap-2'>
@@ -645,7 +645,7 @@ export default function SubcategoryOverlay({
 						</div>
 					</div>
 
-					<div className='self-stretch h-0.5 bg-[#EFEBE6] rounded-[20px]' />
+					<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 
 					{/* Время работы (как цена) */}
 					<div className='flex flex-col gap-2 mb-2'>
@@ -678,7 +678,7 @@ export default function SubcategoryOverlay({
 
 				{/* футер (вне скролла, как и было) */}
 				<div className='self-stretch flex flex-col items-center gap-2.5 px-2.5'>
-					<div className='text-center text-zinc-300 text-xs font-baron'>
+					<div className='text-center text-zinc-300 text-[14px] font-baron'>
 						найдено {previewCount} товар(ов)
 					</div>
 
@@ -989,7 +989,7 @@ export default function SubcategoryOverlay({
 
 			{/* footer */}
 			<div className='px-2.5 pb-3 pt-2'>
-				<div className='text-center text-zinc-300 text-[8px] font-baron'>
+				<div className='text-center text-zinc-300 text-[14px] font-baron'>
 					найдено {previewCount} товар(ов)
 				</div>
 				<div className='flex gap-2 mt-2'>

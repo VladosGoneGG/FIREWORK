@@ -1,5 +1,4 @@
-// src/components/ProductSection/ProductSection.jsx
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import { useEffect, useMemo, useState } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSkeleton'
@@ -11,7 +10,7 @@ import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSke
  * - onSelectProduct: (product) => void
  * - onOpenSubcategory: ({ title, products }) => void
  * - loading: boolean
- * - showHeader?: boolean  // можно скрыть хедер, если он уже есть выше по дереву
+ * - showHeader?: boolean
  */
 const ProductSection = ({
 	title,
@@ -40,15 +39,12 @@ const ProductSection = ({
 		}
 	}
 
-	const FX_IN = {
-		opacity: 1,
-		y: 0,
-		transition: { duration: 0.14, ease: 'easeOut' },
-	}
-	const FX_OUT = {
-		opacity: 0,
-		y: -8,
-		transition: { duration: 0.12, ease: 'easeIn' },
+	const EASE = 'easeOut'
+	const DURATION = 0.15
+	// Анимируем весь грид одним блоком
+	const GRID_BLOCK = {
+		hidden: { opacity: 0, y: 14 },
+		show: { opacity: 1, y: 0, transition: { ease: EASE, duration: DURATION } },
 	}
 
 	const hasMore = !loading && products.length > visibleCount
@@ -71,8 +67,11 @@ const ProductSection = ({
 				</div>
 			)}
 
-			{/* минимум 5 колонок на десктопах */}
-			<div
+			<motion.div
+				key={`${title}|${visible.length}|${products.length}`}
+				variants={GRID_BLOCK}
+				initial='hidden'
+				animate='show'
 				className='  grid
     [grid-template-columns:repeat(auto-fill,120px)]
     xl:[grid-template-columns:repeat(5,120px)]
@@ -80,40 +79,21 @@ const ProductSection = ({
     gap-[11px]
     p-2.5 pb-3 overflow-visible
 
-   
     md:mx-[-8px] lg:mx-[-12px] xl:mx-[-16px]
    
     xl:px-1'
+				style={{ willChange: 'opacity, transform' }}
 			>
-				{loading ? (
-					Array.from({ length: 10 }).map((_, i) => (
-						<ProductCardMiniSkeleton key={i} />
-					))
-				) : (
-					<AnimatePresence initial={false} mode='sync'>
-						{visible.map(p => (
-							<motion.div
-								key={p.id}
-								layout='position'
-								initial={{ opacity: 0, y: -8 }}
-								animate={{
-									opacity: 1,
-									y: 0,
-									transition: { duration: 0.14, ease: 'easeOut' },
-								}}
-								exit={{
-									opacity: 0,
-									y: -8,
-									transition: { duration: 0.12, ease: 'easeIn' },
-								}}
-								style={{ willChange: 'opacity, transform' }}
-							>
+				{loading
+					? Array.from({ length: 10 }).map((_, i) => (
+							<ProductCardMiniSkeleton key={i} />
+					  ))
+					: visible.map(p => (
+							<div key={p.id}>
 								<ProductCardMini product={p} onSelect={onSelectProduct} />
-							</motion.div>
-						))}
-					</AnimatePresence>
-				)}
-			</div>
+							</div>
+					  ))}
+			</motion.div>
 		</section>
 	)
 }

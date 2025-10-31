@@ -1,5 +1,9 @@
-// src/components/ProductsPage/ProductPage.jsx
-import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
+import {
+	AnimatePresence,
+	LayoutGroup,
+	motion,
+	MotionConfig,
+} from 'motion/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -36,6 +40,24 @@ const norm = s =>
 		.trim()
 		.toLowerCase()
 
+// === Smart Animate: Ease out, 150ms ===
+const EASE = 'easeOut'
+const DURATION = 0.15
+
+// ОДИН общий блок: появляется снизу-вверх без каскада
+const BLOCK = {
+	hidden: { opacity: 0, y: 16 },
+	show: { opacity: 1, y: 0, transition: { ease: EASE, duration: DURATION } },
+	exit: {
+		opacity: 0,
+		y: -8,
+		transition: { ease: EASE, duration: DURATION * 0.8 },
+	},
+}
+
+// Универсальный transition для всех layout-анимаций контейнеров/секций
+const LAYOUT_T = { layout: { duration: DURATION, ease: EASE } }
+
 const ProductsPage = ({
 	onToggleFilters,
 	filtersOpen,
@@ -67,6 +89,12 @@ const ProductsPage = ({
 	const anchorRef = useRef(null)
 	const skipNextCategoryEffect = useRef(false)
 
+	// ключ для «перерисовки блока целиком» (без каскада)
+	const view = activeSub ? 'sub' : 'home'
+	const animKey = `${view}-${norm(selected)}-${sortKey}-${
+		showFound ? 'found' : 'no-found'
+	}-${String(search).trim() ? 'q' : 'noq'}`
+
 	useEffect(() => {
 		onDetailsModeChange?.(Boolean(selectedProduct))
 	}, [selectedProduct, onDetailsModeChange])
@@ -89,12 +117,10 @@ const ProductsPage = ({
 		onConsumeExternalSelected?.()
 	}, [externalSelectedProduct, onConsumeExternalSelected, dispatch])
 
-	// === ВАЖНО: обновлённый эффект по поиску (порядок действий) ===
+	// Поиск: порядок включения FoundSection фиксированный и «без рывков»
 	useEffect(() => {
 		const q = String(search).trim()
-
 		if (q) {
-			// 1) сначала очищаем прикладные фильтры и выставляем категорию all
 			dispatch(clearApplied())
 			dispatch(setCategorySmart('all'))
 			try {
@@ -104,15 +130,10 @@ const ProductsPage = ({
 					})
 				)
 			} catch {}
-
-			// 2) затем включаем Found — ПОСЛЕДНИМ действием
 			dispatch(setShowFound(true))
-
-			// 3) гасим детали/подкатегорию
 			setSelectedProduct(null)
 			setActiveSub(null)
 		} else {
-			// пустой запрос — выключаем Found
 			dispatch(setShowFound(false))
 		}
 	}, [search, dispatch])
@@ -123,7 +144,6 @@ const ProductsPage = ({
 
 	const related = useRelated(allItems, selectedProduct, 10)
 
-	const view = activeSub ? 'sub' : 'home'
 	const shouldShowSlider =
 		!!showSlider &&
 		!selectedProduct &&
@@ -131,7 +151,7 @@ const ProductsPage = ({
 		!String(search).trim() &&
 		!showFound
 
-	// ===== вычисления сверху (хуки стабильно) =====
+	// ===== вычисления =====
 	const homeFiltered = useMemo(() => applyFilters(filtered, {}), [filtered])
 
 	const discountedSet = useMemo(
@@ -219,7 +239,7 @@ const ProductsPage = ({
 
 			if (title) {
 				skipNextCategoryEffect.current = true
-				dispatch(setCategorySmart(title)) // ⬅️ умный сет
+				dispatch(setCategorySmart(title))
 			}
 
 			setSelectedProduct(null)
@@ -232,19 +252,15 @@ const ProductsPage = ({
 		[allItems, dispatch]
 	)
 
-	// слушаем: открыть конкретную подкатегорию из сайдбара
 	useEffect(() => {
 		const onOpenSub = e => {
 			const title = e?.detail?.title
-			if (title) {
-				openSubcategory({ title })
-			}
+			if (title) openSubcategory({ title })
 		}
 		window.addEventListener('nav:open-subcategory', onOpenSub)
 		return () => window.removeEventListener('nav:open-subcategory', onOpenSub)
 	}, [openSubcategory])
 
-	// слушаем: выбрана категория (включая «все») — гасим открытую подкатегорию
 	useEffect(() => {
 		const onPicked = () => setActiveSub(null)
 		window.addEventListener('nav:category-picked', onPicked)
@@ -268,12 +284,6 @@ const ProductsPage = ({
 
 	const openDetails = useCallback(p => setSelectedProduct(p), [])
 	const closeDetails = useCallback(() => setSelectedProduct(null), [])
-
-	const FX = {
-		initial: { opacity: 0 },
-		enter: { opacity: 1, transition: { duration: 0.16, ease: 'easeOut' } },
-		exit: { opacity: 0, transition: { duration: 0.12, ease: 'easeIn' } },
-	}
 
 	const FilterBar = (
 		<div className='relative'>
@@ -326,152 +336,156 @@ const ProductsPage = ({
 	)
 
 	return (
-		<LayoutGroup id='products-page'>
-			<div
-				ref={anchorRef}
-				className={`relative bg-white rounded-[20px] overflow-hidden mx-auto 
-           w-full max-w-[1200px] px-4 lg:px-3 md:px-2
+		// MotionConfig — единый transition для ВСЕХ дочерних motion-компонентов
+		<MotionConfig transition={{ duration: DURATION, ease: EASE }}>
+			<LayoutGroup id='products-page'>
+				<div
+					ref={anchorRef}
+					className={`relative bg-white rounded-[20px] overflow-hidden mx-auto 
+           w/full max-w-[1200px] px-4 lg:px-3 md:px-2
           ${selectedProduct ? 'h-[834px]' : 'min-h-[834px]'}`}
-			>
-				<motion.div layout='position'>
-					<motion.div
-						layout='position'
-						initial={false}
-						animate={selectedProduct ? { opacity: 0 } : { opacity: 1 }}
-						style={{
-							position: selectedProduct ? 'absolute' : 'static',
-							inset: selectedProduct ? 0 : 'auto',
-							visibility: selectedProduct ? 'hidden' : 'visible',
-							pointerEvents: selectedProduct ? 'none' : 'auto',
-							width: '100%',
-						}}
-					>
-						{view === 'home' && (
-							<motion.div
-								variants={FX}
-								initial='initial'
-								animate='enter'
-								exit='exit'
-								layout='position'
-							>
-								{!selectedProduct &&
-								!activeSub &&
-								!String(search).trim() &&
-								!showFound &&
-								showSlider ? (
-									<PromoSlider active />
-								) : (
-									FilterBar
-								)}
-							</motion.div>
-						)}
+				>
+					<motion.div layout='position' transition={LAYOUT_T}>
+						<motion.div
+							layout='position'
+							transition={LAYOUT_T}
+							initial={false}
+							animate={selectedProduct ? { opacity: 0 } : { opacity: 1 }}
+							style={{
+								position: selectedProduct ? 'absolute' : 'static',
+								inset: selectedProduct ? 0 : 'auto',
+								visibility: selectedProduct ? 'hidden' : 'visible',
+								pointerEvents: selectedProduct ? 'none' : 'auto',
+								width: '100%',
+							}}
+						>
+							{view === 'home' && (
+								<motion.div
+									key={`top-${animKey}`}
+									variants={BLOCK}
+									initial='hidden'
+									animate='show'
+									exit='exit'
+									layout='position'
+									transition={LAYOUT_T}
+								>
+									{!selectedProduct &&
+									!activeSub &&
+									!String(search).trim() &&
+									!showFound &&
+									showSlider ? (
+										<PromoSlider active />
+									) : (
+										FilterBar
+									)}
+								</motion.div>
+							)}
 
-						<div className='mt-3'>
-							<AnimatePresence mode='wait' initial={false}>
-								{showFound || String(search).trim() ? (
-									<motion.div
-										key='found'
-										layout='position'
-										variants={FX}
-										initial='initial'
-										animate='enter'
-										exit='exit'
-									>
-										<FoundSection
-											products={applySort(
-												Array.isArray(foundItems) ? foundItems : [],
-												sortKey
-											)}
-											onSelectProduct={openDetails}
-										/>
-									</motion.div>
-								) : view === 'home' ? (
-									<motion.div
-										key='home'
-										layout='position'
-										variants={FX}
-										initial='initial'
-										animate='enter'
-										exit='exit'
-										className='space-y-6'
-									>
-										{sectionsSorted.map(sec => (
-											<motion.div
-												key={sec.title}
-												layout='position'
-												variants={FX}
-												initial='initial'
-												animate='enter'
-												exit='exit'
-											>
-												<ProductSection
-													title={sec.title}
-													products={sec.items}
-													onSelectProduct={openDetails}
-													onOpenSubcategory={openSubcategory}
-													loading={status === 'loading'}
-													showHeader={norm(sec.title) !== PROMO_KEY}
-												/>
-											</motion.div>
-										))}
-									</motion.div>
-								) : (
-									<motion.div
-										key='sub'
-										layout='position'
-										variants={FX}
-										initial='initial'
-										animate='enter'
-										exit='exit'
-									>
-										<SubcategoryPanel
-											title={activeSub?.title}
-											products={subSorted}
-											onSelectProduct={openDetails}
-											onOpenFilters={() => {
-												dispatch(setShowFound(false))
-												onToggleFilters?.()
-											}}
-											filtersOpen={!!filtersOpen}
-											sortKey={sortKey}
-											onChangeSort={setSortKey}
-										/>
-									</motion.div>
-								)}
-							</AnimatePresence>
-						</div>
+							<div className='mt-3'>
+								<AnimatePresence mode='wait' initial={false}>
+									{showFound || String(search).trim() ? (
+										<motion.div
+											key={`found-${animKey}`}
+											layout='position'
+											transition={LAYOUT_T}
+											variants={BLOCK}
+											initial='hidden'
+											animate='show'
+											exit='exit'
+										>
+											<FoundSection
+												products={applySort(
+													Array.isArray(foundItems) ? foundItems : [],
+													sortKey
+												)}
+												onSelectProduct={openDetails}
+											/>
+										</motion.div>
+									) : view === 'home' ? (
+										<motion.div
+											key={`home-${animKey}`}
+											layout='position'
+											transition={LAYOUT_T}
+											variants={BLOCK}
+											initial='hidden'
+											animate='show'
+											exit='exit'
+											className='space-y-6'
+										>
+											{sectionsSorted.map(sec => (
+												<div key={sec.title}>
+													<ProductSection
+														title={sec.title}
+														products={sec.items}
+														onSelectProduct={openDetails}
+														onOpenSubcategory={openSubcategory}
+														loading={status === 'loading'}
+														showHeader={norm(sec.title) !== PROMO_KEY}
+													/>
+												</div>
+											))}
+										</motion.div>
+									) : (
+										<motion.div
+											key={`sub-${animKey}`}
+											layout='position'
+											transition={LAYOUT_T}
+											variants={BLOCK}
+											initial='hidden'
+											animate='show'
+											exit='exit'
+										>
+											<SubcategoryPanel
+												title={activeSub?.title}
+												products={subSorted}
+												onSelectProduct={openDetails}
+												onOpenFilters={() => {
+													dispatch(setShowFound(false))
+													onToggleFilters?.()
+												}}
+												filtersOpen={!!filtersOpen}
+												sortKey={sortKey}
+												onChangeSort={setSortKey}
+											/>
+										</motion.div>
+									)}
+								</AnimatePresence>
+							</div>
+						</motion.div>
 					</motion.div>
-				</motion.div>
 
-				<AnimatePresence initial={false} mode='wait'>
-					{selectedProduct && (
-						<div className='absolute inset-0 z-10 bg-white'>
-							<motion.div
-								key='details-content'
-								variants={FX}
-								initial='initial'
-								animate='enter'
-								exit='exit'
-								className='h-full'
-								style={{ willChange: 'opacity' }}
-							>
-								<ProductDetails
-									product={selectedProduct}
-									related={related}
-									onBack={closeDetails}
-									onOpenSubcategory={payload => {
-										closeDetails()
-										dispatch(setShowFound(false))
-										openSubcategory(payload?.title || selectedProduct.category)
-									}}
-									onSelectProduct={openDetails}
-								/>
-							</motion.div>
-						</div>
-					)}
-				</AnimatePresence>
-			</div>
-		</LayoutGroup>
+					<AnimatePresence initial={false} mode='wait'>
+						{selectedProduct && (
+							<div className='absolute inset-0 z-10 bg-white'>
+								<motion.div
+									key='details-content'
+									variants={BLOCK}
+									initial='hidden'
+									animate='show'
+									exit='exit'
+									className='h-full'
+									style={{ willChange: 'opacity, transform' }}
+								>
+									<ProductDetails
+										product={selectedProduct}
+										related={related}
+										onBack={closeDetails}
+										onOpenSubcategory={payload => {
+											closeDetails()
+											dispatch(setShowFound(false))
+											openSubcategory(
+												payload?.title || selectedProduct.category
+											)
+										}}
+										onSelectProduct={openDetails}
+									/>
+								</motion.div>
+							</div>
+						)}
+					</AnimatePresence>
+				</div>
+			</LayoutGroup>
+		</MotionConfig>
 	)
 }
 

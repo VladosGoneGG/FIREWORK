@@ -18,42 +18,15 @@ import BurgerCloseSvg from '../../BurgerCloseSvg/BurgerCloseSvg'
 import BurgerSvg from '../../BurgerSvg/BurgerSvg'
 import SubcategoryOverlay from '../../SubcategoryOverlay/SubcategoryOverlay'
 
+// добавлено — общие строки как на десктопе
+import CategoryRow from '../../CategoryRow/CategoryRow'
+import SubcategoryRow from '../../SubcategoryRow/SubcategoryRow'
+
 const norm = s =>
 	String(s || '')
 		.trim()
 		.toLowerCase()
-
-/** Категории и их подкатегории из каталога */
-function useCategoryTree() {
-	const items = useSelector(s => s.products.items || [])
-	return useMemo(() => {
-		const map = new Map()
-		for (const p of items) {
-			const cat = norm(p?.category)
-			const sub = (p?.subcategory ?? '').toString().trim()
-			if (!cat) continue
-			if (!map.has(cat)) map.set(cat, new Set())
-			if (sub) map.get(cat).add(sub)
-		}
-		const list = [{ key: 'all', title: 'все', subs: [] }]
-		for (const [cat, subs] of map)
-			list.push({ key: cat, title: cat, subs: [...subs] })
-		return list
-	}, [items])
-}
-
-const mapStoreToForm = storeFilters => ({
-	price: {
-		min: storeFilters?.price?.min ?? 0,
-		max: storeFilters?.price?.max ?? null,
-	},
-	types: storeFilters?.types || [],
-	manufacturers: storeFilters?.manufacturers || [],
-	shots: storeFilters?.shots || [],
-	power: storeFilters?.power || [],
-	inStockOnly: !!storeFilters?.inStockOnly,
-	hasCertificate: !!storeFilters?.hasCertificate,
-})
+		.replaceAll('ё', 'е')
 
 const drawerVariants = {
 	closed: {
@@ -71,37 +44,44 @@ const BurgerMobile = () => {
 	const [open, setOpen] = useState(false)
 	const [filtersOpen, setFiltersOpen] = useState(false)
 
-	// АККОРДЕОН: какая категория раскрыта (как на десктопе)
+	// === данные каталога КАК НА ДЕСКТОПЕ ===
+	const {
+		list: categoriesList,
+		selectedCategory,
+		selectedSub,
+	} = useSelector(s => s.categories)
+
+	// Аккордеон — какая категория раскрыта
 	const [expandedId, setExpandedId] = useState(null)
 
-	const categories = useCategoryTree()
-	const resultsCount = useSelector(selectFilteredProducts).length
-	const storeFilters = useSelector(selectFilters)
+	// есть ли подкатегории у категории id
+	const hasSubsById = useMemo(() => {
+		const m = new Map()
+		for (const c of categoriesList)
+			m.set(c.id, (c.subcategories?.length || 0) > 0)
+		return m
+	}, [categoriesList])
 
-	const selectedKey = useSelector(s =>
-		String(s.categories.selectedCategory || 'all')
-			.trim()
-			.toLowerCase()
-	)
-
-	const [form, setForm] = useState(() => mapStoreToForm(storeFilters))
-	useEffect(() => setForm(mapStoreToForm(storeFilters)), [storeFilters])
-
-	// Авто-раскрытие родителя, если выбран саб
+	// авто-раскрытие родителя при выбранном сабе
 	useEffect(() => {
-		if (selectedKey === 'all') {
-			setExpandedId(null)
-			return
-		}
-		// найти родителя по сабу
-		for (const cat of categories) {
-			if (cat.key === 'all') continue
-			if (cat.key === selectedKey || cat.subs.map(norm).includes(selectedKey)) {
-				setExpandedId(cat.key)
-				break
+		const selSub = norm(selectedSub || '')
+		const selCat = norm(selectedCategory || 'all')
+
+		if (selSub) {
+			for (const c of categoriesList) {
+				if ((c.subcategories || []).some(s => norm(s.name) === selSub)) {
+					setExpandedId(c.id)
+					return
+				}
 			}
 		}
-	}, [selectedKey, categories])
+		if (selCat === 'all') setExpandedId(null)
+	}, [selectedSub, selectedCategory, categoriesList])
+
+	const resultsCount = useSelector(selectFilteredProducts).length
+	const storeFilters = useSelector(selectFilters)
+	const [form, setForm] = useState(storeFilters)
+	useEffect(() => setForm(storeFilters), [storeFilters])
 
 	const setField = useCallback((path, value) => {
 		setForm(prev => {
@@ -127,7 +107,6 @@ const BurgerMobile = () => {
 		setOpen(false)
 	}, [])
 
-	// «все» — как раньше: применяем и закрываем
 	const pickAllAndClose = useCallback(() => {
 		dispatch(clearApplied())
 		dispatch(setCategorySmart('all'))
@@ -140,28 +119,26 @@ const BurgerMobile = () => {
 		)
 	}, [dispatch, handleClose])
 
-	// Клик по категории: для 'all' — применить, иначе просто раскрыть/свернуть аккордеон
 	const onCategoryClick = useCallback(
 		cat => {
-			if (cat.key === 'all') {
+			const key = norm(cat.name)
+			if (key === 'all') {
 				pickAllAndClose()
 				return
 			}
-			setExpandedId(prev => (prev === cat.key ? null : cat.key))
-			// Также отмечаем выбор категории в Redux (как на десктопе)
-			dispatch(setCategorySmart(cat.key))
+			// ставим выбранную категорию в стор
+			dispatch(setCategorySmart(key))
+			// раскрываем/сворачиваем аккордеон
+			setExpandedId(prev => (prev === cat.id ? null : cat.id))
 			try {
 				window.dispatchEvent(
-					new CustomEvent('nav:category-picked', {
-						detail: { category: cat.key },
-					})
+					new CustomEvent('nav:category-picked', { detail: { category: key } })
 				)
 			} catch {}
 		},
 		[dispatch, pickAllAndClose]
 	)
 
-	// Клик по сабу — применяем, закрываем, уведомляем страницу (как на десктопе)
 	const pickSubcategory = useCallback(
 		subTitle => {
 			const title = String(subTitle || '').trim()
@@ -199,85 +176,64 @@ const BurgerMobile = () => {
 		dispatch(resetFilters())
 	}, [dispatch])
 
-	// === Рендер ===
+	// === Рендер категорий КАК НА ДЕСКТОПЕ (строки с иконками из CategoryRow) ===
+	const renderAccordionDesktopLike = () => {
+		const selCatKey = norm(selectedCategory || 'all')
+		const selSubKey = norm(selectedSub || '')
 
-	// Список категорий с АККОРДЕОНОМ (без стрелок), активная категория — красная
-	const renderAccordion = () => (
-		<div className='self-stretch p-3.5 bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)] flex flex-col gap-[2px]'>
-			{categories.map(cat => {
-				const isAll = cat.key === 'all'
-				const subs = cat.subs || []
-				const subKeys = subs.map(norm)
-				const isActiveCat =
-					selectedKey === cat.key || subKeys.includes(selectedKey)
-				const isOpen = !isAll && expandedId === cat.key
+		return (
+			<div className='self-stretch p-3.5 bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)] flex flex-col gap-[2px]'>
+				<ul className='space-y-1'>
+					{categoriesList.map((cat, idx) => {
+						const key = norm(cat.name)
+						const subs = cat.subcategories || []
+						const subKeys = subs.map(s => norm(s.name))
+						const isActiveCat = selCatKey === key || subKeys.includes(selSubKey)
+						const isOpen = expandedId === cat.id && hasSubsById.get(cat.id)
 
-				return (
-					<div key={cat.key} className='w-full'>
-						{/* Ряд категории */}
-						<button
-							type='button'
-							onClick={() => onCategoryClick(cat)}
-							aria-current={isActiveCat ? 'true' : 'false'}
-							data-active={isActiveCat ? 'true' : 'false'}
-							className='w-full h-7 rounded-[10px] inline-flex justify-start items-center gap-4'
-						>
-							{/* «плитки» у категорий оставляем как было в бургер-меню */}
-							<div className='w-7 h-7 bg-white rounded-[5px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]' />
-							<div
-								className={[
-									'flex-1 text-left text-sm font-baron capitalize',
-									isActiveCat
-										? 'text-firework-red font-medium'
-										: 'text-[#333] hover:text-firework-red',
-								].join(' ')}
-							>
-								{cat.title}
-							</div>
-							{/* стрелок нет */}
-						</button>
+						return (
+							<li className='font-baron ' key={cat.id}>
+								{/* Ряд категории — ровно как на десктопе (подтянет нужную иконку по idx) */}
+								<CategoryRow
+									cat={cat}
+									active={isActiveCat}
+									onClick={() => onCategoryClick(cat)}
+									idx={idx}
+								/>
 
-						{/* Блок подкатегорий (как на десктопе — аккордеон) */}
-						<AnimatePresence initial={false}>
-							{isOpen && !!subs.length && (
-								<motion.ul
-									key={`${cat.key}-subs`}
-									initial={{ height: 0, opacity: 0 }}
-									animate={{ height: 'auto', opacity: 1 }}
-									exit={{ height: 0, opacity: 0 }}
-									transition={{ duration: 0.18, ease: 'easeOut' }}
-									className='pl-9 mt-1 space-y-1 overflow-hidden'
-								>
-									{subs.map(sub => {
-										const subKey = norm(sub)
-										const isActiveSub = selectedKey === subKey
-										return (
-											<li key={sub}>
-												<button
-													type='button'
-													onClick={() => pickSubcategory(sub)}
-													aria-current={isActiveSub ? 'true' : 'false'}
-													data-active={isActiveSub ? 'true' : 'false'}
-													className={[
-														'w-[190px] h-[30px] font-baron lowercase text-left rounded-[8px] text-[12px] px-2',
-														isActiveSub
-															? 'bg-violet-400/50 text-[#997DF5] font-medium'
-															: 'text-gray-700 hover:text-firework-red',
-													].join(' ')}
-												>
-													{sub}
-												</button>
-											</li>
-										)
-									})}
-								</motion.ul>
-							)}
-						</AnimatePresence>
-					</div>
-				)
-			})}
-		</div>
-	)
+								{/* Подкатегории — как на десктопе */}
+								<AnimatePresence initial={false}>
+									{isOpen && !!subs.length && (
+										<motion.ul
+											key={`${cat.id}-subs`}
+											initial={{ height: 0, opacity: 0 }}
+											animate={{ height: 'auto', opacity: 1 }}
+											exit={{ height: 0, opacity: 0 }}
+											transition={{ duration: 0.18, ease: 'easeOut' }}
+											className='pl-9 mt-1 space-y-1 overflow-hidden'
+										>
+											{subs.map(sub => {
+												const subKey = norm(sub.name)
+												const isActiveSub = selSubKey === subKey
+												return (
+													<SubcategoryRow
+														key={sub.id}
+														sub={sub}
+														active={isActiveSub}
+														onClick={() => pickSubcategory(sub.name)}
+													/>
+												)
+											})}
+										</motion.ul>
+									)}
+								</AnimatePresence>
+							</li>
+						)
+					})}
+				</ul>
+			</div>
+		)
+	}
 
 	return (
 		<>
@@ -337,8 +293,8 @@ const BurgerMobile = () => {
 								</button>
 
 								<div className='max-w-[335px] px-2.5 mt-1 space-y-2.5'>
-									{/* Категории с аккордеоном (как десктоп) */}
-									{renderAccordion()}
+									{/* Категории — теперь как на десктопе (строки с иконками) */}
+									{renderAccordionDesktopLike()}
 
 									{/* Фильтры (аккордеон) */}
 									<div className='self-stretch px-2.5 py-3.5 bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]'>

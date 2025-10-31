@@ -16,6 +16,7 @@ const norm = name =>
 		: String(name || '')
 				.trim()
 				.toLowerCase()
+				.replaceAll('ё', 'е')
 
 const CategoryFilter = ({ onAnyCategoryClick }) => {
 	const dispatch = useDispatch()
@@ -123,7 +124,7 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 	return (
 		<aside className='w-[240px] h-auto bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] font-baron lowercase font-bold'>
 			<ul className='space-y-1'>
-				{list.map(cat => {
+				{list.map((cat, idx) => {
 					const key = norm(cat.name)
 					const subs = cat.subcategories || []
 					const subKeys = subs.map(s => norm(s.name))
@@ -139,6 +140,7 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 								cat={cat}
 								active={isActiveCat}
 								onClick={() => handleCategoryClick(cat)}
+								idx={idx} // <-- индекс для выбора иконки по порядку
 							/>
 
 							{isOpen && (
