@@ -1,7 +1,6 @@
 // src/store/mock/mockProducts.js
 import fullBlockSvg from '../../public/SVG/full-block.svg'
 
-// справочники для моков
 const MFR = ['PIROFF', 'Joker', 'Maxsem', 'РусСалют', 'Fieria']
 const IGNITIONS = ['терочный', 'ударный', 'фитильный']
 const VIEWS_GENERIC = [
@@ -19,6 +18,17 @@ const PETARDA_SHOTS = [1, 2, 3, 4, 50, 100]
 const pick = arr => arr[Math.floor(Math.random() * arr.length)]
 const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a
 
+// короткий «российский» номер сертификата
+const CERT_PREFIX = ['ЕАЭС RU C-RU', 'ТР ТС RU C-RU']
+const CERT_BLOCK = ['АЮ', 'МЮ', 'АН', 'АЯ', 'ДМ']
+const makeCertNum = () => {
+	const num = String(rnd(10000, 99999))
+	const year = String(rnd(23, 26))
+	const block = pick(CERT_BLOCK)
+	const pref = pick(CERT_PREFIX)
+	return `${pref}.${block}.В.${num}/${year}` // напр.: ЕАЭС RU C-RU.АЮ.В.12345/24
+}
+
 // === фабрика товара ===
 const makeProduct = (id, name, category, subcategory, overrides = {}) => {
 	const basePrice = rnd(500, 3499)
@@ -30,21 +40,16 @@ const makeProduct = (id, name, category, subcategory, overrides = {}) => {
 		if (discountPrice >= basePrice) discountPrice = basePrice - 1
 	}
 
-	// базовые поля по умолчанию
 	const manufacturer = pick(MFR)
 	const ignitionType = pick(IGNITIONS)
 	const view = pick(VIEWS_GENERIC)
 	const size = pick(SIZES)
 	const power = pick(POWERS)
 
-	// shots и duration:
-	// - для ПЕТАРД — из списка пресетов (чтобы фильтр «1/2/3/4/50/100» реально работал)
-	// - иначе — произвольное значение
 	const isPetardy = String(category).toLowerCase() === 'петарды'
 	const shots = isPetardy ? pick(PETARDA_SHOTS) : rnd(10, 120)
 	const durationSec = rnd(20, 120)
 
-	// теги: минимально полезные
 	const tags = Array.from(
 		new Set(
 			[
@@ -68,6 +73,9 @@ const makeProduct = (id, name, category, subcategory, overrides = {}) => {
 		)
 	)
 
+	// ~80% товаров с номером, остальные без (для проверки фильтра)
+	const certificateNumber = Math.random() > 0.2 ? makeCertNum() : ''
+
 	return {
 		id,
 		name,
@@ -78,7 +86,7 @@ const makeProduct = (id, name, category, subcategory, overrides = {}) => {
 		caliber: (Math.random() * 1.5 + 0.8).toFixed(1),
 		durationSec,
 		effectsCount: rnd(1, 10),
-		certificateUrl: './certs/salut100.pdf',
+		certificateNumber, // <-- номер сертификата (текст)
 		stock: rnd(1, 50),
 		price: basePrice,
 		discountPrice,
@@ -132,13 +140,9 @@ let id = 1
 ;['мини', 'средние', 'мощные', 'ленты / корсары'].forEach(sub => {
 	for (let i = 0; i < 5; i++) {
 		mockProducts.push(
-			makeProduct(
-				id++,
-				`Петарда — ${sub} #${i + 1}`,
-				'петарды',
-				sub,
-				{ shots: pick(PETARDA_SHOTS) } // гарантируем совпадение с пресетами
-			)
+			makeProduct(id++, `Петарда — ${sub} #${i + 1}`, 'петарды', sub, {
+				shots: pick(PETARDA_SHOTS),
+			})
 		)
 	}
 })

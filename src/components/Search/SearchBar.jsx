@@ -1,6 +1,12 @@
 // src/components/Search/SearchBar.jsx
-import debounce from 'lodash.debounce'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+	startTransition,
+	useCallback,
+	useDeferredValue,
+	useEffect,
+	useRef,
+	useState,
+} from 'react'
 import { useDispatch } from 'react-redux'
 import { setSearchQuery } from '../../store/slices/productsSlice'
 
@@ -11,29 +17,38 @@ import { clearApplied, setShowFound } from '../../store/slices/filtersSlice'
 import forwarding from '../../assets/SVG/forwadding.svg'
 import loop from '../../assets/SVG/loop.svg'
 
+const MIN_CHARS = 4
+const INSERT_DELAY = 120 // задержка при наборе
+const DELETE_DELAY = 320 // задержка при стирании
+
 const SearchBar = ({ className = '' }) => {
 	const dispatch = useDispatch()
 	const [localQuery, setLocalQuery] = useState('')
 	const inputRef = useRef(null)
 
-	// debounce диспатча строки поиска
-	const debouncedSetQuery = useMemo(
-		() =>
-			debounce(q => {
-				dispatch(setSearchQuery(q))
-			}, 300),
-		[dispatch]
-	)
+	// определяем, это вставка или удаление
+	const prevValueRef = useRef('')
+	const lastChangeTypeRef = useRef('insert') // 'insert' | 'delete'
 
-	// переключение Found-сцены + синхронизация категории
+	const onChange = useCallback(e => {
+		const next = e.target.value
+		const prev = prevValueRef.current
+		const isDelete = next.length < prev.length && prev.startsWith(next)
+		lastChangeTypeRef.current = isDelete ? 'delete' : 'insert'
+		prevValueRef.current = next
+		setLocalQuery(next)
+	}, [])
+
+	const deferredQuery = useDeferredValue(localQuery)
+	const lastSentRef = useRef('')
+	const timerRef = useRef(null)
+
 	const toggleFound = useCallback(
 		q => {
 			const has = !!String(q).trim()
 			if (has) {
-				// включаем Found, сбрасываем любые глобальные применённые фильтры
 				dispatch(clearApplied())
 				dispatch(setShowFound(true))
-				// чтобы контентная часть не «липла» к подкатегории — ставим "all"
 				dispatch(setCategorySmart('all'))
 				try {
 					window.dispatchEvent(
@@ -49,23 +64,72 @@ const SearchBar = ({ className = '' }) => {
 		[dispatch]
 	)
 
-	const onChange = useCallback(
-		e => {
-			const val = e.target.value
-			setLocalQuery(val)
-			debouncedSetQuery(val)
-			toggleFound(val)
-		},
-		[debouncedSetQuery, toggleFound]
-	)
+	// главный эффект: ставим на таймер разной длины для insert/delete
+	useEffect(() => {
+		const raw = deferredQuery
+		const q = String(raw || '')
+		const trimmed = q.trim()
+
+		// антишум: короткие запросы пропускаем (кроме полного очищения)
+		const effective =
+			trimmed.length >= MIN_CHARS ? trimmed : trimmed.length === 0 ? '' : null
+		if (effective === null) return
+
+		// одинаковое значение уже отправляли — выходим
+		if (lastSentRef.current === effective) return
+
+		// сбрасываем предыдущий таймер
+		if (timerRef.current) {
+			clearTimeout(timerRef.current)
+			timerRef.current = null
+		}
+
+		// если очищаем строку — можно отправить сразу (ощущается мгновенно)
+		if (effective === '') {
+			lastSentRef.current = ''
+			startTransition(() => {
+				dispatch(setSearchQuery(''))
+				dispatch(setShowFound(false))
+			})
+			return
+		}
+
+		const delay =
+			lastChangeTypeRef.current === 'delete' ? DELETE_DELAY : INSERT_DELAY
+
+		timerRef.current = setTimeout(() => {
+			lastSentRef.current = effective
+			startTransition(() => {
+				dispatch(setSearchQuery(effective))
+				toggleFound(effective)
+			})
+			timerRef.current = null
+		}, delay)
+
+		return () => {
+			if (timerRef.current) {
+				clearTimeout(timerRef.current)
+				timerRef.current = null
+			}
+		}
+	}, [deferredQuery, dispatch, toggleFound])
 
 	const clear = useCallback(() => {
+		// ручная очистка — сразу
 		setLocalQuery('')
-		debouncedSetQuery.cancel()
-		dispatch(setSearchQuery(''))
-		dispatch(setShowFound(false))
+		prevValueRef.current = ''
+		lastChangeTypeRef.current = 'delete'
+		lastSentRef.current = ''
+		if (timerRef.current) {
+			clearTimeout(timerRef.current)
+			timerRef.current = null
+		}
+		startTransition(() => {
+			dispatch(setSearchQuery(''))
+			dispatch(setShowFound(false))
+		})
 		inputRef.current?.focus()
-	}, [dispatch, debouncedSetQuery])
+	}, [dispatch])
 
 	// глобальная горячая клавиша: "/" — фокус в поиск
 	useEffect(() => {
@@ -81,8 +145,6 @@ const SearchBar = ({ className = '' }) => {
 		window.addEventListener('keydown', onKey)
 		return () => window.removeEventListener('keydown', onKey)
 	}, [])
-
-	useEffect(() => () => debouncedSetQuery.cancel(), [debouncedSetQuery])
 
 	return (
 		<div
@@ -128,7 +190,7 @@ const SearchBar = ({ className = '' }) => {
 				].join(' ')}
 			/>
 
-			{/* очистка (по макету скрыта, но оставил поведение) */}
+			{/* очистка (скрыта по макету, поведение оставлено) */}
 			{localQuery && (
 				<button
 					type='button'

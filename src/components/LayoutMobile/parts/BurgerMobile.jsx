@@ -1,4 +1,3 @@
-// src/components/LayoutMobile/parts/BurgerMobile.jsx
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -18,7 +17,6 @@ import BurgerCloseSvg from '../../BurgerCloseSvg/BurgerCloseSvg'
 import BurgerSvg from '../../BurgerSvg/BurgerSvg'
 import SubcategoryOverlay from '../../SubcategoryOverlay/SubcategoryOverlay'
 
-// добавлено — общие строки как на десктопе
 import CategoryRow from '../../CategoryRow/CategoryRow'
 import SubcategoryRow from '../../SubcategoryRow/SubcategoryRow'
 
@@ -44,17 +42,14 @@ const BurgerMobile = () => {
 	const [open, setOpen] = useState(false)
 	const [filtersOpen, setFiltersOpen] = useState(false)
 
-	// === данные каталога КАК НА ДЕСКТОПЕ ===
 	const {
 		list: categoriesList,
 		selectedCategory,
 		selectedSub,
 	} = useSelector(s => s.categories)
 
-	// Аккордеон — какая категория раскрыта
 	const [expandedId, setExpandedId] = useState(null)
 
-	// есть ли подкатегории у категории id
 	const hasSubsById = useMemo(() => {
 		const m = new Map()
 		for (const c of categoriesList)
@@ -62,7 +57,6 @@ const BurgerMobile = () => {
 		return m
 	}, [categoriesList])
 
-	// авто-раскрытие родителя при выбранном сабе
 	useEffect(() => {
 		const selSub = norm(selectedSub || '')
 		const selCat = norm(selectedCategory || 'all')
@@ -102,41 +96,66 @@ const BurgerMobile = () => {
 	}, [])
 
 	const handleOpen = useCallback(() => setOpen(true), [])
+
 	const handleClose = useCallback(() => {
 		setFiltersOpen(false)
 		setOpen(false)
+		try {
+			document.body.style.overflow = ''
+		} catch {}
 	}, [])
+
+	const closeAndNotify = useCallback(
+		(evtName, detail) => {
+			try {
+				window.scrollTo({ top: 0, behavior: 'smooth' })
+			} catch {}
+			handleClose()
+			requestAnimationFrame(() => {
+				try {
+					window.dispatchEvent(new CustomEvent(evtName, { detail }))
+				} catch {}
+			})
+		},
+		[handleClose]
+	)
 
 	const pickAllAndClose = useCallback(() => {
 		dispatch(clearApplied())
 		dispatch(setCategorySmart('all'))
-		try {
-			window.scrollTo({ top: 0, behavior: 'smooth' })
-		} catch {}
-		handleClose()
-		window.dispatchEvent(
-			new CustomEvent('nav:category-picked', { detail: { category: 'all' } })
-		)
-	}, [dispatch, handleClose])
+		closeAndNotify('nav:category-picked', { category: 'all' })
+	}, [dispatch, closeAndNotify])
 
 	const onCategoryClick = useCallback(
 		cat => {
-			const key = norm(cat.name)
+			const key = norm(cat.name) || 'all'
+			const hasSubs = hasSubsById.get(cat.id)
+
+			dispatch(clearApplied())
+			dispatch(setCategorySmart(key))
+
+			requestAnimationFrame(() => {
+				try {
+					window.dispatchEvent(
+						new CustomEvent('nav:category-picked', {
+							detail: { category: key },
+						})
+					)
+				} catch {}
+			})
+
 			if (key === 'all') {
-				pickAllAndClose()
+				handleClose()
 				return
 			}
-			// ставим выбранную категорию в стор
-			dispatch(setCategorySmart(key))
-			// раскрываем/сворачиваем аккордеон
-			setExpandedId(prev => (prev === cat.id ? null : cat.id))
-			try {
-				window.dispatchEvent(
-					new CustomEvent('nav:category-picked', { detail: { category: key } })
-				)
-			} catch {}
+
+			if (hasSubs) {
+				setExpandedId(prev => (prev === cat.id ? null : cat.id))
+			} else {
+				closeAndNotify('nav:category-picked', { category: key })
+			}
 		},
-		[dispatch, pickAllAndClose]
+		[dispatch, hasSubsById, closeAndNotify, handleClose]
 	)
 
 	const pickSubcategory = useCallback(
@@ -145,18 +164,11 @@ const BurgerMobile = () => {
 			if (!title) return
 			dispatch(clearApplied())
 			dispatch(setCategorySmart(title))
-			try {
-				window.scrollTo({ top: 0, behavior: 'smooth' })
-			} catch {}
-			handleClose()
-			window.dispatchEvent(
-				new CustomEvent('nav:open-subcategory', { detail: { title } })
-			)
+			closeAndNotify('nav:open-subcategory', { title })
 		},
-		[dispatch, handleClose]
+		[dispatch, closeAndNotify]
 	)
 
-	// Лочим body-scroll при открытом меню
 	useEffect(() => {
 		if (!open) return
 		const prev = document.body.style.overflow
@@ -176,7 +188,6 @@ const BurgerMobile = () => {
 		dispatch(resetFilters())
 	}, [dispatch])
 
-	// === Рендер категорий КАК НА ДЕСКТОПЕ (строки с иконками из CategoryRow) ===
 	const renderAccordionDesktopLike = () => {
 		const selCatKey = norm(selectedCategory || 'all')
 		const selSubKey = norm(selectedSub || '')
@@ -185,15 +196,14 @@ const BurgerMobile = () => {
 			<div className='self-stretch p-3.5 bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)] flex flex-col gap-[2px]'>
 				<ul className='space-y-1'>
 					{categoriesList.map((cat, idx) => {
-						const key = norm(cat.name)
 						const subs = cat.subcategories || []
 						const subKeys = subs.map(s => norm(s.name))
-						const isActiveCat = selCatKey === key || subKeys.includes(selSubKey)
+						const isActiveCat =
+							selCatKey === norm(cat.name) || subKeys.includes(selSubKey)
 						const isOpen = expandedId === cat.id && hasSubsById.get(cat.id)
 
 						return (
 							<li className='font-baron ' key={cat.id}>
-								{/* Ряд категории — ровно как на десктопе (подтянет нужную иконку по idx) */}
 								<CategoryRow
 									cat={cat}
 									active={isActiveCat}
@@ -201,7 +211,6 @@ const BurgerMobile = () => {
 									idx={idx}
 								/>
 
-								{/* Подкатегории — как на десктопе */}
 								<AnimatePresence initial={false}>
 									{isOpen && !!subs.length && (
 										<motion.ul
@@ -237,7 +246,6 @@ const BurgerMobile = () => {
 
 	return (
 		<>
-			{/* Кнопка в шапке */}
 			<button
 				type='button'
 				aria-label='Открыть меню'
@@ -247,12 +255,10 @@ const BurgerMobile = () => {
 				<BurgerSvg />
 			</button>
 
-			{/* Портал */}
 			{createPortal(
 				<AnimatePresence>
 					{open && (
 						<>
-							{/* Бэкдроп */}
 							<motion.div
 								key='backdrop'
 								className='fixed inset-0 bg-black/30'
@@ -263,7 +269,6 @@ const BurgerMobile = () => {
 								onClick={handleClose}
 							/>
 
-							{/* Сайдбар */}
 							<motion.aside
 								key='drawer'
 								className={[
@@ -283,7 +288,6 @@ const BurgerMobile = () => {
 									backfaceVisibility: 'hidden',
 								}}
 							>
-								{/* Закрыть */}
 								<button
 									type='button'
 									aria-label='Закрыть меню'
@@ -293,10 +297,8 @@ const BurgerMobile = () => {
 								</button>
 
 								<div className='max-w-[335px] px-2.5 mt-1 space-y-2.5'>
-									{/* Категории — теперь как на десктопе (строки с иконками) */}
 									{renderAccordionDesktopLike()}
 
-									{/* Фильтры (аккордеон) */}
 									<div className='self-stretch px-2.5 py-3.5 bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]'>
 										<button
 											type='button'
@@ -352,7 +354,6 @@ const BurgerMobile = () => {
 										</AnimatePresence>
 									</div>
 
-									{/* Футер */}
 									<div className='self-stretch p-2.5 space-y-5'>
 										<div className='flex flex-col gap-2.5'>
 											<div className='text-[#625a51] text-sm font-baron lowercase cursor-pointer'>

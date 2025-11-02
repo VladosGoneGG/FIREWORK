@@ -40,11 +40,9 @@ const norm = s =>
 		.trim()
 		.toLowerCase()
 
-// === Smart Animate: Ease out, 150ms ===
 const EASE = 'easeOut'
 const DURATION = 0.15
 
-// ОДИН общий блок: появляется снизу-вверх без каскада
 const BLOCK = {
 	hidden: { opacity: 0, y: 16 },
 	show: { opacity: 1, y: 0, transition: { ease: EASE, duration: DURATION } },
@@ -55,7 +53,6 @@ const BLOCK = {
 	},
 }
 
-// Универсальный transition для всех layout-анимаций контейнеров/секций
 const LAYOUT_T = { layout: { duration: DURATION, ease: EASE } }
 
 const ProductsPage = ({
@@ -89,7 +86,6 @@ const ProductsPage = ({
 	const anchorRef = useRef(null)
 	const skipNextCategoryEffect = useRef(false)
 
-	// ключ для «перерисовки блока целиком» (без каскада)
 	const view = activeSub ? 'sub' : 'home'
 	const animKey = `${view}-${norm(selected)}-${sortKey}-${
 		showFound ? 'found' : 'no-found'
@@ -117,7 +113,6 @@ const ProductsPage = ({
 		onConsumeExternalSelected?.()
 	}, [externalSelectedProduct, onConsumeExternalSelected, dispatch])
 
-	// Поиск: порядок включения FoundSection фиксированный и «без рывков»
 	useEffect(() => {
 		const q = String(search).trim()
 		if (q) {
@@ -151,7 +146,6 @@ const ProductsPage = ({
 		!String(search).trim() &&
 		!showFound
 
-	// ===== вычисления =====
 	const homeFiltered = useMemo(() => applyFilters(filtered, {}), [filtered])
 
 	const discountedSet = useMemo(
@@ -212,7 +206,6 @@ const ProductsPage = ({
 	)
 	const promoHasMore = !!promoSec && promoSec.items.length > 5
 
-	// ===== Навигация по подкатегориям =====
 	const openSubcategory = useCallback(
 		payload => {
 			const title =
@@ -255,14 +248,19 @@ const ProductsPage = ({
 	useEffect(() => {
 		const onOpenSub = e => {
 			const title = e?.detail?.title
-			if (title) openSubcategory({ title })
+			if (!title) return
+			setSelectedProduct(null)
+			openSubcategory({ title })
 		}
 		window.addEventListener('nav:open-subcategory', onOpenSub)
 		return () => window.removeEventListener('nav:open-subcategory', onOpenSub)
 	}, [openSubcategory])
 
 	useEffect(() => {
-		const onPicked = () => setActiveSub(null)
+		const onPicked = () => {
+			setActiveSub(null)
+			setSelectedProduct(null)
+		}
 		window.addEventListener('nav:category-picked', onPicked)
 		return () => window.removeEventListener('nav:category-picked', onPicked)
 	}, [])
@@ -336,7 +334,6 @@ const ProductsPage = ({
 	)
 
 	return (
-		// MotionConfig — единый transition для ВСЕХ дочерних motion-компонентов
 		<MotionConfig transition={{ duration: DURATION, ease: EASE }}>
 			<LayoutGroup id='products-page'>
 				<div

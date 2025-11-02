@@ -1,5 +1,5 @@
 // src/components/ProductDetails/ProductDetails.jsx
-import { memo } from 'react'
+import { memo, useEffect } from 'react'
 import fireworksSvg from '../../assets/SVG/fireworksSvg.svg'
 import DescriptionBlock from './parts/DescriptionBlock'
 import MediaBlock from './parts/MediaBlock'
@@ -18,28 +18,54 @@ const ProductDetails = ({
 	const img = product.images?.[0]
 	const inStock = Number.isFinite(product.stock) ? product.stock : 15
 
+	// ⬇️ Закрываем детали, когда в бургер-меню выбирают категорию/подкатегорию
+	// Работает только на мобильной версии (max-width: 1040px)
+	useEffect(() => {
+		const isMobile = () =>
+			typeof window !== 'undefined' &&
+			window.matchMedia &&
+			window.matchMedia('(max-width: 1040px)').matches
+
+		const handleNav = () => {
+			if (!isMobile()) return
+			try {
+				onBack?.()
+			} catch {}
+		}
+
+		window.addEventListener('nav:category-picked', handleNav)
+		window.addEventListener('nav:open-subcategory', handleNav)
+		return () => {
+			window.removeEventListener('nav:category-picked', handleNav)
+			window.removeEventListener('nav:open-subcategory', handleNav)
+		}
+	}, [onBack])
+
 	return (
 		<section className='bg-white rounded-[20px] w-full min-h-[834px] h-auto overflow-visible flex flex-col max-[1040px]:mt-16'>
-			{/* ⬇️ было h-full — из-за этого mt-auto снизу не срабатывал */}
-			<div className='p-2.5 flex flex-col justify-between min-h-[834px]'>
+			<div className='px-2.5 pt-2.5 pb-[15px] flex flex-col justify-between min-h-[834px]'>
 				{/* верх: медиа + правая колонка */}
 				<div className='flex flex-col min-[681px]:flex-row gap-2.5 flex-none min-[681px]:items-stretch'>
 					<MediaBlock img={fireworksSvg} name={product.name} onBack={onBack} />
 					<SideInfoCard product={product} img={img} inStock={inStock} />
 				</div>
 
-				{/* низ: описание + «добавь в набор» */}
-				<div className='flex-1 min-h-0 flex flex-col'>
-					<DescriptionBlock description={product.description} />
+				{/* низ: GRID — 1fr (описание) + auto (Related) */}
+				<div className='flex-1 min-h-0 grid grid-rows-[1fr_auto] gap-2.5'>
+					{/* строка 1: растягивается, внутри — собственный скролл */}
+					<DescriptionBlock
+						description={product.description}
+						certificateNumber={product?.certificateNumber}
+						className='min-h-0' // важно оставить min-h-0
+					/>
 
-					<div className='mt-auto w-full flex flex-col justify-end'>
+					{/* строка 2: остаётся на месте у низа */}
+					<div className='w-full flex flex-col justify-end'>
 						<RelatedBlock
 							related={related}
 							currentCategory={product.category}
 							onSelectProduct={onSelectProduct}
-							onOpenSubcategory={payload => {
-								onOpenSubcategory?.(payload)
-							}}
+							onOpenSubcategory={payload => onOpenSubcategory?.(payload)}
 						/>
 					</div>
 				</div>

@@ -10,8 +10,7 @@ const PromoPanel = () => {
 			/>
 			<button
 				type='button'
-				className='
-    mb-2.5 w-[220px] h-[50px]
+				className='mb-2.5 w-[220px] h-[50px]
     rounded-[10px] text-[15px] font-baron tracking-wide lowercase
     transition-colors duration-150 ease-out cursor-pointer
     btn-firework

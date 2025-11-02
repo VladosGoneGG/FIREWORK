@@ -168,7 +168,6 @@ export const selectFilteredProducts = createSelector(
 
 		const priceMin = Number(filters?.price?.min ?? 0)
 		const priceMaxRaw = filters?.price?.max
-		// >>> единственная принципиальная правка:
 		const hasPriceMax =
 			priceMaxRaw !== null && priceMaxRaw !== undefined && priceMaxRaw !== ''
 		const priceMax = hasPriceMax ? Number(filters.price.max) : null
@@ -177,7 +176,6 @@ export const selectFilteredProducts = createSelector(
 		const wantCert = !!filters?.hasCertificate
 
 		return items.filter(p => {
-			// Поиск
 			const matchesSearch =
 				!q ||
 				norm(p.name).includes(q) ||
@@ -187,14 +185,12 @@ export const selectFilteredProducts = createSelector(
 				norm(p.manufacturer).includes(q)
 			if (!matchesSearch) return false
 
-			// Категория/подкатегория
 			if (sel && sel !== 'all') {
 				const productCat = norm(p.category)
 				const productSub = norm(p.subcategory)
 				if (!(sel === productSub || sel === productCat)) return false
 			}
 
-			// === ФИЛЬТРЫ ===
 			const curPrice = getCurrentPrice(p)
 			if (Number.isFinite(priceMin) && curPrice < priceMin) return false
 			if (hasPriceMax && Number.isFinite(priceMax) && curPrice > priceMax)
@@ -205,7 +201,11 @@ export const selectFilteredProducts = createSelector(
 				if (Number.isFinite(sc) && sc <= 0) return false
 			}
 
-			if (wantCert && !String(p?.certificateUrl || '').trim()) return false
+			// ВАЖНО: теперь проверяем наличие certificateNumber (а не certificateUrl)
+			if (wantCert) {
+				const hasNum = !!String(p?.certificateNumber || '').trim()
+				if (!hasNum) return false
+			}
 
 			if (typesSet.size) {
 				const t = norm(p?.subcategory) || norm(p?.category)

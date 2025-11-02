@@ -1,4 +1,3 @@
-// src/components/LayoutMobile/ProductPageMobile.jsx
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -6,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import useProductsBoot from '../../../hooks/useProductsBoot'
 import useSections from '../../../hooks/useSections'
 import { setCategorySmart } from '../../../store/slices/categoriesSlice'
-import { openDetails } from '../../../store/slices/detailsSlice'
+import { closeDetails, openDetails } from '../../../store/slices/detailsSlice'
 import {
 	selectDiscountedProducts,
 	selectFilteredProducts,
@@ -120,6 +119,8 @@ const ProductPageMobile = () => {
 
 			if (title) dispatch(setCategorySmart(isPromo ? PROMO_KEY : title))
 			dispatch(setShowFound(false))
+			dispatch(closeDetails()) // закрываем детали при входе в подкатегорию
+
 			setActiveSub({
 				title: title || 'Категория',
 				products: Array.isArray(products) ? products : [],
@@ -134,6 +135,7 @@ const ProductPageMobile = () => {
 			setActiveSub(null)
 			dispatch(setShowFound(true))
 			dispatch(setCategorySmart('all'))
+			dispatch(closeDetails())
 			try {
 				window.dispatchEvent(
 					new CustomEvent('nav:category-picked', {
@@ -147,24 +149,36 @@ const ProductPageMobile = () => {
 		dispatch(clearApplied())
 	}, [isSearching, dispatch])
 
+	// событие: открыть подкатегорию из бургера
 	useEffect(() => {
 		const onOpenSub = e => {
 			const title = e?.detail?.title
-			if (title) openSubcategory({ title })
+			if (title) {
+				dispatch(closeDetails())
+				openSubcategory({ title })
+			}
 		}
 		window.addEventListener('nav:open-subcategory', onOpenSub)
 		return () => window.removeEventListener('nav:open-subcategory', onOpenSub)
-	}, [openSubcategory])
+	}, [openSubcategory, dispatch])
 
+	// событие: выбрана категория — закрываем sub-панель и детали
 	useEffect(() => {
-		const onPicked = () => setActiveSub(null)
+		const onPicked = () => {
+			setActiveSub(null)
+			dispatch(closeDetails())
+		}
 		window.addEventListener('nav:category-picked', onPicked)
 		return () => window.removeEventListener('nav:category-picked', onPicked)
-	}, [])
+	}, [dispatch])
 
+	// если ушли в "все" — гарантированно закрываем детали и подпанель
 	useEffect(() => {
-		if (norm(selected) === 'all') setActiveSub(null)
-	}, [selected])
+		if (norm(selected) === 'all') {
+			setActiveSub(null)
+			dispatch(closeDetails())
+		}
+	}, [selected, dispatch])
 
 	const openDetailsRedux = useCallback(
 		p => {
@@ -173,7 +187,6 @@ const ProductPageMobile = () => {
 		[dispatch]
 	)
 
-	// Шапка Found без кнопки «фильтр»
 	const FoundHeader = (
 		<div className='flex items-start pt-2.5 gap-2 px-1'>
 			<div className='flex-1'>

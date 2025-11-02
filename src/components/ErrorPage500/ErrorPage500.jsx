@@ -83,7 +83,7 @@ export default function ErrorPage500() {
 			{/* Футер на мобильных скрыт — как у тебя */}
 			<div className='mt-[50px] text-center font-baron text-[#625A51] max-[1040px]:hidden'>
 				<p className='text-[20px]'>
-					если у вас не получилось разбудить сайт{' '}
+					если у вас не получилось разбудить сайт,{' '}
 					<a
 						href='https://t.me/your_username'
 						target='_blank'

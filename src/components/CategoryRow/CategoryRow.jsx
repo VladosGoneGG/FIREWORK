@@ -41,7 +41,7 @@ const CategoryRow = ({ cat, active, onClick, idx = 0 }) => {
 			pressScale={0.98}
 			pressTint={false}
 			variant='ghost'
-			className={`flex items-center gap-4 my-[5px] w-[220px] h-[30px] text-[12px] rounded-[12px] text-left 
+			className={`flex items-center gap-4 my-[5px] max-[1040px]:w-[240px] w-[230px] h-[30px] text-[12px] rounded-[12px] text-left 
         ${
 					active
 						? 'text-firework-red font-medium'
@@ -56,9 +56,7 @@ const CategoryRow = ({ cat, active, onClick, idx = 0 }) => {
 				className={`w-[30px] h-[30px] ${active ? 'opacity-100' : 'opacity-80'}`}
 			/>
 			{/* normal-case, чтобы не сломать заглавную букву при глобальном lowercase */}
-			<span className='truncate normal-case'>
-				{prettyCategoryTitle(cat.name)}
-			</span>
+			<span className=' normal-case'>{prettyCategoryTitle(cat.name)}</span>
 		</PressableButton>
 	)
 }

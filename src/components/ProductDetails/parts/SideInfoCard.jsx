@@ -1,6 +1,4 @@
-// src/components/ProductDetails/parts/SideInfoCard.jsx
 import { memo } from 'react'
-import DownlSvg from '../../DownlSvg/DownlSvg'
 import Param from '../../Param/Param'
 import PriceQtyButton from '../../PriceQtyButton/PriceQtyButton'
 
@@ -21,7 +19,7 @@ function SideInfoCard({ product, img }) {
 		effectsCount,
 		price,
 		discountPrice,
-		certificateUrl,
+		// certificateNumber — больше НЕ отображаем здесь
 		stock,
 	} = product
 
@@ -29,16 +27,13 @@ function SideInfoCard({ product, img }) {
 	const unitPrice = typeof discountPrice === 'number' ? discountPrice : price
 
 	return (
-		// ≤680px: строка; ≥681px: колонка как раньше, фикс. ширина 210px
+		// ≤680px: строка; ≥681px: колонка (фикс. ширина 210px)
 		<aside className='self-stretch inline-flex justify-start items-start gap-2.5 max-[680px]:flex-row min-[681px]:flex-col w-full min-[681px]:w-[210px] flex-shrink-0'>
 			{/* превью */}
 			<div
 				className={[
-					// твои исходные стили превью
 					'rounded-[12px] overflow-hidden bg-[#f6f4f2] grid place-items-center',
-					// ≥681px — как было
 					'min-[681px]:w-full min-[681px]:h-[200px]',
-					// ≤680px — размеры из фигмы: 192×208, радиус 20, тень как на макете
 					'max-[680px]:w-48 max-[680px]:h-52 max-[680px]:rounded-[20px] max-[680px]:shadow-[0_0_10px_rgba(0,0,0,0.25)] max-[680px]:shrink-0',
 				].join(' ')}
 			>
@@ -49,16 +44,13 @@ function SideInfoCard({ product, img }) {
 				)}
 			</div>
 
-			{/* правая часть: характеристики + кнопка */}
+			{/* правая часть */}
 			<div
 				className={[
-					// исходные стили карточки
 					'bg-white px-1.5 flex flex-col items-start relative',
-					// ≤680px: занимать доступное справа, не ломать перенос; отступ сверху 10px как в примере
 					'max-[680px]:flex-1 max-[680px]:min-w-0 max-[680px]:pt-2.5',
 				].join(' ')}
 			>
-				{/* старая цена в углу — как было */}
 				{typeof discountPrice === 'number' && typeof price === 'number' && (
 					<div
 						className='absolute top-[1px] right-1 px-2 py-1 line-through decoration-1 text-[#BD52E9] pointer-events-none font-baron lowercase'
@@ -71,7 +63,6 @@ function SideInfoCard({ product, img }) {
 				<h3
 					className={[
 						'font-baron leading-tight truncate text-[18px] line-clamp-2',
-						// было w-[150px]; на мобилке пусть растягивается по доступной ширине
 						'min-[681px]:w-[150px] max-[680px]:w-auto',
 					].join(' ')}
 					title={name}
@@ -94,32 +85,11 @@ function SideInfoCard({ product, img }) {
 					<Param icon={effectsImg}>{effectsCount ?? '—'}</Param>
 				</div>
 
-				{/* сертификат */}
-				<div className='text-[10px] ml-1 mt-[8px] font-baron lowercase flex items-center gap-2'>
-					<span className='text-[#625a51]'>сертификат</span>
-					{certificateUrl ? (
-						<a
-							href={certificateUrl}
-							download
-							target='_blank'
-							rel='noopener noreferrer'
-							className='flex items-center pt-1 text-[#625a51] hover:text-firework-red transition'
-							title='Скачать сертификат'
-						>
-							<DownlSvg className='w-4 h-4' />
-							<span className='sr-only'>Скачать сертификат</span>
-						</a>
-					) : (
-						<span className='opacity-80'>—</span>
-					)}
-				</div>
-
 				{/* наличие */}
-				<div className='mt-[5px] ml-1 mb-[10px] text-[#098D00] text-[13px] lowercase font-baron leading-[13px] whitespace-nowrap'>
+				<div className='mt-[15px] ml-1  mb-[12px] text-[#098D00] text-[13px] lowercase font-baron leading-[13px] whitespace-nowrap'>
 					в наличии <span className='text-[13px]'>{inStock}</span> шт
 				</div>
 
-				{/* кнопка — оставляю твою */}
 				<div className='w-full'>
 					<PriceQtyButton product={product} unitPrice={unitPrice} />
 				</div>

@@ -168,163 +168,175 @@
    :active — сплошной #efebe6
 */
 @layer components {
+	/* Общие переменные */
+	:root {
+		--btn-r: 10px; /* радиус */
+		--skin-inset: 1px; /* на сколько «кожа» уходит внутрь, чтобы не было блидинга */
+	}
+
+	/* ============ ОСНОВНАЯ КНОПКА ============ */
 	.btn-firework {
 		@apply relative inline-flex items-center justify-center
-           rounded-[10px] text-white
-           transition-[color] duration-150 ease-out
-           cursor-pointer select-none;
+            rounded-[10px] text-white
+            transition-[color] duration-150 ease-out
+            cursor-pointer select-none;
+
+		/* База — пустая, без градиента: кожа рисуется в ::before */
+		background: transparent;
+		border-radius: var(--btn-r);
+		overflow: hidden;
+		isolation: isolate;
+		backface-visibility: hidden;
+		contain: paint;
+		transform: translateZ(0);
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	/* КОЖА: сам фиолетовый градиент — слегка утоплен внутрь на 1px */
+	.btn-firework::before {
+		content: '';
+		position: absolute;
+		inset: var(--skin-inset);
+		border-radius: calc(var(--btn-r) - var(--skin-inset));
 		background-image: radial-gradient(
 			142.27% 173.76% at -13.16% 0%,
 			#1d0353 0%,
 			#c054eb 100%
 		);
-		overflow: hidden;
-		backface-visibility: hidden;
-		will-change: opacity;
-	}
-
-	/* ховер-оверлей (плавно) */
-	.btn-firework::before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		border-radius: inherit;
-		background: #c054eb;
-		opacity: 0;
-		transition: opacity 150ms ease-out;
-		pointer-events: none;
-	}
-	.btn-firework:hover::before {
 		opacity: 1;
+		transition: opacity 150ms ease-out;
+		will-change: opacity;
+		z-index: 0;
 	}
 
-	/* актив-оверлей (плавно) */
+	/* ХОВЕР-ТИНТ (мягкое перекрытие поверх кожи) */
 	.btn-firework::after {
 		content: '';
 		position: absolute;
-		inset: 0;
-		border-radius: inherit;
-		background: #efebe6;
-		opacity: 0;
+		inset: var(--skin-inset);
+		border-radius: calc(var(--btn-r) - var(--skin-inset));
+		background: #c054eb; /* hover-цвет */
+		opacity: 0; /* только прозрачность анимируем */
 		transition: opacity 150ms ease-out;
-		pointer-events: none;
+		will-change: opacity;
+		z-index: 0; /* под контентом */
 	}
-	.btn-firework:active::after {
+	.btn-firework:hover::after {
 		opacity: 1;
 	}
 
-	/* ⬅️ ГЛАВНОЕ: на hover текст остаётся белым */
-	.btn-firework:hover {
-		color: #fff !important;
-	}
-
-	/* при зажатии — как просил */
+	/* АКТИВ: база заливается светлым, кожу прячем (вообще нет источника фиолета) */
 	.btn-firework:active {
+		background: #efebe6 !important;
 		color: #bd52e9 !important;
 	}
+	.btn-firework:active::before {
+		opacity: 0;
+	} /* спрятали кожу */
+	.btn-firework:active::after {
+		opacity: 0;
+	} /* и ховер-тент тоже не нужен */
 
-	/* чтобы псевдо-элементы были изолированы от внешних слоёв */
-	.btn-firework {
-		isolation: isolate;
-	}
-
-	/* ✅ на hover текст кнопки и ВСЕГО содержимого остаётся белым */
+	/* Цвета текста на hover/active — как у тебя */
 	.btn-firework:hover,
 	.btn-firework:hover * {
 		color: #fff !important;
 	}
-
-	/* ✅ плавная анимация цвета не только у самой кнопки, но и у детей */
 	.btn-firework,
 	.btn-firework * {
 		transition: color 150ms ease-out;
 	}
-
-	/* 🔥 (опционально) если где-то внутри попадётся свой цвет с !important —
-     добиваем повышенной специфичностью для активного состояния */
 	.btn-firework:active,
 	.btn-firework:active * {
 		color: #bd52e9 !important;
 	}
 
-	.btn-firework-filter {
-		@apply relative rounded-[10px] cursor-pointer text-white;
-		/* база: градиент */
-		background: var(--background-image-firework-radial);
-
-		/* анти-блидинг + плавный композит */
-		overflow: hidden; /* режем всё за радиусом */
-		backface-visibility: hidden; /* убирает подёргивания в некоторых GPU путях */
-		contain: paint; /* ограничиваем область перерисовки */
-	}
-
-	/* Плавный слой-оверлей поверх градиента */
-	.btn-firework-filter::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background: transparent; /* меняем на hover/active */
-		opacity: 0; /* анимируем только прозрачность */
-		transition: opacity 300ms ease-in-out;
-		z-index: 0;
-
-		/* фикс блидинга: жёстко обрезаем по радиусу */
-		border-radius: 10px;
-		-webkit-mask: radial-gradient(circle, #000 100%, transparent 100%)
-			content-box;
-		mask: radial-gradient(circle, #000 100%, transparent 100%) content-box;
-		will-change: opacity;
-	}
-
-	/* 1) Изолируем стек для кнопки */
-	.btn-firework {
-		isolation: isolate;
-	}
-
-	/* 2) Текст/иконки всегда выше оверлеев */
+	/* Контент всегда над слоями */
 	.btn-firework > * {
 		position: relative;
 		z-index: 1;
+		transform: translateZ(0);
 	}
-
-	/* 3) Ховер/актив оверлеи — под содержимым */
-	.btn-firework::before,
-	.btn-firework::after {
-		z-index: 0;
-	}
-
-	/* 4) Если используешь pressTint из PressableButton — тоже уводим ниже */
+	/* Если внутри бывают служебные спаны (pressTint и т.п.) */
 	.btn-firework > span[aria-hidden='true'] {
 		z-index: 0 !important;
 	}
 
-	.no-scrollbar::-webkit-scrollbar {
-		display: none;
+	/* ============ КНОПКА ФИЛЬТРА ============ */
+	.btn-firework-filter {
+		@apply relative rounded-[10px] cursor-pointer text-white;
+
+		/* База без градиента — он в ::before */
+		background: transparent;
+		border-radius: var(--btn-r);
+		overflow: hidden;
+		isolation: isolate;
+		backface-visibility: hidden;
+		contain: paint;
+		transform: translateZ(0);
+		-webkit-tap-highlight-color: transparent;
 	}
-	.no-scrollbar {
-		-ms-overflow-style: none; /* IE/Edge */
-		scrollbar-width: none; /* Firefox */
+
+	/* Кожа с твоим кастомным градиентом из токена */
+	.btn-firework-filter::before {
+		content: '';
+		position: absolute;
+		inset: var(--skin-inset);
+		border-radius: calc(var(--btn-r) - var(--skin-inset));
+		background: var(--background-image-firework-radial);
+		opacity: 1;
+		transition: opacity 150ms ease-out;
+		will-change: opacity;
+		z-index: 0;
 	}
-	/* контент всегда выше оверлея */
+
+	/* Hover/Active-оверлей */
+	.btn-firework-filter::after {
+		content: '';
+		position: absolute;
+		inset: var(--skin-inset);
+		border-radius: calc(var(--btn-r) - var(--skin-inset));
+		background: transparent;
+		opacity: 0;
+		transition: opacity 300ms ease-in-out;
+		will-change: opacity;
+		z-index: 0;
+	}
+
+	/* Контент поверх */
 	.btn-firework-filter > * {
 		position: relative;
 		z-index: 1;
-		color: #fff; /* белый текст по умолчанию/hover */
+		color: #fff;
 	}
 
-	/* hover — мягко накрываем фирменным цветом */
+	/* Hover — накрываем фирменным цветом */
 	.btn-firework-filter:hover::after {
 		background: var(--color-firework-hover); /* #BD52E9 */
 		opacity: 1;
 	}
 
-	/* active — светлый фон и тёмный текст */
-	.btn-firework-filter:active::after {
+	/* Active — база светлая, кожу прячем «в ноль» */
+	.btn-firework-filter:active {
 		background: var(--color-firework-active); /* #EFEBE6 */
-		opacity: 1;
 	}
+	.btn-firework-filter:active::before {
+		opacity: 0;
+	} /* кожа исчезла */
+	.btn-firework-filter:active::after {
+		opacity: 0;
+	} /* без перекрытия */
 	.btn-firework-filter:active,
 	.btn-firework-filter:active * {
 		color: #625a51;
+	}
+
+	/* Утилиты скролла (как у тебя) */
+	.no-scrollbar::-webkit-scrollbar {
+		display: none;
+	}
+	.no-scrollbar {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
 	}
 }

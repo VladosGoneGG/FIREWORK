@@ -106,7 +106,7 @@ function WhiteCheckRow({ label, checked, onToggle }) {
 	)
 }
 
-// ===== двойной слайдер (204px трек) =====
+// ===== двойной слайдер (204px трек) — БЕЗ минимального зазора, с нужными цветами =====
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
 const snap = (v, step, min) => Math.round((v - min) / step) * step + min
 
@@ -120,6 +120,7 @@ const RangeDual = memo(function RangeDual({
 	className = '',
 }) {
 	const trackRef = React.useRef(null)
+
 	const vMin = clamp(
 		Number.isFinite(valueMin) ? valueMin : min,
 		min,
@@ -130,6 +131,7 @@ const RangeDual = memo(function RangeDual({
 		Number.isFinite(valueMin) ? valueMin : min,
 		max
 	)
+
 	const range = max - min
 	const pMin = ((vMin - min) / range) * 100
 	const pMax = ((vMax - min) / range) * 100
@@ -139,16 +141,23 @@ const RangeDual = memo(function RangeDual({
 		const track = trackRef.current
 		if (!track) return
 		const rect = track.getBoundingClientRect()
+
 		const getValFromClientX = clientX => {
 			const x = clamp(clientX - rect.left, 0, rect.width)
 			const raw = min + (x / rect.width) * range
 			return clamp(snap(raw, step, min), min, max)
 		}
+
 		const move = clientX => {
 			const val = getValFromClientX(clientX)
-			if (thumb === 'min') onChange?.(Math.min(val, vMax - step), vMax)
-			else onChange?.(vMin, Math.max(val, vMin + step))
+			if (thumb === 'min') {
+				// БЕЗ зазора: позволяем min == max
+				onChange?.(Math.min(val, vMax), vMax)
+			} else {
+				onChange?.(vMin, Math.max(val, vMin))
+			}
 		}
+
 		const onPointerMove = ev => move(ev.clientX)
 		const onPointerUp = () => {
 			window.removeEventListener('pointermove', onPointerMove)
@@ -167,8 +176,9 @@ const RangeDual = memo(function RangeDual({
 		const val = clamp(snap(raw, step, min), min, max)
 		const distToMin = Math.abs(val - vMin)
 		const distToMax = Math.abs(val - vMax)
-		if (distToMin <= distToMax) onChange?.(Math.min(val, vMax - step), vMax)
-		else onChange?.(vMin, Math.max(val, vMin + step))
+		// БЕЗ зазора: двигаем ближайший бегунок, допускаем пересечение/равенство
+		if (distToMin <= distToMax) onChange?.(Math.min(val, vMax), vMax)
+		else onChange?.(vMin, Math.max(val, vMin))
 	}
 
 	const TRACK_W = 204
@@ -183,15 +193,20 @@ const RangeDual = memo(function RangeDual({
 					if (!e.target.dataset.thumb) clickOnTrack(e)
 				}}
 			>
-				<div className='absolute top-1/2 -translate-y-1/2 w/full h-[2px] rounded-[20px] bg-[#CCBEFA]' />
+				{/* Базовая линия трека */}
+				<div className='absolute top-1/2 -translate-y-1/2 w-full h-[2px] rounded-[20px] bg-purple-500' />
+
+				{/* Выбранный промежуток */}
 				<div
-					className='absolute top-1/2 -translate-y-1/2 h-[2px] rounded-[20px] bg-[#BF53EA]'
+					className='absolute top-1/2 -translate-y-1/2 h-[2px] rounded-[20px] bg-violet-300'
 					style={{
 						left: `${pMin}%`,
-						width: `${pMax - pMin}%`,
+						width: `${Math.max(0, pMax - pMin)}%`,
 						transition: 'left .12s ease, width .12s ease',
 					}}
 				/>
+
+				{/* Бегунки */}
 				<button
 					type='button'
 					data-thumb='min'
@@ -325,7 +340,7 @@ const TagsEditor = ({ value = [], onChange }) => {
 	return (
 		<div
 			ref={boxRef}
-			className='w-[232px] min-h-[65px] px-2 py-1 bg-transparent rounded-[10px] 
+			className='w-[232px] min-h-[55px]   py-1 pl-1 bg-transparent rounded-[10px] 
                  text-[10px] font-baron text-black 
                  inline-flex flex-wrap items-start gap-[5px] content-start'
 			onClick={() => inputRef.current?.focus()}
@@ -366,7 +381,7 @@ const TagsEditor = ({ value = [], onChange }) => {
 				onKeyDown={onKeyDown}
 				onPaste={onPaste}
 				onBlur={onBlur}
-				placeholder={items.length ? '' : 'введите теги'}
+				placeholder={items.length ? '' : 'теги'}
 				className='flex-1 min-w-[80px] h-5 bg-transparent outline-none 
                    text-[10px] font-baron placeholder:text-[#625A51]/60'
 			/>
@@ -650,7 +665,7 @@ export default function SubcategoryOverlay({
 					{/* Время работы (как цена) */}
 					<div className='flex flex-col gap-2 mb-2'>
 						<div className='text-[#625A51] text-sm font-baron'>
-							время работы, сек
+							время работы
 						</div>
 						<div className='inline-flex items-center gap-2.5'>
 							<BadgeInput
@@ -678,7 +693,7 @@ export default function SubcategoryOverlay({
 
 				{/* футер (вне скролла, как и было) */}
 				<div className='self-stretch flex flex-col items-center gap-2.5 px-2.5'>
-					<div className='text-center text-zinc-300 text-[14px] font-baron'>
+					<div className='text-center text-zinc-300 text-[12px] font-baron'>
 						найдено {previewCount} товар(ов)
 					</div>
 
@@ -744,7 +759,7 @@ export default function SubcategoryOverlay({
 	const InnerStandalone = (
 		<div
 			className={[
-				'w-[240px] h-[834px] rounded-[20px] flex flex-col',
+				'w-[240px]  h-[834px] rounded-[20px] flex flex-col',
 				className,
 			].join(' ')}
 			style={style}
@@ -754,7 +769,7 @@ export default function SubcategoryOverlay({
 				<div className='text-[#625A51] text-lg font-baron lowercase'>
 					фильтры
 				</div>
-				<div className='w-[204px] h-[3px] bg-[#EFEBE6] rounded-[20px] mt-2.5 mx-auto' />
+
 				<button
 					type='button'
 					onClick={onClose}
@@ -773,7 +788,7 @@ export default function SubcategoryOverlay({
 					</svg>
 				</button>
 			</div>
-
+			<div className='w-[220px] h-[2px]  bg-[#EFEBE6] rounded-[20px] mt-2.5 mx-auto' />
 			{/* body (как было — скролл) */}
 			<div
 				className='flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-[10px] pb-2 scroll-smooth scroll-hidden'
@@ -787,7 +802,7 @@ export default function SubcategoryOverlay({
 						onChange={next => setField('tags', next)}
 					/>
 				</div>
-
+				<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 				<div className='mt-3'>
 					<div className='text-black text-[12px] font-baron mb-2'>Цена</div>
 					<div className='mt-3 grid grid-cols-2 gap-[10px]'>
@@ -958,7 +973,7 @@ export default function SubcategoryOverlay({
 
 				<div>
 					<div className='text-black text-[12px] font-baron mb-2 mx-2'>
-						время работы, сек
+						время работы
 					</div>
 					<div className='mt-3 grid grid-cols-2 gap-[10px]'>
 						<BadgeInput
@@ -989,8 +1004,8 @@ export default function SubcategoryOverlay({
 
 			{/* footer */}
 			<div className='px-2.5 pb-3 pt-2'>
-				<div className='text-center text-zinc-300 text-[14px] font-baron'>
-					найдено {previewCount} товар(ов)
+				<div className='text-center text-zinc-300 text-[12px] font-baron'>
+					найден {previewCount} товар
 				</div>
 				<div className='flex gap-2 mt-2'>
 					<button
