@@ -107,13 +107,15 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 			className={[
 				// твои текущие классы — без «режимов»
 				'pb-4 pt-2 bg-white',
-				'max-[1040px]:max-h-[220px]',
+
 				'max-[1040px]:overflow-y-auto',
 				'max-[1040px]:pr-1',
 				'max-[1040px]:pb-3',
 				'max-[1040px]:flex',
 				'max-[1040px]:flex-col',
 				'max-[1040px]:items-center',
+				'max-[1040px]:mt-[50px]',
+				'max-[475px]:mt-[5px]',
 				'[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
 			].join(' ')}
 		>
