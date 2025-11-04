@@ -33,7 +33,7 @@ const MediaBlock = ({ img, name, onBack }) => {
 			)}
 
 			<div className='absolute inset-0 pointer-events-none grid place-items-center'>
-				<div className='rounded-[10px] grid place-items-center px-3 py-2'>
+				<div className='rounded-[10px] grid place-items-center px-3 py-2 shadow-lg'>
 					<img src={overlaySvg} alt='overlay' />
 				</div>
 			</div>

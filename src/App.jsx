@@ -7,7 +7,7 @@ import FooterSection from './components/FooterSection/FooterSection'
 import Header from './components/Header/Header'
 import ProductCart from './components/ProductCart/ProductCart'
 import ProductsPage from './components/ProductsPage/ProductPage'
-import PromoPanel from './components/PromoPanel/PromoPanel'
+// import PromoPanel from './components/PromoPanel/PromoPanel'
 import SearchBar from './components/Search/SearchBar'
 import SearchModal from './components/Search/SearchModal'
 import SubcategoryOverlay from './components/SubcategoryOverlay/SubcategoryOverlay'
@@ -83,7 +83,7 @@ function App() {
 											<CategoryFilter
 												onAnyCategoryClick={() => setIsLanding(false)}
 											/>
-											<PromoPanel />
+											{/* <PromoPanel /> */}
 										</>
 									)}
 									<SubcategoryOverlay
