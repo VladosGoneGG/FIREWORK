@@ -163,7 +163,7 @@ const ProductsPage = ({
 	)
 
 	const homeSections = useSections(homeDiscounted, homeNonDiscounted, selected)
-
+	const showHeaderFor = title => norm(title) !== PROMO_KEY || shouldShowSlider
 	const sections = useMemo(() => {
 		if (selected === 'all') return homeSections
 
@@ -417,7 +417,7 @@ const ProductsPage = ({
 														onSelectProduct={openDetails}
 														onOpenSubcategory={openSubcategory}
 														loading={status === 'loading'}
-														showHeader={norm(sec.title) !== PROMO_KEY}
+														showHeader={showHeaderFor(sec.title)}
 													/>
 												</div>
 											))}

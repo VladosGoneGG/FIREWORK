@@ -42,7 +42,7 @@ const FoundSection = ({ products = [], onSelectProduct }) => {
 					variants={GRID_BLOCK}
 					initial='hidden'
 					animate='show'
-					className='grid grid-cols-1 sm:grid-cols-2 gap-[10px]'
+					className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3  gap-[10px]'
 					style={{ willChange: 'opacity, transform' }}
 				>
 					{items.map(p => (

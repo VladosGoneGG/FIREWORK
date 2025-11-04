@@ -15,6 +15,11 @@ const CARD_W = 120 // ширина карточки по макету
 const GAP = 10 // gap-2.5 = 10px
 const MAX_PER_ROW = 7
 
+// мобильные ограничения: не больше 2 в ряд и не больше 3 рядов => 6 карточек
+const MOBILE_MAX_PER_ROW = 2
+const MOBILE_MAX_ROWS = 3
+const MOBILE_LIMIT = MOBILE_MAX_PER_ROW * MOBILE_MAX_ROWS // 6
+
 const RelatedBlock = ({
 	related = [],
 	currentCategory,
@@ -31,11 +36,9 @@ const RelatedBlock = ({
 		const el = rowRef.current
 
 		const computeCount = containerWidth => {
-			// базовый подсчёт (если вдруг экран большой)
 			let n = Math.max(1, Math.floor((containerWidth + GAP) / (CARD_W + GAP)))
 			n = Math.min(MAX_PER_ROW, n)
 
-			// твои жёсткие правила
 			const vw = window.innerWidth || containerWidth
 			if (vw < 1125) return 5
 			if (vw < 1256) return 6
@@ -71,6 +74,9 @@ const RelatedBlock = ({
 		[related, visiblePerRow]
 	)
 
+	// 🔸 главное изменение: на мобиле показываем только первые 6
+	const itemsMobile = useMemo(() => related.slice(0, MOBILE_LIMIT), [related])
+
 	return (
 		<>
 			<div className='flex items-center font-baron text-[18px] justify-between'>
@@ -84,7 +90,7 @@ const RelatedBlock = ({
 				</button>
 			</div>
 
-			{/* Десктоп: фиксируем кол-во карточек по брейкпоинтам, растягиваем ряд без пустого хвоста */}
+			{/* Десктоп: фиксируем количество карточек по брейкпоинтам */}
 			{!isMobile && (
 				<div
 					ref={rowRef}
@@ -101,17 +107,16 @@ const RelatedBlock = ({
 				</div>
 			)}
 
-			{/* Мобилка (<=1040px): как было */}
+			{/* Мобилка (≤1040px): сетка как у тебя, но рендерим максимум 6 карточек */}
 			{isMobile && (
 				<div
 					className={[
 						'mt-[10px] grid gap-2.5',
 						'grid-cols-1',
-						'min-[560px]:grid-cols-2',
-						'min-[820px]:grid-cols-3',
+						'min-[560px]:grid-cols-3', // максимум 2 в ряд
 					].join(' ')}
 				>
-					{related.map(p => (
+					{itemsMobile.map(p => (
 						<ProductCardMiniMobile
 							key={p.id}
 							product={p}

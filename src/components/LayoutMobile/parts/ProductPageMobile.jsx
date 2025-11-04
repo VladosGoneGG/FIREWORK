@@ -74,6 +74,8 @@ const ProductPageMobile = () => {
 		[sections, sortKey]
 	)
 
+	const showHeaderForMobile = title => (norm(title) !== PROMO_KEY ? true : true)
+
 	const openSubcategory = useCallback(
 		payload => {
 			const n = s =>
@@ -91,7 +93,8 @@ const ProductPageMobile = () => {
 			}
 			const t = n(title)
 			const isPromo = t === PROMO_KEY
-
+			const showHeaderFor = title =>
+				norm(title) !== PROMO_KEY || shouldShowSlider
 			if (!products.length && title) {
 				products = allItems.filter(
 					p => n(p.category) === t || n(p.subcategory) === t
@@ -261,7 +264,7 @@ const ProductPageMobile = () => {
 						onSelectProduct={openDetailsRedux}
 						onOpenSubcategory={openSubcategory}
 						loading={status === 'loading'}
-						showHeader={norm(sec.title) !== PROMO_KEY}
+						showHeader={showHeaderForMobile(sec.title)}
 					/>
 				</motion.div>
 			))}
