@@ -14,7 +14,7 @@ const LayoutMobile = () => {
 				<HeaderMobile />
 
 				{/* Контент с отступом, чтобы не уезжал под хедер */}
-				<div className={`pt-[${HEADER_H}px]`}>
+				<div className={`pt-[${HEADER_H}px] mb-[80px]`}>
 					<SliderMobile />
 					<ProductPageMobile />
 				</div>

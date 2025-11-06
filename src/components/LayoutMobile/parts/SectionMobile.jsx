@@ -50,16 +50,16 @@ const SectionMobile = ({
 	// до md всегда узко; на md+ для 2 карт — 730px, для 3+ — без ограничений
 	const wrapW =
 		visible.length >= 3
-			? 'mx-auto max-w-[360px] md:max-w-none'
+			? ' w-full '
 			: visible.length === 2
-			? 'mx-auto max-w-[360px] md:max-w-[730px]'
-			: 'mx-auto max-w-[360px] md:max-w-[360px]'
+			? 'w-full'
+			: 'w-full'
 
 	return (
-		<section className='space-y-3 px-3 py-3'>
+		<section className='space-y-3 '>
 			<div className={wrapW}>
 				{showHeader && (
-					<div className='flex items-center justify-between mb-2.5 '>
+					<div className='flex items-center justify-between mb-2.5'>
 						<h3 className='text-[18px] lowercase font-baron '>{title}</h3>
 
 						{hasMore && (
@@ -74,7 +74,7 @@ const SectionMobile = ({
 					</div>
 				)}
 
-				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[10px] justify-items-center md:justify-items-stretch'>
+				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[10px] justify-items-center md:justify-items-center'>
 					{loading ? (
 						Array.from({ length: INITIAL }).map((_, i) => (
 							<div key={i} className='w-full'>

@@ -79,7 +79,7 @@ const RelatedBlock = ({
 
 	return (
 		<>
-			<div className='flex items-center font-baron text-[18px] justify-between'>
+			<div className='flex items-center font-baron text-[18px] justify-between '>
 				<div className='font-semibold'>добавь в набор</div>
 				<button
 					type='button'
@@ -94,7 +94,7 @@ const RelatedBlock = ({
 			{!isMobile && (
 				<div
 					ref={rowRef}
-					className='mt-[10px] w-full flex gap-2.5 justify-between overflow-hidden'
+					className='mt-[10px] w-full flex gap-2.5  overflow-hidden'
 				>
 					{itemsDesktop.map(p => (
 						<div key={p.id} className='shrink-0'>
@@ -111,9 +111,7 @@ const RelatedBlock = ({
 			{isMobile && (
 				<div
 					className={[
-						'mt-[10px] grid gap-2.5',
-						'grid-cols-1',
-						'min-[560px]:grid-cols-3', // максимум 2 в ряд
+						'mt-[10px] mb-[80px] grid gap-2.5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
 					].join(' ')}
 				>
 					{itemsMobile.map(p => (

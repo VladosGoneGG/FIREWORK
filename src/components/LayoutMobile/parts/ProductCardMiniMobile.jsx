@@ -87,10 +87,10 @@ function ProductCardMiniMobile({ product, onSelect }) {
 		<div
 			onClick={handleOpen}
 			className={[
-				'flex flex-row w-full max-w-[360px] h-[100px] justify-between rounded-[20px]',
+				'flex flex-row items-center w-full  min-h-[120px] justify-between rounded-[20px]',
 				'shadow-[0_0_10px_rgba(0,0,0,0.2)] bg-white px-2.5',
 				'select-none outline-none cursor-pointer',
-				'min-w-0', // ✅ важно, чтобы внутренняя флекс-верстка могла сжиматься
+				'min-w-0',
 				outOfStock ? 'opacity-70' : '',
 			].join(' ')}
 		>
@@ -117,15 +117,13 @@ function ProductCardMiniMobile({ product, onSelect }) {
 				)}
 			</div>
 
-			{/* контент */}
-			{/* ⬇️ было w-[230px] → делаем гибким, чтобы не наезжало */}
-			<div className='flex flex-col justify-between flex-1 min-w-0 h-[100px] pl-2'>
+			<div className='flex flex-col justify-between gap-[9px] flex-1 min-w-0 h-[100px] pl-2'>
 				{/* заголовок + бейдж */}
 				<div className='flex justify-between items-start h-[27px]'>
 					{/* ⬇️ добавили min-w-0, чтобы текст корректно обрезался и не толкал рядом стоящее */}
-					<ul className='max-w-[170px] min-w-0'>
+					<ul className='w-[100px]'>
 						<li className='leading-[14px]'>
-							<p className='font-barlow text-[12px] pt-2.5 text-black line-clamp-1'>
+							<p className='font-barlow text-[12px]  text-black '>
 								{name || '—'}
 							</p>
 						</li>
@@ -137,7 +135,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 					</ul>
 
 					{badgeText && (
-						<div className='w-[49px] h-[22px] mt-[10px] bg-[#098d00]/70 rounded-[10px] flex justify-center items-end overflow-hidden shrink-0'>
+						<div className='w-[49px] h-[22px]  bg-[#098d00]/70 rounded-[10px] flex justify-center items-end overflow-hidden shrink-0'>
 							<div className='text-white text-[17px] font-baron'>
 								{Number.isFinite(stockCount) ? stockCount : packCount}
 							</div>
@@ -149,10 +147,9 @@ function ProductCardMiniMobile({ product, onSelect }) {
 				</div>
 
 				{/* характеристики + цена */}
-				<div className='flex items-end justify-between mb-2.5 h-[60px] text-[12px] text-[#625A51] font-baron min-w-0'>
-					{/* ⬇️ делаем блок характеристик гибким, чтобы он сжимался, а не залезал на цену */}
-					<div className='flex-1 min-w-0 grid grid-cols-2 gap-x-2 gap-y-1 max-w-[160px] [&_svg]:w-5 [&_svg]:h-5 [&_img]:w-5 [&_img]:h-5'>
-						<div className='flex items-center h-6 gap-1 leading-none tabular-nums'>
+				<div className='flex items-end justify-between  h-[60px] text-[12px] text-[#625A51] font-baron min-w-0'>
+					<div className='flex-1 min-w-0 grid grid-cols-2   max-w-[130px] [&_svg]:w-5 [&_svg]:h-5 [&_img]:w-5 [&_img]:h-5'>
+						<div className='flex items-center h-6  leading-none tabular-nums'>
 							<PriceBlock.Param icon='shots'>{shots ?? '—'}</PriceBlock.Param>
 						</div>
 						<div className='flex items-center h-6 gap-1 leading-none tabular-nums'>
@@ -160,7 +157,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 								{caliber ?? '—'}
 							</PriceBlock.Param>
 						</div>
-						<div className='flex items-center h-6 gap-1 leading-none tabular-nums'>
+						<div className='flex items-center h-6 gap-1  leading-none  tabular-nums'>
 							<PriceBlock.Param icon='time' title={fmtSecFull(durationSec)}>
 								{renderSec(durationSec)}
 							</PriceBlock.Param>
@@ -175,7 +172,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 					{/* ⬇️ правая колонка с ценой/кнопкой — фиксируем, чтобы её не расплющивало */}
 					<div className='flex flex-col items-end shrink-0'>
 						{hasDiscount && (
-							<div className='mb-[2px] text-[14px] font-baron lowercase line-through text-[#BD52E9] font-bold'>
+							<div className='mb-[5px] text-[15px] font-baron lowercase line-through text-[#B4B4B4] font-bold'>
 								{fmtPrice(price)}
 							</div>
 						)}

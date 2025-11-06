@@ -14,8 +14,6 @@ const MediaBlock = ({ img, name, onBack }) => {
 				'min-[681px]:w-[695px] min-[681px]:h-[400px]',
 				// без видимых скроллбаров (скролл колёсиком остаётся)
 				'[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-				// центрируем
-				'mx-auto',
 			].join(' ')}
 		>
 			<BackButton onClick={onBack} className='absolute cursor-pointer z-10' />

@@ -97,7 +97,7 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 							animate={FX.enter}
 							exit={FX.exit}
 							style={{ willChange: 'opacity, transform' }}
-							className={mobile ? 'w-full max-w-[360px]' : undefined}
+							className={mobile ? 'w-full ' : undefined}
 						>
 							{mobile ? (
 								<ProductCardMiniMobile product={p} onSelect={onSelectProduct} />

@@ -59,13 +59,12 @@ const PriceQtyButton = ({ product, unitPrice, className = '' }) => {
 	return (
 		<div
 			className={[
-				// фиксированные размеры и RADIUS сохраняем
-				'relative w-48 h-11 rounded-[10px] max-[680px]:rounded-[20px] max-[680px]:w-[142px]',
-				// ВАЖНО: жёсткий паддинг 10px от краёв
+				'relative w-full h-11 rounded-[10px] max-[680px]:rounded-[20px] max-[680px]:max-w-[241px] max-[680px]:mt-[5px]',
+
 				'px-[10px]',
-				// макетные плавности
+
 				'transition-[background-color,transform,filter] duration-200 ease-out',
-				// без скейла на ВЕСЬ контейнер, чтобы паддинги не «сжимались»
+
 				'select-none font-normal inline-flex items-center',
 				className,
 			].join(' ')}
@@ -136,7 +135,7 @@ const PriceQtyButton = ({ product, unitPrice, className = '' }) => {
 
 				{/* Центр: итоговая сумма */}
 				<div className='flex flex-col items-center leading-none font-baron cursor-default select-none font-normal'>
-					<div className='flex items-baseline gap-1'>
+					<div className='flex items-baseline pb-[5px] gap-1'>
 						<span className='text-[20px] leading-none text-white font-normal'>
 							{typeof total === 'number' ? fmtNum(total) : '—'}
 						</span>
