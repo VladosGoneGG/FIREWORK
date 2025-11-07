@@ -107,7 +107,7 @@ function SideInfoCard({ product, img }) {
 					</div>
 				)}
 
-				<div className='w-full'>
+				<div className='min-w-[200px] max-[680px]:min-w-0 max-[680px]:w-full'>
 					<PriceQtyButton product={product} unitPrice={unitPrice} />
 				</div>
 			</div>

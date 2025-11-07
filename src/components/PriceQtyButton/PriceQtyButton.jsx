@@ -60,12 +60,13 @@ const PriceQtyButton = ({ product, unitPrice, className = '' }) => {
 		<div
 			className={[
 				'relative w-full h-11 rounded-[10px] max-[680px]:rounded-[20px] max-[680px]:max-w-[241px] max-[680px]:mt-[5px]',
-
+				'min-[1040]:mt-[6px]',
 				'px-[10px]',
 
 				'transition-[background-color,transform,filter] duration-200 ease-out',
 
 				'select-none font-normal inline-flex items-center',
+				'[--btn-r:10px] [--skin-inset:1px]',
 				className,
 			].join(' ')}
 			onMouseLeave={() => {

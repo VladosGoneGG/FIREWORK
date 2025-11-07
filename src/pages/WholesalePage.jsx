@@ -34,7 +34,14 @@ export default function WholesalePage() {
 							onClick={() => {
 								/* ... */
 							}}
-							className='btn-firework rounded-[20px] select-none cursor-pointer inline-flex items-center justify-center h-[64px] min-w-[183px] px-[28px] my-[38px]'
+							className={[
+								'btn-firework inline-flex items-center justify-center',
+								'rounded-[20px] h-[64px] w-[183px] px-[28px] my-[38px]',
+								// ⬇️ критично: синхронизируем переменные с реальным радиусом и inset
+								'[--btn-r:20px] [--skin-inset:1px]',
+								// опционально сгладить края на некоторых WebKit
+								'bg-clip-padding',
+							].join(' ')}
 						>
 							<span className='relative z-[1] bottom-[2px] font-baron text-white text-[20px] leading-none'>
 								Скачать

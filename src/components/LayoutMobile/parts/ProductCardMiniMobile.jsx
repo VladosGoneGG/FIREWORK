@@ -123,7 +123,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 					{/* ⬇️ добавили min-w-0, чтобы текст корректно обрезался и не толкал рядом стоящее */}
 					<ul className='w-[100px]'>
 						<li className='leading-[14px]'>
-							<p className='font-barlow text-[12px]  text-black '>
+							<p className='font-barlow font-normal text-[12px]  text-black '>
 								{name || '—'}
 							</p>
 						</li>

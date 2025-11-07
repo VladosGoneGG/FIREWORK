@@ -7,13 +7,13 @@ export default function ProductThumb({
 	badgeText = 'Нет в наличии',
 }) {
 	return (
-		<div className='mx-auto w-[100px] h-[100px] rounded-[10px] overflow-hidden relative'>
+		<div className='w-[100px] h-[100px] rounded-[10px] overflow-hidden relative'>
 			{src ? (
 				<img
 					src={src}
 					alt={alt}
 					loading='lazy'
-					className='w-full h-full object-contain cursor-pointer'
+					className='w-full h-full object-cover cursor-pointer'
 				/>
 			) : (
 				<div className='grid place-items-center w-full h-full text-xs opacity-60'>

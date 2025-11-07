@@ -8,22 +8,24 @@ const HeaderMobile = () => {
 			className={[
 				'sticky top-0 z-[120]', // липкий + поверх контента
 				'flex flex-row items-end justify-between w-full',
-				'h-[62px] bg-[#efebe6] pb-[10px]',
+				'h-[60px] bg-[#efebe6] ',
 				'rounded-bl-[30px] rounded-br-[10px]',
 				'shadow-[0_1px_6px_rgba(0,0,0,0.08)]',
 			].join(' ')}
 			style={{ willChange: 'transform' }}
 		>
-			<div className='w-full flex items-center justify-between'>
-				<div className='ml-[10px]'>
-					<BurgerMobile />
+			<div className='w-full flex  items-end'>
+				<div className='ml-[10px] mb-[6px] flex justify-center  gap-[26px]'>
+					<div>
+						<BurgerMobile />
+					</div>
+					<div>
+						<a href='/'>
+							<Logotip />
+						</a>
+					</div>
 				</div>
-				<div>
-					<a href='/'>
-						<Logotip />
-					</a>
-				</div>
-				<div>
+				<div className='ml-auto mb-2.5'>
 					<div className='flex items-center mr-[10px] gap-2.5'>
 						<div className='pt-2'>
 							<CursorSvg />
