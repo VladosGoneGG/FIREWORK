@@ -15,7 +15,7 @@ const HeaderMobile = () => {
 			style={{ willChange: 'transform' }}
 		>
 			<div className='w-full flex  items-end'>
-				<div className='ml-[10px] mb-[6px] flex justify-center  gap-[26px]'>
+				<div className='w-[180px] ml-[10px] mb-[6px] flex justify-between j  '>
 					<div>
 						<BurgerMobile />
 					</div>
@@ -26,7 +26,7 @@ const HeaderMobile = () => {
 					</div>
 				</div>
 				<div className='ml-auto mb-2.5'>
-					<div className='flex items-center mr-[10px] gap-2.5'>
+					<div className='flex w-[150px] items-center justify-end mr-2.5 gap-2.5'>
 						<div className='pt-2'>
 							<CursorSvg />
 						</div>
