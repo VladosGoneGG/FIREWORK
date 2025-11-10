@@ -1,6 +1,6 @@
 // src/components/PromoSlider/PromoSlider.jsx
 import { memo, useEffect, useRef, useState } from 'react'
-const DEFAULT_IMAGES = ['/tovar-1.webp', '/tovar-2.webp', '/tovar-3.webp']
+const DEFAULT_IMAGES = ['./tovar-1.webp', './tovar-2.webp', './tovar-3.webp']
 
 const PromoSlider = ({
 	images = DEFAULT_IMAGES,
