@@ -1,6 +1,18 @@
 // src/components/PromoSlider/PromoSlider.jsx
-import { memo, useEffect, useRef, useState } from 'react'
-const DEFAULT_IMAGES = ['./tovar-1.webp', './tovar-2.webp', './tovar-3.webp']
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
+
+// base берём из Vite (подставится из vite.config base)
+const BASE = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '/')
+const withBase = p => `${BASE}${String(p).replace(/^\.?\/*/, '')}` // 'promo/x.webp' -> '/REPO/promo/x.webp'
+const isExternal = s => /^https?:|^data:|^blob:/.test(s)
+const norm = s => (isExternal(s) ? s : withBase(s.replace(/^\.\//, '')))
+
+// дефолтные картинки теперь из public/promo/*
+const DEFAULT_IMAGES = [
+	'promo/tovar-1.webp',
+	'promo/tovar-2.webp',
+	'promo/tovar-3.webp',
+]
 
 const PromoSlider = ({
 	images = DEFAULT_IMAGES,
@@ -12,14 +24,17 @@ const PromoSlider = ({
 	const [i, setI] = useState(0)
 	const timerRef = useRef(null)
 
+	// нормализуем любые входные пути под BASE (и локально, и на GH Pages)
+	const imgs = useMemo(() => images.map(norm), [images])
+
 	useEffect(() => {
-		if (!active || images.length <= 1) return
+		if (!active || imgs.length <= 1) return
 		timerRef.current = setInterval(
-			() => setI(prev => (prev + 1) % images.length),
+			() => setI(prev => (prev + 1) % imgs.length),
 			intervalMs
 		)
 		return () => clearInterval(timerRef.current)
-	}, [active, images.length, intervalMs])
+	}, [active, imgs.length, intervalMs])
 
 	const fitClass =
 		fit === 'cover'
@@ -29,31 +44,28 @@ const PromoSlider = ({
 	return (
 		<div
 			className={[
-				// РЕЗИНА: растягиваемся по центру, но не больше макета
 				'relative w-full max-w-[665px] mx-auto rounded-[10px] overflow-hidden bg-[#f6f4f2] mt-2.5',
-				// немного воздуха по краям на узких, на xl убираем (если нужно — можно убрать)
 				'px-0',
 				'select-none',
 				className,
 			].join(' ')}
 			aria-label='Промо-слайдер'
-			// высота считается автоматически по соотношению сторон 640×300 (≈ 64/30)
 			style={{ aspectRatio: '64 / 30' }}
 		>
 			<div
 				className='absolute inset-0 flex'
 				style={{
-					width: `${images.length * 100}%`,
-					transform: `translateX(-${i * (100 / images.length)}%)`,
+					width: `${imgs.length * 100}%`,
+					transform: `translateX(-${i * (100 / imgs.length)}%)`,
 					transition: 'transform 380ms ease-out',
 					willChange: 'transform',
 				}}
 			>
-				{images.map((src, idx) => (
+				{imgs.map((src, idx) => (
 					<div
 						key={idx}
 						className='flex-shrink-0'
-						style={{ width: `${100 / images.length}%`, height: '100%' }}
+						style={{ width: `${100 / imgs.length}%`, height: '100%' }}
 					>
 						<img
 							src={src}

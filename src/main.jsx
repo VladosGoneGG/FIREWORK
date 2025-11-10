@@ -11,34 +11,36 @@ import WholesalePage from './pages/WholesalePage.jsx'
 import { store } from './store/store.js'
 
 const basename = import.meta.env.BASE_URL || '/'
-const router = createBrowserRouter([
-	{
-		path: '/',
-		element: (
-			<ErrorBoundary>
-				<ResponsiveRoot />
-			</ErrorBoundary>
-		),
-	},
-	{
-		path: '/wholesale',
-		element: (
-			<ErrorBoundary>
-				<WholesalePage />
-			</ErrorBoundary>
-		),
-	},
-	{
-		path: '/contacts',
-		element: (
-			<ErrorBoundary>
-				<ContactsPage />
-			</ErrorBoundary>
-		),
-	},
-	{ path: '*', element: <NotFoundPage /> },
-	{ basename },
-])
+const router = createBrowserRouter(
+	[
+		{
+			path: '/',
+			element: (
+				<ErrorBoundary>
+					<ResponsiveRoot />
+				</ErrorBoundary>
+			),
+		},
+		{
+			path: '/wholesale',
+			element: (
+				<ErrorBoundary>
+					<WholesalePage />
+				</ErrorBoundary>
+			),
+		},
+		{
+			path: '/contacts',
+			element: (
+				<ErrorBoundary>
+					<ContactsPage />
+				</ErrorBoundary>
+			),
+		},
+		{ path: '*', element: <NotFoundPage /> },
+	],
+	{ basename }
+)
 
 ReactDOM.createRoot(document.getElementById('root')).render(
 	<Provider store={store}>

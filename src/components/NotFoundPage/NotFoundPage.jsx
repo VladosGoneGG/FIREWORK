@@ -50,7 +50,7 @@ const NotFoundPage = () => {
 				<Link to='/' className='max-[1040px]:w-full max-[1040px]:max-w-[259px]'>
 					<PressableButton
 						className='
-							btn-firework w-[220px] h-[50px] text-[15px] font-baron tracking-wide mt-[50px]
+							btn-firework w-[220px] h-[50px] text-[15px] font-baron tracking-wide mt-[50px] [--btn-r:20px] [--skin-inset:1px]
 							/* мобильные параметры как на 505 */
 							max-[1040px]:w-full
 							max-[1040px]:h-[64px]
