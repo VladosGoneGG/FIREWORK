@@ -10,6 +10,7 @@ import './index.css'
 import WholesalePage from './pages/WholesalePage.jsx'
 import { store } from './store/store.js'
 
+const basename = import.meta.env.BASE_URL || '/'
 const router = createBrowserRouter([
 	{
 		path: '/',
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
 		),
 	},
 	{ path: '*', element: <NotFoundPage /> },
+	{ basename },
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(
