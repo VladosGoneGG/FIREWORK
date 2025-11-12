@@ -1,9 +1,9 @@
-// src/components/ResponsiveRoot/ResponsiveRoot.jsx
 import { memo, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 import App from '../../App'
 import useMediaQuery from '../../hooks/useMediaQuery'
+import { StaticPageProvider } from '../../pages/StaticPageContext'
 import { closeDetails } from '../../store/slices/detailsSlice'
 import LayoutMobile from '../LayoutMobile/LayoutMobile'
 import ProductDetailsOverlay from '../ProductDetailsOverlay/ProductDetailsOverlay'
@@ -14,12 +14,17 @@ function ResponsiveRoot() {
 	const navigate = useNavigate()
 	const location = useLocation()
 
+	const { pathname } = location
+	const pageKey =
+		pathname === '/contacts'
+			? 'contacts'
+			: pathname === '/wholesale'
+			? 'wholesale'
+			: null
+
 	useEffect(() => {
 		if (!isMobile) {
-			// Закрыть оверлей деталей (Redux)
 			dispatch(closeDetails())
-
-			// Если где-то использовался URL-параметр ?p=..., аккуратно уберём его
 			const sp = new URLSearchParams(location.search)
 			if (sp.has('p')) {
 				sp.delete('p')
@@ -32,10 +37,10 @@ function ResponsiveRoot() {
 	}, [isMobile, dispatch, location.pathname, location.search, navigate])
 
 	return (
-		<>
+		<StaticPageProvider value={pageKey}>
 			{isMobile ? <LayoutMobile /> : <App />}
 			<ProductDetailsOverlay />
-		</>
+		</StaticPageProvider>
 	)
 }
 

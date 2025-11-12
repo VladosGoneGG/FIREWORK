@@ -34,6 +34,10 @@ import {
 	setShowFound,
 } from '../../store/slices/filtersSlice'
 
+import { useStaticPageKey } from '../../pages/StaticPageContext'
+import StaticContactsBlock from './static/StaticContactsBlock'
+import StaticWholesaleBlock from './static/StaticWholesaleBlock'
+
 const PROMO_KEY = 'акции'
 const norm = s =>
 	String(s || '')
@@ -63,10 +67,13 @@ const ProductsPage = ({
 	externalSelectedProduct,
 	onConsumeExternalSelected,
 	showSlider = true,
+	pageKey: pageKeyProp = null, // опционально через проп (сохраняю совместимость)
 }) => {
 	useProductsBoot()
 
 	const dispatch = useDispatch()
+	const pageKeyCtx = useStaticPageKey()
+	const pageKey = pageKeyProp ?? pageKeyCtx ?? null
 
 	const status = useSelector(s => s.products.status)
 	const selected = useSelector(s => s.categories.selectedCategory || 'all')
@@ -148,6 +155,8 @@ const ProductsPage = ({
 
 	const homeFiltered = useMemo(() => applyFilters(filtered, {}), [filtered])
 
+	const hasStaticPage = !!pageKey
+
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
 		[discountedAll]
@@ -163,7 +172,9 @@ const ProductsPage = ({
 	)
 
 	const homeSections = useSections(homeDiscounted, homeNonDiscounted, selected)
-	const showHeaderFor = title => norm(title) !== PROMO_KEY || shouldShowSlider
+	const showHeaderFor = title =>
+		norm(title) !== PROMO_KEY || shouldShowSlider || hasStaticPage
+
 	const sections = useMemo(() => {
 		if (selected === 'all') return homeSections
 
@@ -174,7 +185,6 @@ const ProductsPage = ({
 
 		const sel = norm(selected)
 		const inCategory = allItems.filter(p => norm(p.category) === sel)
-
 		const catPromoItems = inCategory.filter(p => discountedSet.has(p.id))
 
 		const bySub = new Map()
@@ -366,11 +376,7 @@ const ProductsPage = ({
 									layout='position'
 									transition={LAYOUT_T}
 								>
-									{!selectedProduct &&
-									!activeSub &&
-									!String(search).trim() &&
-									!showFound &&
-									showSlider ? (
+									{hasStaticPage ? null : shouldShowSlider ? ( // на статике показываем обычную панель (как у каталога)
 										<PromoSlider active />
 									) : (
 										FilterBar
@@ -397,6 +403,28 @@ const ProductsPage = ({
 												)}
 												onSelectProduct={openDetails}
 											/>
+										</motion.div>
+									) : hasStaticPage ? (
+										<motion.div
+											key={`static-${pageKey}-${animKey}`}
+											layout='position'
+											transition={LAYOUT_T}
+											variants={BLOCK}
+											initial='hidden'
+											animate='show'
+											exit='exit'
+											className='space-y-6'
+										>
+											{pageKey === 'contacts' && (
+												<div>
+													<StaticContactsBlock />
+												</div>
+											)}
+											{pageKey === 'wholesale' && (
+												<div>
+													<StaticWholesaleBlock />
+												</div>
+											)}
 										</motion.div>
 									) : view === 'home' ? (
 										<motion.div

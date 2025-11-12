@@ -8,7 +8,6 @@ const FooterMobile = () => {
 			role='contentinfo'
 			className={[
 				'bg-[#efebe6] pt-[20px] pl-[31px] w-full min-h-[100px] shadow-none',
-				// Чуть компактнее на очень узких экранах (можно убрать, если не надо)
 				'max-[680px]:pl-[16px] max-[680px]:pt-[16px]',
 			].join(' ')}
 		>
@@ -20,8 +19,9 @@ const FooterMobile = () => {
 			>
 				<div>
 					<ul className='uppercase flex flex-col gap-[10px]'>
+						{/* ⬇️ был просто текст — делаем роут */}
 						<li className='hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'>
-							контакты
+							<Link to='/contacts'>контакты</Link>
 						</li>
 						<li className='hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'>
 							условия доставки

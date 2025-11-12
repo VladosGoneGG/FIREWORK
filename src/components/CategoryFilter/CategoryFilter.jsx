@@ -3,12 +3,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
 	fetchCategories,
-	setCategorySmart, // умный сет: нормализует "все"/категорию/подкатегорию
+	setCategorySmart,
 } from '../../store/slices/categoriesSlice'
 import { clearSearchQuery } from '../../store/slices/productsSlice'
 import CategoryRow from '../CategoryRow/CategoryRow'
 import SubcategoryRow from '../SubcategoryRow/SubcategoryRow'
 import CategoryFilterSkeleton from './CategoryFilterSkeleton'
+
+// ⬇️ ДОБАВЬ ЭТО:
+import { useNavigate } from 'react-router-dom'
 
 const norm = name =>
 	name === 'Все'
@@ -20,37 +23,33 @@ const norm = name =>
 
 const CategoryFilter = ({ onAnyCategoryClick }) => {
 	const dispatch = useDispatch()
+	const navigate = useNavigate() // ⬅️ добавили
+
 	const { list, selectedCategory, selectedSub, status } = useSelector(
 		s => s.categories
 	)
 
 	const [expandedId, setExpandedId] = useState(null)
 
-	// загрузка категорий
 	useEffect(() => {
 		if (status === 'idle') dispatch(fetchCategories())
 	}, [status, dispatch])
 
-	// быстрые справочники
 	const hasSubsById = useMemo(() => {
 		const m = new Map()
 		for (const c of list) m.set(c.id, (c.subcategories?.length || 0) > 0)
 		return m
 	}, [list])
 
-	// карта: subKey -> parentCatId
 	const subKeyToParentId = useMemo(() => {
 		const map = new Map()
 		for (const c of list) {
 			const subs = c.subcategories || []
-			for (const s of subs) {
-				map.set(norm(s.name), c.id)
-			}
+			for (const s of subs) map.set(norm(s.name), c.id)
 		}
 		return map
 	}, [list])
 
-	// авто-раскрытие категории, если выбран её саб
 	useEffect(() => {
 		const selSub = norm(selectedSub || '')
 		const selCat = norm(selectedCategory || 'all')
@@ -62,10 +61,13 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 				return
 			}
 		}
-
-		// если саб не выбран — сворачиваем при "all", иначе не трогаем (пусть руками открывают)
 		if (selCat === 'all') setExpandedId(null)
 	}, [selectedSub, selectedCategory, subKeyToParentId])
+
+	const backToRoot = () => {
+		// возвращаемся на '/', чтобы центр перестал рендерить /contacts|/wholesale
+		navigate('/', { replace: true })
+	}
 
 	const handleCategoryClick = useCallback(
 		cat => {
@@ -75,7 +77,9 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 			dispatch(setCategorySmart(key))
 			dispatch(clearSearchQuery())
 
-			// синхронизируем с контентом (страница/мобильная)
+			// ⬇️ КРИТИЧЕСКОЕ: сбросить маршрут на главный
+			backToRoot()
+
 			try {
 				window.dispatchEvent(
 					new CustomEvent('nav:category-picked', { detail: { category: key } })
@@ -88,7 +92,7 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 				setExpandedId(null)
 			}
 		},
-		[dispatch, hasSubsById, onAnyCategoryClick]
+		[dispatch, hasSubsById, onAnyCategoryClick] // navigate/backToRoot замыкать не нужно
 	)
 
 	const handleSubClick = useCallback(
@@ -96,16 +100,17 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 			onAnyCategoryClick?.()
 			const subKey = norm(name)
 
-			// 1) открыть подкатегорию на странице (десктоп/мобила слушают это событие)
 			try {
 				window.dispatchEvent(
 					new CustomEvent('nav:open-subcategory', { detail: { title: name } })
 				)
 			} catch {}
 
-			// 2) зафиксировать выбор в сторе (установит selectedCategory и selectedSub)
 			dispatch(setCategorySmart(subKey))
 			dispatch(clearSearchQuery())
+
+			// ⬇️ Аналогично при выборе подкатегории
+			backToRoot()
 		},
 		[dispatch, onAnyCategoryClick]
 	)
@@ -128,10 +133,7 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 					const key = norm(cat.name)
 					const subs = cat.subcategories || []
 					const subKeys = subs.map(s => norm(s.name))
-
-					// активна, если выбрана сама категория ИЛИ любая её подкатегория
 					const isActiveCat = selCatKey === key || subKeys.includes(selSubKey)
-
 					const isOpen = expandedId === cat.id && hasSubsById.get(cat.id)
 
 					return (
@@ -140,9 +142,8 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 								cat={cat}
 								active={isActiveCat}
 								onClick={() => handleCategoryClick(cat)}
-								idx={idx} // <-- индекс для выбора иконки по порядку
+								idx={idx}
 							/>
-
 							{isOpen && (
 								<ul className='pl-9 mt-1 space-y-1'>
 									{subs.map(sub => {
