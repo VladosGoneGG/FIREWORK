@@ -2,7 +2,7 @@ const StaticContactsBlock = () => {
 	return (
 		<div
 			className='
-				bg-white 
+				bg-white my-25
 				flex flex-col justify-start items-center
 				
 			'
@@ -18,7 +18,7 @@ const StaticContactsBlock = () => {
 					max-w-[1240px] mx-auto h-full bg-white
 					flex flex-col justify-center items-center
 					
-					/* мобильная раскладка: левое выравнивание и растяжение */
+		
 					
 					
 				'
