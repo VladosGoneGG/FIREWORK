@@ -18,7 +18,7 @@ const CartItem = ({ item, onDec, onInc }) => {
 
 	return (
 		<div className='flex items-center gap-3 max-[1040px]:mt-2.5'>
-			<div className='w-[70px] h-[70px] rounded-[10px] overflow-hidden bg-[#f6f4f2] flex-shrink-0'>
+			<div className='w-[70px] h-[70px] rounded-[10px] overflow-hidden bg-[#f6f4f2] shrink-0'>
 				{item.images?.[0] ? (
 					<img
 						src={item.images[0]}

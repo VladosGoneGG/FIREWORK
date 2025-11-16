@@ -45,6 +45,7 @@ const ProductPageMobile = () => {
 	const dispatch = useDispatch()
 	const navigate = useNavigate()
 	const { pathname } = useLocation()
+
 	const pageKey =
 		pathname === '/contacts'
 			? 'contacts'
@@ -96,17 +97,20 @@ const ProductPageMobile = () => {
 		[sections, sortKey]
 	)
 
+	// ====== открыть подкатегорию / список для секции ======
 	const openSubcategory = useCallback(
 		payload => {
 			const n = s =>
 				String(s || '')
 					.trim()
 					.toLowerCase()
+
 			let title = ''
 			let products = []
 
-			if (typeof payload === 'string') title = payload
-			else if (payload && typeof payload === 'object') {
+			if (typeof payload === 'string') {
+				title = payload
+			} else if (payload && typeof payload === 'object') {
 				title = payload.title || payload.category || ''
 				if (Array.isArray(payload.products) && payload.products.length) {
 					products = payload.products
@@ -140,11 +144,18 @@ const ProductPageMobile = () => {
 				for (const p of discountedSameCat) byId.set(p.id, p)
 				products = Array.from(byId.values())
 			} else {
+				// акции: гарантируем, что здесь только скидочные
 				const dset = new Set(discountedAll.map(p => p.id))
 				products = products.filter(p => dset.has(p.id))
 			}
 
-			if (title) dispatch(setCategorySmart(isPromo ? PROMO_KEY : title))
+			// ВАЖНО:
+			// для обычных категорий — синхронизируем Redux
+			// для "акции" НИЧЕГО НЕ ТРОГАЕМ, чтобы не ломать фильтрацию
+			if (title && !isPromo) {
+				dispatch(setCategorySmart(title))
+			}
+
 			dispatch(setShowFound(false))
 			dispatch(closeDetails())
 
@@ -166,7 +177,6 @@ const ProductPageMobile = () => {
 	// ====== Реакция на поиск ======
 	useEffect(() => {
 		if (isSearching) {
-			// включаем found и возвращаемся на общую витрину, если открыта статика
 			if (pageKey) navigate('/', { replace: true })
 			setActiveSub(null)
 			dispatch(setShowFound(true))
@@ -178,14 +188,12 @@ const ProductPageMobile = () => {
 		dispatch(clearApplied())
 	}, [isSearching, pageKey, navigate, dispatch])
 
-	// ====== Реакция на выбор подкатегории/категории (через Redux), без window-событий ======
+	// ====== Реакция на выбор подкатегории/категории (через Redux) ======
 	useEffect(() => {
 		const subKey = norm(selectedSub)
 		const catKey = norm(selectedCategory)
 
-		// если есть выбранная подкатегория — открываем панель подкатегории
 		if (subKey) {
-			// если висим на статической странице — уводим на '/'
 			if (pageKey) navigate('/', { replace: true })
 
 			const products = allItems.filter(
@@ -199,19 +207,18 @@ const ProductPageMobile = () => {
 			return
 		}
 
-		// если выбрана "все" — закрываем субпанель
 		if (catKey === 'all') {
 			setActiveSub(null)
 			dispatch(closeDetails())
 			return
 		}
 
-		// если выбрана конкретная категория — просто закрываем саб (карточки рендерятся секциями)
+		// для конкретной категории (в т.ч. "акции" из фильтра) просто закрываем sub-панель:
 		setActiveSub(null)
 		dispatch(closeDetails())
 	}, [selectedCategory, selectedSub, allItems, pageKey, navigate, dispatch])
 
-	// ====== Если пользователь начинает «показывать товары», а url статический — уходим на '/' ======
+	// ====== Если на статике начали показывать товары — уходим на '/' ======
 	useEffect(() => {
 		const showingProducts =
 			shouldShowFound || activeSub || norm(selectedCategory) !== 'all'
@@ -262,7 +269,6 @@ const ProductPageMobile = () => {
 				products={applySort(activeSub?.products || [], sortKey)}
 				onSelectProduct={openDetailsRedux}
 				sortKey={sortKey}
-				// не используем window-события; если нужен фильтр — передайте проп из родителя
 				onOpenFilters={() => {}}
 				mobile
 			/>
