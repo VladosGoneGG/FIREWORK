@@ -79,7 +79,7 @@ const RelatedBlock = ({
 
 	return (
 		<>
-			<div className='flex items-center font-baron text-[18px] justify-between '>
+			<div className='flex mb-[10px] px-2 items-center font-baron text-[18px] justify-between '>
 				<div className='font-semibold'>добавь в набор</div>
 				<button
 					type='button'
@@ -92,10 +92,7 @@ const RelatedBlock = ({
 
 			{/* Десктоп: фиксируем количество карточек по брейкпоинтам */}
 			{!isMobile && (
-				<div
-					ref={rowRef}
-					className='mt-[10px] w-full flex gap-2.5  overflow-hidden'
-				>
+				<div ref={rowRef} className=' w-full flex gap-2.5  overflow-hidden'>
 					{itemsDesktop.map(p => (
 						<div key={p.id} className='shrink-0'>
 							<ProductCardMini

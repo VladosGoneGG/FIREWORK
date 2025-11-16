@@ -11,21 +11,25 @@ const DescriptionBlock = ({
 			{/* ВАЖНО: этот контейнер занимает всю высоту своей строки и скроллится */}
 			<div
 				className={[
-					'w-full max-h-[140px]',
+					'w-full max-h-[120px]',
 					'overflow-y-auto overscroll-contain touch-pan-y scroll-smooth',
 					'scroll-hidden', // твоя утилита скрытия скроллбара
 				].join(' ')}
 				onWheelCapture={e => e.stopPropagation()}
 				onTouchMoveCapture={e => e.stopPropagation()}
 			>
-				<div className='font-semibold mb-1'>ОПИСАНИЕ:</div>
+				<div className='font-baron text-[18px] font-semibold mb-1'>
+					Описание:
+				</div>
 
-				<p className='text-[14px] opacity-80'>
+				<p className='text-[16px] opacity-80'>
 					{description || 'Описание товара отсутствует.'}
 				</p>
 
-				<div className='font-semibold mb-1 mt-3'>СЕРТИФИКАТ:</div>
-				<p className='text-[14px] opacity-80'>
+				<div className='font-baron text-[18px] font-semibold mb-1 mt-3'>
+					Сертификат
+				</div>
+				<p className='text-[16px] opacity-80'>
 					{certificateNumber && String(certificateNumber).trim()
 						? certificateNumber
 						: '—'}

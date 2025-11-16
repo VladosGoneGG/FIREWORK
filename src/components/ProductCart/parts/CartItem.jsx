@@ -8,13 +8,9 @@ const CartItem = ({ item, onDec, onInc }) => {
 	const unitPrice =
 		toNum(item?.unitPrice) || toNum(item?.discountPrice) || toNum(item?.price)
 
-	// 2) Количество
 	const qty = Math.max(1, item.quantity || 1)
-
-	// 3) Общая сумма за позицию
 	const lineTotal = unitPrice * qty
 
-	// 4) Нужна ли «старая» цена
 	const hasOldPrice =
 		typeof item?.discountPrice === 'number' &&
 		typeof item?.price === 'number' &&
@@ -32,27 +28,27 @@ const CartItem = ({ item, onDec, onInc }) => {
 				) : null}
 			</div>
 
-			<div className='flex-1 min-w-0'>
-				<div className='leading-tight truncate'>{item.name}</div>
-				<div className='text-[8px] text-[#625A51]'>
-					{item.manufacturer || ''}
+			{/* две зоны: верх (фиксированная высота) + низ */}
+			<div className='flex-1 min-w-0 flex flex-col justify-between'>
+				{/* ВЕРХНИЙ БЛОК — ДЕЛАЕМ ФИКСИРОВАННУЮ МИНИМАЛЬНУЮ ВЫСОТУ */}
+				<div className='min-h-[49px]'>
+					<div className='leading-tight truncate'>{item.name}</div>
+					<div className='text-[8px] text-[#625A51]'>
+						{item.manufacturer || ''}
+					</div>
+
+					{hasOldPrice && (
+						<div className='text-[10px] text-[#BD52E9] line-through decoration-1 mt-0.5'>
+							{fmtPriceRub(item.price)}
+							<span className='lowercase'>руб.</span>
+						</div>
+					)}
 				</div>
 
-				{/* Старая цена, если есть */}
-				{hasOldPrice && (
-					<div
-						className='text-[10px] text-[#BD52E9] line-through decoration-1 mt-0.5'
-						title='Старая цена'
-					>
-						{fmtPriceRub(item.price)}
-						<span className='lowercase'>руб.</span>
-					</div>
-				)}
-
-				<div className='mt-1 flex items-center justify-between'>
+				{/* НИЖНИЙ БЛОК — ВСЕГДА ПРИЖАТ НИЗ */}
+				<div className=' flex items-center justify-between'>
 					<Qty value={qty} onDec={onDec} onInc={onInc} />
 
-					{/* Общая сумма за позицию */}
 					<div className='text-right pr-2.5'>
 						<div className='text-[18px] font-bold'>
 							{fmtPriceRub(lineTotal)}

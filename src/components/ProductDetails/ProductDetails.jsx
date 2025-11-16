@@ -66,7 +66,7 @@ const ProductDetails = ({
 				</div>
 
 				{/* низ: GRID — 1fr (описание) + auto (Related) */}
-				<div className='flex-1 min-h-0 grid grid-rows-[1fr_auto] gap-2.5'>
+				<div className='flex-1 min-h-0 grid grid-rows-[1fr_auto] '>
 					{/* строка 1: растягивается, внутри — собственный скролл */}
 					<DescriptionBlock
 						description={product.description}

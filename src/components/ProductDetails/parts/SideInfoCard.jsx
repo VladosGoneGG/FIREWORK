@@ -91,7 +91,7 @@ function SideInfoCard({ product, img }) {
 					className={[
 						'mt-[5px] ml-1 text-[#098D00] text-[13px] lowercase font-baron leading-[13px] whitespace-nowrap',
 						// ⬇️ если НЕТ скидки — добавляем нижний отступ (настраиваешь сам)
-						!hasOldPrice ? 'mt-[10px] mb-[20px] max-[680px]:mt-[18px]' : '',
+						!hasOldPrice ? 'mt-[5px] mb-[26px] max-[680px]:mt-[18px]' : '',
 					].join(' ')}
 				>
 					в наличии <span className='text-[13px]'>{inStock}</span> шт
@@ -100,7 +100,7 @@ function SideInfoCard({ product, img }) {
 				{/* старая цена — отдельной строкой СРАЗУ под наличием, слева (только если есть скидка) */}
 				{hasOldPrice && (
 					<div
-						className='ml-1 mt-[3px]  text-[15px] line-through decoration-1 text-[#BD52E9] max-[1040px]:text-[#b4b4b4] max-[680px]:pt-[8px] pointer-events-none font-baron lowercase'
+						className='ml-1 mt-[4px] mb-[4px]  text-[12px] line-through decoration-1 text-[#BD52E9] max-[1040px]:text-[#b4b4b4] max-[680px]:pt-[8px] pointer-events-none font-baron lowercase'
 						title='Старая цена'
 					>
 						{fmtNum(price)}

@@ -348,7 +348,7 @@ const ProductsPage = ({
 			<LayoutGroup id='products-page'>
 				<div
 					ref={anchorRef}
-					className={`relative bg-white rounded-[20px] overflow-hidden mx-auto 
+					className={`relative bg-white rounded-[20px] pb-2.5 overflow-hidden mx-auto 
            w/full max-w-[1200px] px-4 lg:px-3 md:px-2
           ${selectedProduct ? 'h-[834px]' : 'min-h-[834px]'}`}
 				>

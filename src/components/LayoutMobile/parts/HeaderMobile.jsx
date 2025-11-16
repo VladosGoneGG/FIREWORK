@@ -27,15 +27,20 @@ const HeaderMobile = () => {
 				</div>
 				<div className='ml-auto mb-2.5'>
 					<div className='flex w-[150px] items-center justify-end mr-2.5 gap-2.5'>
-						<div className='pt-2'>
+						<a
+							href='https://yandex.ru/maps/-/CLG7jLpF'
+							target='_blank'
+							rel='noopener noreferrer'
+							className='pt-2'
+						>
 							<CursorSvg />
-						</div>
+						</a>
 						<ul className='font-baron'>
 							<li>
 								<p className='text-[20px]'>9:00 - 18:00</p>
 							</li>
-							<li>
-								<p className='text-[12px]'>
+							<li className='relative bottom-1.5'>
+								<p className='text-[12px] text-[#625a51]'>
 									каховская <span className='uppercase'>1а/с</span>
 								</p>
 							</li>

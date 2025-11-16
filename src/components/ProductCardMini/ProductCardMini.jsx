@@ -67,7 +67,7 @@ function ProductCardMini({ product, onSelect }) {
 			onClick={handleSelect}
 			onKeyDown={onKey}
 			title={name}
-			className='w-[120px] h-[206px] bg-white '
+			className='w-[121px] h-[234px] bg-[#F2F2F2] rounded-[10px] p-[5px] '
 		>
 			{/* фиксируем колонковую раскладку на всю высоту */}
 			<div className='h-full w-full flex flex-col font-baron'>
@@ -84,7 +84,6 @@ function ProductCardMini({ product, onSelect }) {
 
 				{/* Параметры */}
 				<div className='flex text-[12px] justify-between text-[#625A51] leading-none'>
-					{/* БАГ: тут не хватало пробела после h-[25px] */}
 					<div className='w-[65px] h-[25px] flex flex-col gap-0.5 whitespace-nowrap'>
 						<PriceBlock.Param icon='shots'>{shots ?? '—'}</PriceBlock.Param>
 						<PriceBlock.Param icon='time' title={fmtSecFull(durationSec)}>

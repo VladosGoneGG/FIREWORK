@@ -95,7 +95,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 			].join(' ')}
 		>
 			{/* превью */}
-			<div className='relative w-[100px] h-[100px] rounded-[10px] overflow-hidden shrink-0'>
+			<div className='w-[100px] h-[100px] rounded-[10px] overflow-hidden shrink-0'>
 				{img ? (
 					<ProductThumb
 						src={typeof img === 'string' ? img : img?.url || img?.src}
@@ -111,7 +111,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 				)}
 
 				{outOfStock && (
-					<div className='absolute inset-0 bg-white/70 flex items-center justify-center text-[12px] font-medium rounded-[10px]'>
+					<div className=' inset-0 bg-white/70 flex items-center justify-center text-[12px] font-medium rounded-[10px]'>
 						Нет в наличии
 					</div>
 				)}
@@ -121,7 +121,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 				{/* заголовок + бейдж */}
 				<div className='flex justify-between items-start h-[27px]'>
 					{/* ⬇️ добавили min-w-0, чтобы текст корректно обрезался и не толкал рядом стоящее */}
-					<ul className='w-[100px]'>
+					<ul className='w-auto'>
 						<li className='leading-[14px]'>
 							<p className='font-barlow font-normal text-[12px]  text-black '>
 								{name || '—'}

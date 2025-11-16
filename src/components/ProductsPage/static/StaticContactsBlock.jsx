@@ -65,7 +65,12 @@ const StaticContactsBlock = () => {
 							</li>
 						</ul>
 
-						<div className='flex text-[14px] text-[#bd52e9] mt-[15px] pl-[6px]'>
+						<a
+							href='https://yandex.ru/maps/-/CLG7jLpF'
+							target='_blank'
+							rel='noopener noreferrer'
+							className='flex text-[14px] text-[#bd52e9] mt-[15px] pl-[6px] cursor-pointer'
+						>
 							<span className='relative top-1 right-1'>
 								<svg
 									width='15'
@@ -83,8 +88,8 @@ const StaticContactsBlock = () => {
 									/>
 								</svg>
 							</span>
-							построить маршрут
-						</div>
+							<p>построить маршрут</p>
+						</a>
 					</div>
 
 					<div className='max-[1040px]:w-full'>

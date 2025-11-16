@@ -43,15 +43,15 @@ function PriceBlock({ price, discountPrice, fmtPrice }) {
 					{/* новая цена */}
 					<div className='text-[15px] font-bold'>
 						{fmtPrice(dp)}
-						<span className='text-[10px] font-baron lowercase relative top-0.5 left-[1px]'>
+						<span className='text-[8px] font-baron lowercase relative top-0.5 left-[1px]'>
 							руб.
 						</span>
 					</div>
 				</>
 			) : (
-				<div className='text-[15px] font-bold'>
+				<div className='text-[15px] font-bold pb-[3px]'>
 					{fmtPrice(Number.isFinite(p) && p > 0 ? p : 0)}
-					<span className='text-[10px] font-baron lowercase relative top-0.5'>
+					<span className='text-[8px] font-baron lowercase relative top-0.5'>
 						руб.
 					</span>
 				</div>
