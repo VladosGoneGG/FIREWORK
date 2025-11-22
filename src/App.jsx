@@ -57,12 +57,11 @@ function App() {
 		<div className='flex flex-col items-center min-h-screen scroll-hidden overflow-y-auto'>
 			<Header rightSlot={<SearchBar />} />
 
-			<div className='w-full  px-2.5  overflow-visible'>
+			<div className='w-full  px-2.5  overflow-visible '>
 				<div className='overflow-x-auto'>
 					<main
 						className={[
-							'mx-auto w-full ',
-							// Ниже 1024 — горизонтальный скролл, ничего не исчезает
+							'mx-auto w-full pb-6 ',
 							detailsMode
 								? 'min-w-[1024px] max-w-[1240px]'
 								: 'min-w-[1024px] max-w-[1240px]',
@@ -110,7 +109,7 @@ function App() {
 						)}
 
 						{/* ЦЕНТР — фикс высота, внутренняя прокрутка (скрытая полоса) */}
-						<div className='scroll-hidden bg-transparent flex flex-col w-full overflow-visible pt-[2px] -mt-[2px]'>
+						<div className='scroll-hidden bg-transparent flex flex-col w-full overflow-visible pt-[2px] -mt-[2px] '>
 							<div
 								className='relative z-10 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px] flex flex_col bg-white w-full overflow-visible'
 								style={{ height: detailsMode ? 'auto' : COLUMN_H }}

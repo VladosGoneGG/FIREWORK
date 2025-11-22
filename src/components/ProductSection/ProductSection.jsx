@@ -1,6 +1,6 @@
 // src/components/ProductSection/ProductSection.jsx
 import { motion } from 'motion/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSkeleton'
 
@@ -14,10 +14,12 @@ import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSke
  * - showHeader?: boolean
  */
 
-const CARD_W = 120 // ширина карточки по макету
-const GAP = 10 // gap-[11px]
-const MAX_COLS = 5 // максимум карточек в ряд
-
+// карточка у тебя w-[121px]
+const CARD_W = 121
+const GAP = 11
+const VISIBLE_COUNT = 5
+const CONTAINER_W = CARD_W * VISIBLE_COUNT + GAP * (VISIBLE_COUNT - 1) // 649px
+const END_PADDING = 50
 const ProductSection = ({
 	title,
 	products = [],
@@ -26,58 +28,16 @@ const ProductSection = ({
 	loading = false,
 	showHeader = true,
 }) => {
-	const wrapRef = useRef(null)
-	const [cols, setCols] = useState(5)
+	const hasProducts = products && products.length > 0
+	const skeletonCount = useMemo(
+		() =>
+			hasProducts ? Math.min(products.length, VISIBLE_COUNT) : VISIBLE_COUNT,
+		[hasProducts, products.length]
+	)
 
-	// пересчёт количества колонок от ширины контейнера
-	useEffect(() => {
-		const el = wrapRef.current
-		if (!el) return
-
-		const computeCols = containerW => {
-			if (!containerW) return 1
-
-			// без лишнего урезания ширины — считаем прямо по контейнеру
-			let n = Math.floor((containerW + GAP) / (CARD_W + GAP))
-
-			if (n < 1) n = 1
-			if (n > MAX_COLS) n = MAX_COLS
-
-			// не показываем больше, чем есть товаров
-			return Math.min(n, products.length || 1)
-		}
-
-		const measure = () => {
-			const w = el.clientWidth || 0
-			setCols(prev => {
-				const next = computeCols(w)
-				return next === prev ? prev : next
-			})
-		}
-
-		measure()
-
-		let ro
-		if (typeof ResizeObserver !== 'undefined') {
-			ro = new ResizeObserver(measure)
-			ro.observe(el)
-		}
-		window.addEventListener('resize', measure)
-		window.addEventListener('orientationchange', measure)
-
-		return () => {
-			ro?.disconnect?.()
-			window.removeEventListener('resize', measure)
-			window.removeEventListener('orientationchange', measure)
-		}
-	}, [products.length])
-
-	const visible = useMemo(() => products.slice(0, cols || 1), [products, cols])
-
+	const hasMore = !loading && products.length > 0 && !!onOpenSubcategory
 	const handleOpenMore = () => {
-		if (onOpenSubcategory) {
-			onOpenSubcategory({ title, products })
-		}
+		if (onOpenSubcategory) onOpenSubcategory({ title, products })
 	}
 
 	const EASE = 'easeOut'
@@ -87,13 +47,69 @@ const ProductSection = ({
 		show: { opacity: 1, y: 0, transition: { ease: EASE, duration: DURATION } },
 	}
 
-	const hasMore = !loading && products.length > visible.length
+	// ===== горизонтальный скролл и блокировка скролла страницы =====
+	const scrollRef = useRef(null)
+	const animRef = useRef(null)
+
+	const smoothScrollTo = useCallback(target => {
+		const el = scrollRef.current
+		if (!el) return
+
+		if (animRef.current) {
+			cancelAnimationFrame(animRef.current)
+		}
+
+		const start = el.scrollLeft
+		const distance = target - start
+		if (distance === 0) return
+
+		const duration = 260 // ms
+		const startTime = performance.now()
+
+		const step = now => {
+			const t = Math.min(1, (now - startTime) / duration)
+			// easeOutCubic
+			const eased = 1 - Math.pow(1 - t, 3)
+			el.scrollLeft = start + distance * eased
+			if (t < 1) {
+				animRef.current = requestAnimationFrame(step)
+			}
+		}
+
+		animRef.current = requestAnimationFrame(step)
+	}, [])
+
+	const handleWheel = event => {
+		const el = scrollRef.current
+		if (!el) return
+
+		const maxScroll = el.scrollWidth - el.clientWidth
+		if (maxScroll <= 0) return
+
+		// блокируем скролл страницы, пока мышь в зоне карточек
+		event.preventDefault()
+
+		const { deltaX, deltaY } = event
+		const absX = Math.abs(deltaX)
+		const absY = Math.abs(deltaY)
+
+		// доминирующее направление
+		const delta = absX > absY ? deltaX : deltaY
+		if (!delta) return
+
+		const factor = 1.3 // делаем движение мягче
+		const current = el.scrollLeft
+		const next = current + delta * factor
+		const clamped = Math.max(0, Math.min(maxScroll, next))
+
+		smoothScrollTo(clamped)
+	}
 
 	return (
 		<section>
 			{showHeader && (
-				<div className='flex  justify-between'>
-					<h3 className='text-[18px] mt-[1px]  lowercase font-baron pl-2.5 mb-1.5'>
+				<div className='flex justify-between'>
+					<h3 className='text-[18px] mt-[1px] lowercase font-baron pl-2.5 mb-1.5'>
 						{title}
 					</h3>
 
@@ -109,33 +125,62 @@ const ProductSection = ({
 				</div>
 			)}
 
-			{/* ОБЁРТКА, по которой меряем ширину */}
-			<div ref={wrapRef}>
+			{/* ВЕСЬ КОНТЕЙНЕР — зона горизонтального скролла */}
+			<div
+				ref={scrollRef}
+				onWheel={handleWheel}
+				className={[
+					'relative',
+					'overflow-x-auto overflow-y-visible',
+					// прячем полосы прокрутки
+					'[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+					// твои отступы, как и были
+					'md:mx-[-8px] lg:mx-[-12px] xl:mx-[-16px]',
+					'xl:px-1',
+					// чтобы скролл не пробивался наружу
+					'[overscroll-behavior-x:contain] [overscroll-behavior-y:none]',
+				].join(' ')}
+				style={{
+					width: CONTAINER_W, // показываем ровно 5 карточек
+					maxWidth: '100%',
+					marginLeft: 'auto',
+					marginRight: 'auto',
+				}}
+			>
 				<motion.div
-					key={`${title}|${visible.length}|${products.length}`}
+					key={`${title}|${products.length}|${loading ? 'loading' : 'ready'}`}
 					variants={GRID_BLOCK}
 					initial='hidden'
 					animate='show'
-					className='grid
-            justify-center
-            gap-[11px]
-            overflow-visible
-            md:mx-[-8px] lg:mx-[-12px] xl:mx-[-16px]
-            xl:px-1'
+					className={[
+						'flex flex-nowrap gap-[8px]',
+						'justify-start',
+						// плавность при программных скроллах
+						'scroll-smooth',
+						'snap-x snap-mandatory',
+					].join(' ')}
 					style={{
-						gridTemplateColumns: `repeat(${Math.max(
-							visible.length || 1,
-							1
-						)}, ${CARD_W}px)`,
 						willChange: 'opacity, transform',
+						// чуть больше, чем одна карточка, чтобы последняя точно влезала
+						paddingRight: END_PADDING,
 					}}
 				>
 					{loading
-						? Array.from({ length: Math.max(cols || 1, 1) }).map((_, i) => (
-								<ProductCardMiniSkeleton key={i} />
+						? Array.from({ length: skeletonCount }).map((_, i) => (
+								<div
+									key={i}
+									className='snap-start shrink-0'
+									style={{ width: CARD_W }}
+								>
+									<ProductCardMiniSkeleton />
+								</div>
 						  ))
-						: visible.map(p => (
-								<div key={p.id}>
+						: products.map(p => (
+								<div
+									key={p.id}
+									className='snap-start shrink-0'
+									style={{ width: CARD_W }}
+								>
 									<ProductCardMini product={p} onSelect={onSelectProduct} />
 								</div>
 						  ))}
