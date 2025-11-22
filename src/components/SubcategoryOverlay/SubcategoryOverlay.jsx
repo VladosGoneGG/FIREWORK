@@ -1046,7 +1046,7 @@ export default function SubcategoryOverlay({
 						opacity: { duration: isOpen ? 0.18 : 0.2, ease: 'easeOut' },
 						y: { duration: 0.18 },
 					}}
-					className='relative w-[240px] bg-white rounded-[20px] overflow-hidden'
+					className='relative w-[240px]  bg-white rounded-[20px] overflow-hidden'
 					onAnimationComplete={() => {
 						if (!isOpen) setVisible(false)
 					}}

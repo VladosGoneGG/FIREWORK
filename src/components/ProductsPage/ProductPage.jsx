@@ -295,7 +295,7 @@ const ProductsPage = ({
 
 	const FilterBar = (
 		<div className='relative'>
-			<div className='flex items-start pt-2.5 gap-2 '>
+			<div className='flex  items-start pt-2.5 gap-2 '>
 				<div className='pl-1 flex-1'>
 					{showFound ? (
 						<div className='flex flex-col gap-1'>
@@ -321,7 +321,7 @@ const ProductsPage = ({
 					) : null}
 				</div>
 
-				<div className='ml-auto flex items-center gap-2'>
+				<div className='ml-auto  flex items-end gap-2'>
 					<button
 						type='button'
 						onClick={() => {
@@ -329,13 +329,13 @@ const ProductsPage = ({
 							onToggleFilters?.()
 						}}
 						className={[
-							'w-[75px] h-[25px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
+							'w-[70px] h-[25px]  rounded-[10px] font-baron text-[10px]',
 							filtersOpen
 								? 'bg-[#EFEBE7] text-[#BD52E9]'
 								: 'btn-firework-filter',
 						].join(' ')}
 					>
-						<span>фильтр</span>
+						<p className='pb-[2px]'>фильтр</p>
 					</button>
 					<SortDropdown value={sortKey} onChange={setSortKey} />
 				</div>
@@ -384,7 +384,7 @@ const ProductsPage = ({
 								</motion.div>
 							)}
 
-							<div className='mt-3'>
+							<div className='mt-1.5'>
 								<AnimatePresence mode='wait' initial={false}>
 									{showFound || String(search).trim() ? (
 										<motion.div

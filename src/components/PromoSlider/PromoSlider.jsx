@@ -44,7 +44,7 @@ const PromoSlider = ({
 	return (
 		<div
 			className={[
-				'relative w-full max-w-[665px] mx-auto rounded-[10px] overflow-hidden bg-[#f6f4f2] mt-2.5',
+				'relative w-full max-w-[665px] mx-auto rounded-[10px] overflow-hidden bg-[#f6f4f2] mt-2.5 mb-[30px]',
 				'px-0',
 				'select-none',
 				className,

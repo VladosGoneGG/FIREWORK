@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useSelector } from 'react-redux'
 
 import CategoryFilter from './components/CategoryFilter/CategoryFilter'
-import FooterSection from './components/FooterSection/FooterSection'
+
 import Header from './components/Header/Header'
 import ProductCart from './components/ProductCart/ProductCart'
 import ProductsPage from './components/ProductsPage/ProductPage'
@@ -57,7 +57,7 @@ function App() {
 		<div className='flex flex-col items-center min-h-screen scroll-hidden overflow-y-auto'>
 			<Header rightSlot={<SearchBar />} />
 
-			<div className='w-full  px-2.5 overflow-visible'>
+			<div className='w-full  px-2.5  overflow-visible'>
 				<div className='overflow-x-auto'>
 					<main
 						className={[
@@ -78,14 +78,17 @@ function App() {
 									className='relative w-[240px]'
 									style={{ height: COLUMN_H }}
 								>
+									{/* когда фильтр ЗАКРЫТ — категории + промопанель */}
 									{!filtersOpen && (
 										<>
 											<CategoryFilter
 												onAnyCategoryClick={() => setIsLanding(false)}
 											/>
-											{/* <PromoPanel /> */}
+											<PromoPanel />
 										</>
 									)}
+
+									{/* когда фильтр ОТКРЫТ — только оверлей, PromoPanel скрыта */}
 									<SubcategoryOverlay
 										isOpen={filtersOpen}
 										onClose={() => setFiltersOpen(false)}
@@ -102,7 +105,6 @@ function App() {
 										setField={setField}
 										reset={resetForm}
 									/>
-									<PromoPanel />
 								</div>
 							</div>
 						)}
@@ -142,10 +144,6 @@ function App() {
 										showSlider={showSliderOnHome}
 									/>
 								</div>
-							</div>
-
-							<div className='mb-[20px] relative z-0'>
-								<FooterSection />
 							</div>
 						</div>
 

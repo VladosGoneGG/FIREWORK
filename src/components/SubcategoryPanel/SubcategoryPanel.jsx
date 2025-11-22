@@ -42,13 +42,13 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 	}
 
 	return (
-		<section className='space-y-3'>
+		<section>
 			{/* Хедер */}
-			<div className='flex items-center justify-between'>
-				<h3 className='text-[18px] lowercase font-baron pl-5'>{title}</h3>
+			<div className='flex items-start justify-between pl-1 pt-1 '>
+				<h3 className='text-[18px] lowercase font-baron '>{title}</h3>
 
 				{/* правый блок: фильтр + сортировка */}
-				<div className='ml-auto flex items-center gap-2 pr-[18px]'>
+				<div className='ml-auto flex items-end gap-2 '>
 					{onOpenFilters && (
 						<button
 							type='button'
@@ -57,7 +57,7 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 								// скрываем кнопку на ширине < 1040px
 								'hidden min-[1040px]:inline-flex',
 								// БАЗА: фиксируем центрирование вне зависимости от темы/сост.
-								'w-[75px] h-[25px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
+								'w-[70px] h-[26px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
 								'items-center justify-center text-center select-none',
 								'focus:outline-none',
 								// Состояние
@@ -68,9 +68,9 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 								'justify-center',
 							].join(' ')}
 						>
-							<span className='block w-full text-center leading-none pointer-events-none'>
+							<p className='block pb-[2px] w-full text-center leading-none pointer-events-none'>
 								фильтр
-							</span>
+							</p>
 						</button>
 					)}
 					{typeof sortKey !== 'undefined' &&
@@ -84,7 +84,7 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 			<div
 				className={
 					mobile
-						? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[10px] justify-items-center md:justify-items-stretch px-2'
+						? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[10px] justify-items-center md:justify-items-stretch py-2.5 px-2'
 						: 'grid [grid-template-columns:repeat(auto-fill,120px)] xl:[grid-template-columns:repeat(5,120px)] justify-center gap-[11px] p-2.5 pb-3 overflow-visible md:mx-[-8px] lg:mx-[-12px] xl:mx-[-16px] xl:px-1'
 				}
 			>

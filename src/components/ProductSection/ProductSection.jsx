@@ -90,10 +90,10 @@ const ProductSection = ({
 	const hasMore = !loading && products.length > visible.length
 
 	return (
-		<section className='space-y-3'>
+		<section>
 			{showHeader && (
-				<div className='flex items-center justify-between'>
-					<h3 className='text-[18px] mt-[1px] lowercase font-baron pl-2.5'>
+				<div className='flex  justify-between'>
+					<h3 className='text-[18px] mt-[1px]  lowercase font-baron pl-2.5 mb-1.5'>
 						{title}
 					</h3>
 

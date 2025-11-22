@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import HeaderMobile from '../LayoutMobile/parts/HeaderMobile'
 import PressableButton from '../PressableButton/PressableButton'
 
 const NotFoundPage = () => {
@@ -10,6 +11,9 @@ const NotFoundPage = () => {
 				max-[1040px]:flex max-[1040px]:flex-col
 			'
 		>
+			<div className='hidden max-[1040px]:block'>
+				<HeaderMobile />
+			</div>
 			<div
 				className='
 					w-[1240px] mx-auto h-[907px] bg-white rounded-b-[20px]

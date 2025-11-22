@@ -114,7 +114,7 @@ function SortDropdown({
 					'transition-colors',
 				].join(' ')}
 			>
-				<span className='truncate'>{current.label}</span>
+				<p className='truncate pb-[2px]'>{current.label}</p>
 				<span className='relative w-[10px] h-[10px] overflow-hidden'>
 					<span
 						className={[

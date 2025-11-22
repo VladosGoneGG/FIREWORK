@@ -67,7 +67,15 @@ function ProductCardMini({ product, onSelect }) {
 			onClick={handleSelect}
 			onKeyDown={onKey}
 			title={name}
-			className='w-[121px] h-[234px] bg-[#F2F2F2] rounded-[10px] p-[5px] '
+			className={[
+				'w-[121px] h-[234px] bg-[#F2F2F2] rounded-[10px] p-[5px]',
+				// ховер как в фигме: плавный change-to
+				'cursor-pointer',
+				'transition-[background-color,box-shadow,transform] duration-300 ease-in-out',
+				'hover:bg-[#efebe6]',
+				'hover:shadow-[0_4px_10px_rgba(0,0,0,0.12)] hover:-translate-y-[1px]',
+				'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#bd52e9]',
+			].join(' ')}
 		>
 			{/* фиксируем колонковую раскладку на всю высоту */}
 			<div className='h-full w-full flex flex-col font-baron'>

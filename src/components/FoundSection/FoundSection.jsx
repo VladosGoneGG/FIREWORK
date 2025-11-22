@@ -34,7 +34,7 @@ const FoundSection = ({ products = [], onSelectProduct }) => {
 	const gridKey = `found|${items.length}`
 
 	return (
-		<section className='px-3 py-3'>
+		<section>
 			{/* МОБИЛЬНЫЕ КАРТОЧКИ */}
 			<div className='block min-[1040px]:hidden'>
 				<motion.div
