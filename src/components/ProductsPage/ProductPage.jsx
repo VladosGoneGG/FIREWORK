@@ -321,7 +321,7 @@ const ProductsPage = ({
 					) : null}
 				</div>
 
-				<div className='ml-auto  flex items-end gap-2'>
+				<div className='ml-auto  flex items=end gap-2'>
 					<button
 						type='button'
 						onClick={() => {
@@ -348,9 +348,11 @@ const ProductsPage = ({
 			<LayoutGroup id='products-page'>
 				<div
 					ref={anchorRef}
-					className={`relative bg-white rounded-[20px] pb-2.5 overflow-hidden mx-auto 
-           w/full max-w-[1200px] px-4 lg:px-2.5 md:px-2
-          ${selectedProduct ? 'h-[834px]' : 'min-h-[834px]'}`}
+					className={`
+						relative bg-white rounded-[20px] pb-2.5 overflow-hidden mx-auto
+						w-full max-w-[1200px] px-4 lg:px-2.5 md:px-2
+						min-h-full
+					`}
 				>
 					<motion.div layout='position' transition={LAYOUT_T}>
 						<motion.div

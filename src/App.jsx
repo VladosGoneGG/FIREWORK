@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { useSelector } from 'react-redux'
 
 import CategoryFilter from './components/CategoryFilter/CategoryFilter'
-
 import Header from './components/Header/Header'
 import ProductCart from './components/ProductCart/ProductCart'
 import ProductsPage from './components/ProductsPage/ProductPage'
@@ -11,10 +10,10 @@ import PromoPanel from './components/PromoPanel/PromoPanel'
 import SearchBar from './components/Search/SearchBar'
 import SearchModal from './components/Search/SearchModal'
 import SubcategoryOverlay from './components/SubcategoryOverlay/SubcategoryOverlay'
-
 import useOverlayFilters from './hooks/useOverlayFilters'
+import useStickToBottom from './utils/useStickToBottom'
 
-const COLUMN_H = 834
+const COLUMN_H = 834 // если нужно ровно 834 — поставь 834
 const DETAILS_H = 834
 const CENTER_W = 720 // информативный проп для ProductsPage
 
@@ -24,6 +23,12 @@ function App() {
 	const [searchOpen, setSearchOpen] = useState(false)
 	const [selectedFromSearch, setSelectedFromSearch] = useState(null)
 	const [isLanding, setIsLanding] = useState(true)
+
+	// ⬇️ центр: базовая высота COLUMN_H, снизу держим минимум 10px
+	const { ref: centerRef, height: centerHeight } = useStickToBottom(
+		COLUMN_H,
+		19
+	)
 
 	const selectedCategory = useSelector(
 		s => s.categories.selectedCategory || 'all'
@@ -57,11 +62,11 @@ function App() {
 		<div className='flex flex-col items-center min-h-screen scroll-hidden overflow-y-auto'>
 			<Header rightSlot={<SearchBar />} />
 
-			<div className='w-full  px-2.5  overflow-visible '>
+			<div className='w-full px-2.5 overflow-visible'>
 				<div className='overflow-x-auto'>
 					<main
 						className={[
-							'mx-auto w-full pb-6 ',
+							'mx-auto w-full pb-6',
 							detailsMode
 								? 'min-w-[1024px] max-w-[1240px]'
 								: 'min-w-[1024px] max-w-[1240px]',
@@ -108,11 +113,15 @@ function App() {
 							</div>
 						)}
 
-						{/* ЦЕНТР — фикс высота, внутренняя прокрутка (скрытая полоса) */}
+						{/* ЦЕНТР — базовая высота, на больших экранах растягиваем вниз до 10px от низа */}
 						<div className='scroll-hidden bg-transparent flex flex-col w-full overflow-visible pt-[2px] -mt-[2px] '>
 							<div
+								ref={centerRef}
 								className='relative z-10 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px] flex flex_col bg-white w-full overflow-visible'
-								style={{ height: detailsMode ? 'auto' : COLUMN_H }}
+								style={{
+									height: detailsMode ? 'auto' : centerHeight,
+									marginBottom: detailsMode ? 0 : 10, // 10px от низа окна при достаточной высоте
+								}}
 							>
 								<div
 									className={`flex-1 rounded-[20px] ${
