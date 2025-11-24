@@ -9,14 +9,11 @@ const MediaBlock = ({ img, name, onBack }) => {
 			className={[
 				'relative bg-[#f6f4f2] rounded-[10px] overflow-hidden',
 				// мобильный режим — тянемся на всю ширину
-				'max-[680px]:w-full max-[680px]:aspect-[695/400]',
-				// десктоп: высота фикс, ширина — гибкая
+				'max-[680px]:w-full max-[680px]:h-[240px] max-[680px]:min-h-[220px]',
+				// десктоп: фикс высота, ширина полностью управляется флексом, без max-w
 				'min-[681px]:h-[400px]',
-				// было: flex:0 1 695px, из-за этого всё жёстко
-				// стало: растягиваемся, но с ограничениями по min/max
-				'min-[681px]:flex-[1_1_0%]',
-				'min-[681px]:max-w-[695px]',
-				'min-[681px]:min-w-[380px]',
+				'min-[681px]:flex-[1_1_0%]', // гибко занимаем всё доступное
+				'min-[681px]:min-w-[380px]', // но не уже 380px, чтобы не ломать картинку
 				'min-w-0',
 				// без видимых скроллбаров
 				'[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',

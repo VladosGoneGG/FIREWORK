@@ -47,7 +47,6 @@ function ProductCardMini({ product, onSelect }) {
 	const hasValidDiscount =
 		Number.isFinite(p) && p > 0 && Number.isFinite(dp) && dp > 0 && dp < p
 
-	// Итоговая цена для корзины
 	const unitPrice = hasValidDiscount ? dp : Number.isFinite(p) ? p : 0
 
 	const add = useCallback(
@@ -68,12 +67,12 @@ function ProductCardMini({ product, onSelect }) {
 			onKeyDown={onKey}
 			title={name}
 			className={[
-				'w-[121px] h-[234px] bg-[#F2F2F2] rounded-[10px] p-[5px]',
-				// ховер как в фигме: плавный change-to
+				// ⬇️ вместо жёсткой max-w — карточка занимает всю ширину своего контейнера
+				'w-full h-[233px] bg-[#F2F2F2] rounded-[10px] p-[5px]',
 				'cursor-pointer',
 				'transition-[background-color,box-shadow,transform] duration-300 ease-in-out',
 				'hover:bg-[#efebe6]',
-				'hover:shadow-[0_4px_10px_rgba(0,0,0,0.12)] hover:-translate-y-[1px]',
+				'hover:shadow-[0_0px_5px_rgba(0,0,0,0.15)] hover:-translate-y-[1px]',
 				'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#bd52e9]',
 			].join(' ')}
 		>
@@ -91,7 +90,7 @@ function ProductCardMini({ product, onSelect }) {
 				<ProductMeta name={name} manufacturer={manufacturer} />
 
 				{/* Параметры */}
-				<div className='flex text-[12px] justify-between text-[#625A51] leading-none'>
+				<div className='flex text-[12px] justify-center gap-2.5 text-[#625A51] leading-none'>
 					<div className='w-[65px] h-[25px] flex flex-col gap-0.5 whitespace-nowrap'>
 						<PriceBlock.Param icon='shots'>{shots ?? '—'}</PriceBlock.Param>
 						<PriceBlock.Param icon='time' title={fmtSecFull(durationSec)}>

@@ -5,6 +5,10 @@ import ProductCardMiniMobile from '../LayoutMobile/parts/ProductCardMiniMobile'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 import SortDropdown from '../ui/SortDropdown'
 
+const CARD_W = 121
+const EXPANDED_W = 150
+const FEW_PER_ROW_LIMIT = 4 // если товаров ≤ 4 — расширяем карточки
+
 /**
  * Props:
  * - title: string
@@ -41,6 +45,17 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 		exit: { opacity: 0, y: -8, transition: { duration: 0.12, ease: 'easeIn' } },
 	}
 
+	// десктоп: если товаров мало — расширяем карточки
+	const fewDesktopItems =
+		!mobile && items.length > 0 && items.length <= FEW_PER_ROW_LIMIT
+
+	const mobileGrid =
+		'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ' +
+		'gap-[10px] justify-items-center md:justify-items-stretch py-2.5 px-2'
+
+	const desktopContainer =
+		'flex flex-wrap justify-start gap-[10px]  py-2.5 overflow-visible '
+
 	return (
 		<section>
 			{/* Хедер */}
@@ -54,17 +69,13 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 							type='button'
 							onClick={onOpenFilters}
 							className={[
-								// скрываем кнопку на ширине < 1040px
 								'hidden min-[1040px]:inline-flex',
-								// БАЗА: фиксируем центрирование вне зависимости от темы/сост.
 								'w-[70px] h-[26px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
 								'items-center justify-center text-center select-none',
 								'focus:outline-none',
-								// Состояние
 								filtersOpen
 									? 'bg-[#EFEBE6] text-[#BD52E9]'
 									: 'btn-firework-filter',
-								// Последним повторим выравнивание — на случай, если внутри btn-firework-filter есть свои justify-*
 								'justify-center',
 							].join(' ')}
 						>
@@ -81,13 +92,7 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 			</div>
 
 			{/* Контент */}
-			<div
-				className={
-					mobile
-						? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[10px] justify-items-center md:justify-items-stretch py-2.5 px-2'
-						: 'grid [grid-template-columns:repeat(auto-fill,120px)] xl:[grid-template-columns:repeat(5,120px)] justify-center gap-[11px] p-2.5 pb-3 overflow-visible md:mx-[-8px] lg:mx-[-12px] xl:mx-[-16px] xl:px-1'
-				}
-			>
+			<div className={mobile ? mobileGrid : desktopContainer}>
 				<AnimatePresence initial={false} mode='sync'>
 					{items.map(p => (
 						<motion.div
@@ -96,7 +101,15 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 							initial={FX.initial}
 							animate={FX.enter}
 							exit={FX.exit}
-							style={{ willChange: 'opacity, transform' }}
+							style={{
+								willChange: 'opacity, transform',
+								// на десктопе даём адаптивную ширину карточке
+								...(mobile
+									? {}
+									: {
+											width: fewDesktopItems ? EXPANDED_W : CARD_W,
+									  }),
+							}}
 							className={mobile ? 'w-full ' : undefined}
 						>
 							{mobile ? (

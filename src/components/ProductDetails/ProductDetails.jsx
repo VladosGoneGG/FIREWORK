@@ -43,24 +43,23 @@ const ProductDetails = ({
 		<section
 			className={[
 				'bg-white rounded-[20px] max-w-[905px] overflow-visible flex flex-col pt-2.5',
-				'min-[1041px]:h-[824px]',
+				'min-[1041px]:h-[824px] max-[1040px]:mt-15 max-[1040px]:mx-2.5 max-[1040px]:max-w-[1040px]',
 			].join(' ')}
 		>
 			<div className={['flex flex-col gap-2.5', 'flex-1 min-h-0'].join(' ')}>
 				{/* верх: медиа + правая колонка */}
 				<div
 					className={[
-						'flex flex-col h-[400px]', // мобилка — колонкой
-						'min-[681px]:flex-row', // десктоп — в ряд
-						'gap-2.5', // вертикальный зазор на мобилке
-						'min-[681px]:gap-[10px]', // ГЛАВНОЕ: 10px между MediaBlock и SideInfoCard на десктопе
+						'flex flex-col', // на мобиле — колонка, высота по контенту
+						'min-[681px]:flex-row', // на десктопе — в ряд
+						'gap-2.5',
+						'min-[681px]:gap-[10px]', // 10px между MediaBlock и SideInfoCard на десктопе
 						'flex-none min-[681px]:items-stretch',
+						'min-[681px]:h-[400px]', // фикс 400px ТОЛЬКО на десктопе
 					].join(' ')}
 				>
-					{/* медиаблок сам управляет своей шириной (flex:1, max 695px) */}
 					<MediaBlock img={fireworksSvg} name={product.name} onBack={onBack} />
 
-					{/* правая колонка: фикс 200px */}
 					<div className='min-[681px]:flex-none min-[681px]:w-[200px] min-w-0 flex justify-end'>
 						<SideInfoCard product={product} img={img} inStock={inStock} />
 					</div>

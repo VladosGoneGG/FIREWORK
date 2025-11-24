@@ -4,26 +4,14 @@ import { useMemo } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSkeleton'
 
-/**
- * Props:
- * - title: string
- * - products: array
- * - onSelectProduct: (product) => void
- * - onOpenSubcategory: ({ title, products }) => void
- * - loading: boolean
- * - showHeader?: boolean
- */
-
-// карточка у тебя w-[121px]
 const CARD_W = 121
-const MAX_ITEMS = 15 // жёсткий максимум
+const MAX_ITEMS = 15
 
-// ступенчатое количество видимых карточек
 function getVisibleCount(total) {
-	if (total <= 5) return total // 1–5 показываем все
-	if (total <= 10) return 5 // 6–10 → 5
-	if (total <= 15) return 10 // 11–15 → 10
-	return MAX_ITEMS // >15 → 15
+	if (total <= 5) return total
+	if (total <= 10) return 5
+	if (total <= 15) return 10
+	return MAX_ITEMS
 }
 
 const ProductSection = ({
@@ -94,25 +82,27 @@ const ProductSection = ({
 				variants={GRID_BLOCK}
 				initial='hidden'
 				animate='show'
-				className={[
-					// сетка карточек
-					'flex flex-wrap justify-center gap-[11px]',
-					// твои отрицательные отступы, как были
-					'md:mx-[-8px] lg:mx-[-12px] xl:mx-[-16px]',
-					'xl:px-1',
-				].join(' ')}
+				className={['flex flex-wrap gap-2.5 items-start gap-y-2.5'].join(' ')}
 				style={{
 					willChange: 'opacity, transform',
 				}}
 			>
 				{loading
 					? Array.from({ length: skeletonCount }).map((_, i) => (
-							<div key={i} className='shrink-0' style={{ width: CARD_W }}>
+							<div
+								key={i}
+								className='shrink-0 flex-[1_0_121px] max-w-[150px]'
+								style={{ minWidth: CARD_W }}
+							>
 								<ProductCardMiniSkeleton />
 							</div>
 					  ))
 					: visibleProducts.map(p => (
-							<div key={p.id} className='shrink-0' style={{ width: CARD_W }}>
+							<div
+								key={p.id}
+								className='shrink-0 flex-[1_0_121px] max-w-[150px]'
+								style={{ minWidth: CARD_W }}
+							>
 								<ProductCardMini product={p} onSelect={onSelectProduct} />
 							</div>
 					  ))}

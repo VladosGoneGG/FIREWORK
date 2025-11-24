@@ -14,6 +14,7 @@ import ProductCardMini from '../../ProductCardMini/ProductCardMini'
 const CARD_W = 120 // ширина карточки по макету
 const GAP = 10 // gap-2.5 = 10px
 const MAX_PER_ROW = 7
+const FEW_PER_ROW = 5 // порог, когда можно давать карточкам расширяться
 
 // мобильные ограничения: не больше 2 в ряд и не больше 3 рядов => 6 карточек
 const MOBILE_MAX_PER_ROW = 2
@@ -74,8 +75,10 @@ const RelatedBlock = ({
 		[related, visiblePerRow]
 	)
 
-	// 🔸 главное изменение: на мобиле показываем только первые 6
+	// мобилка: максимум 6 карточек
 	const itemsMobile = useMemo(() => related.slice(0, MOBILE_LIMIT), [related])
+
+	const fewCardsInRow = visiblePerRow <= FEW_PER_ROW
 
 	return (
 		<>
@@ -90,11 +93,19 @@ const RelatedBlock = ({
 				</button>
 			</div>
 
-			{/* Десктоп: фиксируем количество карточек по брейкпоинтам */}
+			{/* Десктоп: адаптивные мини-карточки */}
 			{!isMobile && (
-				<div ref={rowRef} className=' w-full flex gap-[9px]  overflow-hidden'>
+				<div ref={rowRef} className='w-full flex gap-[9px] overflow-hidden'>
 					{itemsDesktop.map(p => (
-						<div key={p.id} className='shrink-0'>
+						<div
+							key={p.id}
+							className={[
+								'shrink-0',
+								// если карточек мало — даём им адаптив ширины (121–150)
+								fewCardsInRow ? 'flex-[1_0_121px] max-w-[150px]' : 'w-[121px]',
+							].join(' ')}
+							style={fewCardsInRow ? { minWidth: CARD_W } : undefined}
+						>
 							<ProductCardMini
 								product={p}
 								onSelect={() => onSelectProduct?.(p)}
@@ -104,11 +115,13 @@ const RelatedBlock = ({
 				</div>
 			)}
 
-			{/* Мобилка (≤1040px): сетка как у тебя, но рендерим максимум 6 карточек */}
+			{/* Мобилка (≤1040px): сетка как у тебя, максимум 6 карточек */}
 			{isMobile && (
 				<div
 					className={[
-						'mt-[10px] mb-[80px] grid gap-2.5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+						'mt-[10px]',
+						'mb-[90px]',
+						'grid gap-2.5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
 					].join(' ')}
 				>
 					{itemsMobile.map(p => (

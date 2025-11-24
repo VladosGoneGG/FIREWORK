@@ -30,7 +30,7 @@ function SideInfoCard({ product, img }) {
 
 	return (
 		<aside
-			className='self-stretch inline-flex justify-start items-start gap-[10px]
+			className='self-stretch inline-flex  items-start gap-[10px]
 			max-[680px]:flex-row min-[681px]:flex-col
 			w-full min-[681px]:w-[200px] flex-shrink-0'
 		>
@@ -52,7 +52,7 @@ function SideInfoCard({ product, img }) {
 			{/* правая часть */}
 			<div
 				className={[
-					'bg-white px-1.5 flex flex-col items-start',
+					'bg-white px-1.5 flex flex-col items-start ',
 					'max-[680px]:flex-1 max-[680px]:min-w-0 max-[680px]:pt-2.5',
 				].join(' ')}
 			>
@@ -90,7 +90,9 @@ function SideInfoCard({ product, img }) {
 				<div
 					className={[
 						'mt-[5px] ml-1 text-[#098D00] text-[13px] lowercase font-baron leading-[13px] whitespace-nowrap',
-						!hasOldPrice ? 'mt-[5px] mb-[26px] max-[680px]:mt-[18px]' : '',
+						!hasOldPrice
+							? 'mt-[5px]  max-[680px]:mt-[18px] mb-[26px]'
+							: 'mb-[7px]',
 					].join(' ')}
 				>
 					в наличии <span className='text-[13px]'>{inStock}</span> шт
@@ -99,7 +101,7 @@ function SideInfoCard({ product, img }) {
 				{/* старая цена (если есть скидка) */}
 				{hasOldPrice && (
 					<div
-						className='ml-1 mt-[4px] mb-[4px] text-[12px] line-through decoration-1 text-[#BD52E9]
+						className='relative bottom-1.5 right-1.5 text-[14px] line-through decoration-1 text-[#BD52E9]
 						max-[1040px]:text-[#b4b4b4] max-[680px]:pt-[8px]
 						pointer-events-none font-baron lowercase'
 						title='Старая цена'
@@ -108,10 +110,15 @@ function SideInfoCard({ product, img }) {
 					</div>
 				)}
 
-				{/* кнопка цены/кол-ва — по ширине карточки (200px на десктопе) */}
-			</div>
-			<div className='w-full max-[680px]:min-w-0 max-[680px]:w-full'>
-				<PriceQtyButton product={product} unitPrice={unitPrice} />
+				<div
+					className={[
+						'max-[680px]:w-full max-[680px]:min-w-0',
+
+						'min-[681px]:w-[200px] min-[681px]:-ml-1.5',
+					].join(' ')}
+				>
+					<PriceQtyButton product={product} unitPrice={unitPrice} />
+				</div>
 			</div>
 		</aside>
 	)
