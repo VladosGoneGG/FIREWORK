@@ -330,7 +330,7 @@ const ProductsPage = ({
 							onToggleFilters?.()
 						}}
 						className={[
-							'w-[70px] h-[25px]  rounded-[10px] font-baron text-[10px]',
+							'w-[70px] h-[26.5px]  rounded-[10px] font-baron text-[10px]',
 							filtersOpen
 								? 'bg-[#EFEBE7] text-[#BD52E9]'
 								: 'btn-firework-filter',

@@ -70,7 +70,7 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 							onClick={onOpenFilters}
 							className={[
 								'hidden min-[1040px]:inline-flex',
-								'w-[70px] h-[26px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
+								'w-[70px] h-[26.5px] px-[5px] py-1 rounded-[10px] font-baron text-[10px]',
 								'items-center justify-center text-center select-none',
 								'focus:outline-none',
 								filtersOpen

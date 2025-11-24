@@ -106,7 +106,7 @@ function SortDropdown({
 				aria-haspopup='listbox'
 				aria-expanded={open}
 				className={[
-					'w-[150px] h-[25px]   cursor-pointer',
+					'w-[150px] h-[25.5px]   cursor-pointer',
 					'rounded-[10px] ring-1 ring-inset ring-[#D9D9D9]',
 					'inline-flex items-center justify-center gap-[13px]',
 					'bg-white text-[#625A51] text-[10px] font-baron',
