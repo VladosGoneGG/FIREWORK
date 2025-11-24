@@ -29,8 +29,11 @@ function SideInfoCard({ product, img }) {
 		typeof discountPrice === 'number' && typeof price === 'number'
 
 	return (
-		// ≤680px: строка; ≥681px: колонка (фикс. ширина 210px)
-		<aside className='self-stretch inline-flex justify-start items-start gap-[10px] max-[680px]:flex-row min-[681px]:flex-col w-full min-[681px]:w-[210px] flex-shrink-0'>
+		<aside
+			className='self-stretch inline-flex justify-start items-start gap-[10px]
+			max-[680px]:flex-row min-[681px]:flex-col
+			w-full min-[681px]:w-[200px] flex-shrink-0'
+		>
 			{/* превью */}
 			<div
 				className={[
@@ -50,7 +53,7 @@ function SideInfoCard({ product, img }) {
 			<div
 				className={[
 					'bg-white px-1.5 flex flex-col items-start',
-					'max-[680px]:flex-1  max-[680px]:min-w-0 max-[680px]:pt-2.5',
+					'max-[680px]:flex-1 max-[680px]:min-w-0 max-[680px]:pt-2.5',
 				].join(' ')}
 			>
 				{/* заголовок */}
@@ -59,11 +62,8 @@ function SideInfoCard({ product, img }) {
 						'font-baron leading-tight',
 						'text-[18px]',
 						'max-[1039px]:text-[14px]',
-						// ⬇️ мобильный: переносы + при желании ограничить до 2 строк
 						'max-[680px]:whitespace-normal max-[680px]:break-words max-[680px]:line-clamp-2',
-						// ⬆️ десктоп: одна строка с троеточием
 						'min-[681px]:truncate min-[681px]:whitespace-nowrap',
-						// ширина как у тебя
 						'min-[681px]:w-[150px] max-[680px]:w-auto',
 					].join(' ')}
 					title={name}
@@ -90,26 +90,28 @@ function SideInfoCard({ product, img }) {
 				<div
 					className={[
 						'mt-[5px] ml-1 text-[#098D00] text-[13px] lowercase font-baron leading-[13px] whitespace-nowrap',
-						// ⬇️ если НЕТ скидки — добавляем нижний отступ (настраиваешь сам)
 						!hasOldPrice ? 'mt-[5px] mb-[26px] max-[680px]:mt-[18px]' : '',
 					].join(' ')}
 				>
 					в наличии <span className='text-[13px]'>{inStock}</span> шт
 				</div>
 
-				{/* старая цена — отдельной строкой СРАЗУ под наличием, слева (только если есть скидка) */}
+				{/* старая цена (если есть скидка) */}
 				{hasOldPrice && (
 					<div
-						className='ml-1 mt-[4px] mb-[4px]  text-[12px] line-through decoration-1 text-[#BD52E9] max-[1040px]:text-[#b4b4b4] max-[680px]:pt-[8px] pointer-events-none font-baron lowercase'
+						className='ml-1 mt-[4px] mb-[4px] text-[12px] line-through decoration-1 text-[#BD52E9]
+						max-[1040px]:text-[#b4b4b4] max-[680px]:pt-[8px]
+						pointer-events-none font-baron lowercase'
 						title='Старая цена'
 					>
 						{fmtNum(price)}
 					</div>
 				)}
 
-				<div className='min-w-[200px] max-[680px]:min-w-0 max-[680px]:w-full'>
-					<PriceQtyButton product={product} unitPrice={unitPrice} />
-				</div>
+				{/* кнопка цены/кол-ва — по ширине карточки (200px на десктопе) */}
+			</div>
+			<div className='w-full max-[680px]:min-w-0 max-[680px]:w-full'>
+				<PriceQtyButton product={product} unitPrice={unitPrice} />
 			</div>
 		</aside>
 	)

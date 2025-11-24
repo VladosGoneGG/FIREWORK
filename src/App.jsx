@@ -59,7 +59,7 @@ function App() {
 	const gridDetails = '[grid-template-columns:minmax(709px,925px)_295px]'
 
 	return (
-		<div className='flex flex-col items-center min-h-screen scroll-hidden overflow-y-auto'>
+		<div className='flex flex-col items-center min-h-screen scroll-hidden '>
 			<Header rightSlot={<SearchBar />} />
 
 			<div className='w-full px-2.5 overflow-visible'>

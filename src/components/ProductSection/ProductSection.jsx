@@ -1,6 +1,6 @@
 // src/components/ProductSection/ProductSection.jsx
 import { motion } from 'motion/react'
-import { useCallback, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSkeleton'
 
@@ -16,10 +16,16 @@ import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSke
 
 // карточка у тебя w-[121px]
 const CARD_W = 121
-const GAP = 11
-const VISIBLE_COUNT = 5
-const CONTAINER_W = CARD_W * VISIBLE_COUNT + GAP * (VISIBLE_COUNT - 1) // 649px
-const END_PADDING = 50
+const MAX_ITEMS = 15 // жёсткий максимум
+
+// ступенчатое количество видимых карточек
+function getVisibleCount(total) {
+	if (total <= 5) return total // 1–5 показываем все
+	if (total <= 10) return 5 // 6–10 → 5
+	if (total <= 15) return 10 // 11–15 → 10
+	return MAX_ITEMS // >15 → 15
+}
+
 const ProductSection = ({
 	title,
 	products = [],
@@ -29,13 +35,27 @@ const ProductSection = ({
 	showHeader = true,
 }) => {
 	const hasProducts = products && products.length > 0
-	const skeletonCount = useMemo(
+	const total = hasProducts ? products.length : 0
+
+	const visibleCount = hasProducts ? getVisibleCount(total) : 0
+
+	const visibleProducts = useMemo(
 		() =>
-			hasProducts ? Math.min(products.length, VISIBLE_COUNT) : VISIBLE_COUNT,
-		[hasProducts, products.length]
+			hasProducts && visibleCount > 0 ? products.slice(0, visibleCount) : [],
+		[hasProducts, products, visibleCount]
 	)
 
-	const hasMore = !loading && products.length > 0 && !!onOpenSubcategory
+	const skeletonCount = useMemo(
+		() => (hasProducts ? visibleCount || 5 : 5),
+		[hasProducts, visibleCount]
+	)
+
+	const hasMore =
+		!loading &&
+		hasProducts &&
+		typeof onOpenSubcategory === 'function' &&
+		products.length > visibleProducts.length
+
 	const handleOpenMore = () => {
 		if (onOpenSubcategory) onOpenSubcategory({ title, products })
 	}
@@ -45,64 +65,6 @@ const ProductSection = ({
 	const GRID_BLOCK = {
 		hidden: { opacity: 0, y: 14 },
 		show: { opacity: 1, y: 0, transition: { ease: EASE, duration: DURATION } },
-	}
-
-	// ===== горизонтальный скролл и блокировка скролла страницы =====
-	const scrollRef = useRef(null)
-	const animRef = useRef(null)
-
-	const smoothScrollTo = useCallback(target => {
-		const el = scrollRef.current
-		if (!el) return
-
-		if (animRef.current) {
-			cancelAnimationFrame(animRef.current)
-		}
-
-		const start = el.scrollLeft
-		const distance = target - start
-		if (distance === 0) return
-
-		const duration = 260 // ms
-		const startTime = performance.now()
-
-		const step = now => {
-			const t = Math.min(1, (now - startTime) / duration)
-			// easeOutCubic
-			const eased = 1 - Math.pow(1 - t, 3)
-			el.scrollLeft = start + distance * eased
-			if (t < 1) {
-				animRef.current = requestAnimationFrame(step)
-			}
-		}
-
-		animRef.current = requestAnimationFrame(step)
-	}, [])
-
-	const handleWheel = event => {
-		const el = scrollRef.current
-		if (!el) return
-
-		const maxScroll = el.scrollWidth - el.clientWidth
-		if (maxScroll <= 0) return
-
-		// блокируем скролл страницы, пока мышь в зоне карточек
-		event.preventDefault()
-
-		const { deltaX, deltaY } = event
-		const absX = Math.abs(deltaX)
-		const absY = Math.abs(deltaY)
-
-		// доминирующее направление
-		const delta = absX > absY ? deltaX : deltaY
-		if (!delta) return
-
-		const factor = 1.3 // делаем движение мягче
-		const current = el.scrollLeft
-		const next = current + delta * factor
-		const clamped = Math.max(0, Math.min(maxScroll, next))
-
-		smoothScrollTo(clamped)
 	}
 
 	return (
@@ -125,67 +87,36 @@ const ProductSection = ({
 				</div>
 			)}
 
-			{/* ВЕСЬ КОНТЕЙНЕР — зона горизонтального скролла */}
-			<div
-				ref={scrollRef}
-				onWheel={handleWheel}
+			<motion.div
+				key={`${title}|${visibleProducts.length}|${
+					loading ? 'loading' : 'ready'
+				}`}
+				variants={GRID_BLOCK}
+				initial='hidden'
+				animate='show'
 				className={[
-					'relative',
-					'overflow-x-auto overflow-y-visible',
-					// прячем полосы прокрутки
-					'[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-					// твои отступы, как и были
+					// сетка карточек
+					'flex flex-wrap justify-center gap-[11px]',
+					// твои отрицательные отступы, как были
 					'md:mx-[-8px] lg:mx-[-12px] xl:mx-[-16px]',
 					'xl:px-1',
-					// чтобы скролл не пробивался наружу
-					'[overscroll-behavior-x:contain] [overscroll-behavior-y:none]',
 				].join(' ')}
 				style={{
-					width: CONTAINER_W, // показываем ровно 5 карточек
-					maxWidth: '100%',
-					marginLeft: 'auto',
-					marginRight: 'auto',
+					willChange: 'opacity, transform',
 				}}
 			>
-				<motion.div
-					key={`${title}|${products.length}|${loading ? 'loading' : 'ready'}`}
-					variants={GRID_BLOCK}
-					initial='hidden'
-					animate='show'
-					className={[
-						'flex flex-nowrap gap-[8px]',
-						'justify-start',
-						// плавность при программных скроллах
-						'scroll-smooth',
-						'snap-x snap-mandatory',
-					].join(' ')}
-					style={{
-						willChange: 'opacity, transform',
-						// чуть больше, чем одна карточка, чтобы последняя точно влезала
-						paddingRight: END_PADDING,
-					}}
-				>
-					{loading
-						? Array.from({ length: skeletonCount }).map((_, i) => (
-								<div
-									key={i}
-									className='snap-start shrink-0'
-									style={{ width: CARD_W }}
-								>
-									<ProductCardMiniSkeleton />
-								</div>
-						  ))
-						: products.map(p => (
-								<div
-									key={p.id}
-									className='snap-start shrink-0'
-									style={{ width: CARD_W }}
-								>
-									<ProductCardMini product={p} onSelect={onSelectProduct} />
-								</div>
-						  ))}
-				</motion.div>
-			</div>
+				{loading
+					? Array.from({ length: skeletonCount }).map((_, i) => (
+							<div key={i} className='shrink-0' style={{ width: CARD_W }}>
+								<ProductCardMiniSkeleton />
+							</div>
+					  ))
+					: visibleProducts.map(p => (
+							<div key={p.id} className='shrink-0' style={{ width: CARD_W }}>
+								<ProductCardMini product={p} onSelect={onSelectProduct} />
+							</div>
+					  ))}
+			</motion.div>
 		</section>
 	)
 }

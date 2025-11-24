@@ -44,7 +44,7 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 	return (
 		<section>
 			{/* Хедер */}
-			<div className='flex items-start justify-between pl-1 pt-1 '>
+			<div className='flex items-start justify-between pl-1 '>
 				<h3 className='text-[18px] lowercase font-baron '>{title}</h3>
 
 				{/* правый блок: фильтр + сортировка */}

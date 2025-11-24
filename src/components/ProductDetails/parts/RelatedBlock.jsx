@@ -92,7 +92,7 @@ const RelatedBlock = ({
 
 			{/* Десктоп: фиксируем количество карточек по брейкпоинтам */}
 			{!isMobile && (
-				<div ref={rowRef} className=' w-full flex gap-2.5  overflow-hidden'>
+				<div ref={rowRef} className=' w-full flex gap-[9px]  overflow-hidden'>
 					{itemsDesktop.map(p => (
 						<div key={p.id} className='shrink-0'>
 							<ProductCardMini

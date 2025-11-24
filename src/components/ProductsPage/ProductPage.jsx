@@ -1,3 +1,4 @@
+// src/components/ProductsPage/ProductPage.jsx
 import {
 	AnimatePresence,
 	LayoutGroup,
@@ -67,7 +68,7 @@ const ProductsPage = ({
 	externalSelectedProduct,
 	onConsumeExternalSelected,
 	showSlider = true,
-	pageKey: pageKeyProp = null, // опционально через проп (сохраняю совместимость)
+	pageKey: pageKeyProp = null,
 }) => {
 	useProductsBoot()
 
@@ -321,7 +322,7 @@ const ProductsPage = ({
 					) : null}
 				</div>
 
-				<div className='ml-auto  flex items=end gap-2'>
+				<div className='ml-auto  flex items-end gap-2'>
 					<button
 						type='button'
 						onClick={() => {
@@ -343,6 +344,7 @@ const ProductsPage = ({
 		</div>
 	)
 
+	// ====== РЕНДЕР ======
 	return (
 		<MotionConfig transition={{ duration: DURATION, ease: EASE }}>
 			<LayoutGroup id='products-page'>
@@ -351,163 +353,155 @@ const ProductsPage = ({
 					className={`
 						relative bg-white rounded-[20px] pb-2.5 overflow-hidden mx-auto
 						w-full max-w-[1200px] px-4 lg:px-2.5 md:px-2
-						min-h-full
 					`}
+					style={{ minHeight: 834 }} // базовая высота как по макету
 				>
-					<motion.div layout='position' transition={LAYOUT_T}>
-						<motion.div
-							layout='position'
-							transition={LAYOUT_T}
-							initial={false}
-							animate={selectedProduct ? { opacity: 0 } : { opacity: 1 }}
-							style={{
-								position: selectedProduct ? 'absolute' : 'static',
-								inset: selectedProduct ? 0 : 'auto',
-								visibility: selectedProduct ? 'hidden' : 'visible',
-								pointerEvents: selectedProduct ? 'none' : 'auto',
-								width: '100%',
-							}}
-						>
-							{view === 'home' && (
-								<motion.div
-									key={`top-${animKey}`}
-									variants={BLOCK}
-									initial='hidden'
-									animate='show'
-									exit='exit'
-									layout='position'
-									transition={LAYOUT_T}
-								>
-									{hasStaticPage ? null : shouldShowSlider ? ( // на статике показываем обычную панель (как у каталога)
-										<PromoSlider active />
-									) : (
-										FilterBar
-									)}
-								</motion.div>
-							)}
-
-							<div className='mt-1.5'>
-								<AnimatePresence mode='wait' initial={false}>
-									{showFound || String(search).trim() ? (
-										<motion.div
-											key={`found-${animKey}`}
-											layout='position'
-											transition={LAYOUT_T}
-											variants={BLOCK}
-											initial='hidden'
-											animate='show'
-											exit='exit'
-										>
-											<FoundSection
-												products={applySort(
-													Array.isArray(foundItems) ? foundItems : [],
-													sortKey
-												)}
-												onSelectProduct={openDetails}
-											/>
-										</motion.div>
-									) : hasStaticPage ? (
-										<motion.div
-											key={`static-${pageKey}-${animKey}`}
-											layout='position'
-											transition={LAYOUT_T}
-											variants={BLOCK}
-											initial='hidden'
-											animate='show'
-											exit='exit'
-											className='space-y-6'
-										>
-											{pageKey === 'contacts' && (
-												<div>
-													<StaticContactsBlock />
-												</div>
-											)}
-											{pageKey === 'wholesale' && (
-												<div>
-													<StaticWholesaleBlock />
-												</div>
-											)}
-										</motion.div>
-									) : view === 'home' ? (
-										<motion.div
-											key={`home-${animKey}`}
-											layout='position'
-											transition={LAYOUT_T}
-											variants={BLOCK}
-											initial='hidden'
-											animate='show'
-											exit='exit'
-											className='space-y-6'
-										>
-											{sectionsSorted.map(sec => (
-												<div key={sec.title}>
-													<ProductSection
-														title={sec.title}
-														products={sec.items}
-														onSelectProduct={openDetails}
-														onOpenSubcategory={openSubcategory}
-														loading={status === 'loading'}
-														showHeader={showHeaderFor(sec.title)}
-													/>
-												</div>
-											))}
-										</motion.div>
-									) : (
-										<motion.div
-											key={`sub-${animKey}`}
-											layout='position'
-											transition={LAYOUT_T}
-											variants={BLOCK}
-											initial='hidden'
-											animate='show'
-											exit='exit'
-										>
-											<SubcategoryPanel
-												title={activeSub?.title}
-												products={subSorted}
-												onSelectProduct={openDetails}
-												onOpenFilters={() => {
-													dispatch(setShowFound(false))
-													onToggleFilters?.()
-												}}
-												filtersOpen={!!filtersOpen}
-												sortKey={sortKey}
-												onChangeSort={setSortKey}
-											/>
-										</motion.div>
-									)}
-								</AnimatePresence>
-							</div>
-						</motion.div>
-					</motion.div>
-
 					<AnimatePresence initial={false} mode='wait'>
-						{selectedProduct && (
-							<div className='absolute inset-0 z-10 bg-white'>
-								<motion.div
-									key='details-content'
-									variants={BLOCK}
-									initial='hidden'
-									animate='show'
-									exit='exit'
-									className='h-full'
-									style={{ willChange: 'opacity, transform' }}
-								>
-									<ProductDetails
-										product={selectedProduct}
-										related={related}
-										onBack={closeDetails}
-										onOpenSubcategory={payload => {
-											closeDetails()
-											dispatch(setShowFound(false))
-											openSubcategory(
-												payload?.title || selectedProduct.category
-											)
-										}}
-										onSelectProduct={openDetails}
-									/>
-								</motion.div>
-							</div>
+						{selectedProduct ? (
+							// ===== РЕЖИМ ДЕТАЛЕЙ =====
+							<motion.div
+								key='details-view'
+								variants={BLOCK}
+								initial='hidden'
+								animate='show'
+								exit='exit'
+								className='h-auto'
+								style={{ willChange: 'opacity, transform' }}
+							>
+								<ProductDetails
+									product={selectedProduct}
+									related={related}
+									onBack={closeDetails}
+									onOpenSubcategory={payload => {
+										closeDetails()
+										dispatch(setShowFound(false))
+										openSubcategory(payload?.title || selectedProduct.category)
+									}}
+									onSelectProduct={openDetails}
+								/>
+							</motion.div>
+						) : (
+							// ===== КАТАЛОГ / СТАТИКА / ПОИСК =====
+							<motion.div
+								key={`list-view-${animKey}`}
+								layout='position'
+								transition={LAYOUT_T}
+								variants={BLOCK}
+								initial='hidden'
+								animate='show'
+								exit='exit'
+							>
+								{view === 'home' && (
+									<motion.div
+										key={`top-${animKey}`}
+										variants={BLOCK}
+										initial='hidden'
+										animate='show'
+										exit='exit'
+										layout='position'
+										transition={LAYOUT_T}
+									>
+										{hasStaticPage ? null : shouldShowSlider ? (
+											<PromoSlider active />
+										) : (
+											FilterBar
+										)}
+									</motion.div>
+								)}
+
+								<div className='mt-1.5'>
+									<AnimatePresence mode='wait' initial={false}>
+										{showFound || String(search).trim() ? (
+											<motion.div
+												key={`found-${animKey}`}
+												layout='position'
+												transition={LAYOUT_T}
+												variants={BLOCK}
+												initial='hidden'
+												animate='show'
+												exit='exit'
+											>
+												<FoundSection
+													products={applySort(
+														Array.isArray(foundItems) ? foundItems : [],
+														sortKey
+													)}
+													onSelectProduct={openDetails}
+												/>
+											</motion.div>
+										) : hasStaticPage ? (
+											<motion.div
+												key={`static-${pageKey}-${animKey}`}
+												layout='position'
+												transition={LAYOUT_T}
+												variants={BLOCK}
+												initial='hidden'
+												animate='show'
+												exit='exit'
+												className='space-y-6'
+											>
+												{pageKey === 'contacts' && (
+													<div>
+														<StaticContactsBlock />
+													</div>
+												)}
+												{pageKey === 'wholesale' && (
+													<div>
+														<StaticWholesaleBlock />
+													</div>
+												)}
+											</motion.div>
+										) : view === 'home' ? (
+											<motion.div
+												key={`home-${animKey}`}
+												layout='position'
+												transition={LAYOUT_T}
+												variants={BLOCK}
+												initial='hidden'
+												animate='show'
+												exit='exit'
+												className='space-y-6'
+											>
+												{sectionsSorted.map(sec => (
+													<div key={sec.title}>
+														<ProductSection
+															title={sec.title}
+															products={sec.items}
+															onSelectProduct={openDetails}
+															onOpenSubcategory={openSubcategory}
+															loading={status === 'loading'}
+															showHeader={showHeaderFor(sec.title)}
+														/>
+													</div>
+												))}
+											</motion.div>
+										) : (
+											<motion.div
+												key={`sub-${animKey}`}
+												layout='position'
+												transition={LAYOUT_T}
+												variants={BLOCK}
+												initial='hidden'
+												animate='show'
+												exit='exit'
+											>
+												<SubcategoryPanel
+													title={activeSub?.title}
+													products={subSorted}
+													onSelectProduct={openDetails}
+													onOpenFilters={() => {
+														dispatch(setShowFound(false))
+														onToggleFilters?.()
+													}}
+													filtersOpen={!!filtersOpen}
+													sortKey={sortKey}
+													onChangeSort={setSortKey}
+												/>
+											</motion.div>
+										)}
+									</AnimatePresence>
+								</div>
+							</motion.div>
 						)}
 					</AnimatePresence>
 				</div>

@@ -123,8 +123,7 @@
 		margin: 0;
 		padding: 0;
 
-		/* <-- ВАЖНО: разрешаем прокрутку страницы */
-		overflow-y: auto;
+		overflow-y: hidden;
 		overflow-x: hidden;
 
 		/* Скрываем скроллбар, не отключая скролл */
