@@ -296,7 +296,7 @@ const ProductsPage = ({
 
 	const FilterBar = (
 		<div className='relative'>
-			<div className='flex  items-start pt-2.5 gap-2 '>
+			<div className='flex  items-start mb-2.5 gap-2 '>
 				<div className='pl-1 flex-1'>
 					{showFound ? (
 						<div className='flex flex-col gap-1'>
@@ -351,9 +351,10 @@ const ProductsPage = ({
 				<div
 					ref={anchorRef}
 					className={`
-						relative bg-white rounded-[20px] pb-2.5 overflow-hidden mx-auto
-						w-full max-w-[1200px] px-4 lg:px-2.5 md:px-2
-					`}
+		relative bg-white rounded-[20px] pb-2.5 overflow-hidden mx-auto
+		w-full max-w-[1200px] px-4 lg:px-2.5 md:px-2
+		         
+	`}
 					style={{ minHeight: 834 }} // базовая высота как по макету
 				>
 					<AnimatePresence initial={false} mode='wait'>
@@ -409,98 +410,96 @@ const ProductsPage = ({
 									</motion.div>
 								)}
 
-								<div className='mt-1.5'>
-									<AnimatePresence mode='wait' initial={false}>
-										{showFound || String(search).trim() ? (
-											<motion.div
-												key={`found-${animKey}`}
-												layout='position'
-												transition={LAYOUT_T}
-												variants={BLOCK}
-												initial='hidden'
-												animate='show'
-												exit='exit'
-											>
-												<FoundSection
-													products={applySort(
-														Array.isArray(foundItems) ? foundItems : [],
-														sortKey
-													)}
-													onSelectProduct={openDetails}
-												/>
-											</motion.div>
-										) : hasStaticPage ? (
-											<motion.div
-												key={`static-${pageKey}-${animKey}`}
-												layout='position'
-												transition={LAYOUT_T}
-												variants={BLOCK}
-												initial='hidden'
-												animate='show'
-												exit='exit'
-												className='space-y-6'
-											>
-												{pageKey === 'contacts' && (
-													<div>
-														<StaticContactsBlock />
-													</div>
+								<AnimatePresence mode='wait' initial={false}>
+									{showFound || String(search).trim() ? (
+										<motion.div
+											key={`found-${animKey}`}
+											layout='position'
+											transition={LAYOUT_T}
+											variants={BLOCK}
+											initial='hidden'
+											animate='show'
+											exit='exit'
+										>
+											<FoundSection
+												products={applySort(
+													Array.isArray(foundItems) ? foundItems : [],
+													sortKey
 												)}
-												{pageKey === 'wholesale' && (
-													<div>
-														<StaticWholesaleBlock />
-													</div>
-												)}
-											</motion.div>
-										) : view === 'home' ? (
-											<motion.div
-												key={`home-${animKey}`}
-												layout='position'
-												transition={LAYOUT_T}
-												variants={BLOCK}
-												initial='hidden'
-												animate='show'
-												exit='exit'
-												className='space-y-6'
-											>
-												{sectionsSorted.map(sec => (
-													<div key={sec.title}>
-														<ProductSection
-															title={sec.title}
-															products={sec.items}
-															onSelectProduct={openDetails}
-															onOpenSubcategory={openSubcategory}
-															loading={status === 'loading'}
-															showHeader={showHeaderFor(sec.title)}
-														/>
-													</div>
-												))}
-											</motion.div>
-										) : (
-											<motion.div
-												key={`sub-${animKey}`}
-												layout='position'
-												transition={LAYOUT_T}
-												variants={BLOCK}
-												initial='hidden'
-												animate='show'
-												exit='exit'
-											>
-												<SubcategoryPanel
-													title={activeSub?.title}
-													products={subSorted}
-													onSelectProduct={openDetails}
-													onOpenFilters={() => {
-														dispatch(setShowFound(false))
-														onToggleFilters?.()
-													}}
-													filtersOpen={!!filtersOpen}
-													sortKey={sortKey}
-													onChangeSort={setSortKey}
-												/>
-											</motion.div>
-										)}
-									</AnimatePresence>
-								</div>
+												onSelectProduct={openDetails}
+											/>
+										</motion.div>
+									) : hasStaticPage ? (
+										<motion.div
+											key={`static-${pageKey}-${animKey}`}
+											layout='position'
+											transition={LAYOUT_T}
+											variants={BLOCK}
+											initial='hidden'
+											animate='show'
+											exit='exit'
+											className='space-y-6'
+										>
+											{pageKey === 'contacts' && (
+												<div>
+													<StaticContactsBlock />
+												</div>
+											)}
+											{pageKey === 'wholesale' && (
+												<div>
+													<StaticWholesaleBlock />
+												</div>
+											)}
+										</motion.div>
+									) : view === 'home' ? (
+										<motion.div
+											key={`home-${animKey}`}
+											layout='position'
+											transition={LAYOUT_T}
+											variants={BLOCK}
+											initial='hidden'
+											animate='show'
+											exit='exit'
+											className='space-y-6'
+										>
+											{sectionsSorted.map(sec => (
+												<div key={sec.title}>
+													<ProductSection
+														title={sec.title}
+														products={sec.items}
+														onSelectProduct={openDetails}
+														onOpenSubcategory={openSubcategory}
+														loading={status === 'loading'}
+														showHeader={showHeaderFor(sec.title)}
+													/>
+												</div>
+											))}
+										</motion.div>
+									) : (
+										<motion.div
+											key={`sub-${animKey}`}
+											layout='position'
+											transition={LAYOUT_T}
+											variants={BLOCK}
+											initial='hidden'
+											animate='show'
+											exit='exit'
+										>
+											<SubcategoryPanel
+												title={activeSub?.title}
+												products={subSorted}
+												onSelectProduct={openDetails}
+												onOpenFilters={() => {
+													dispatch(setShowFound(false))
+													onToggleFilters?.()
+												}}
+												filtersOpen={!!filtersOpen}
+												sortKey={sortKey}
+												onChangeSort={setSortKey}
+											/>
+										</motion.div>
+									)}
+								</AnimatePresence>
 							</motion.div>
 						)}
 					</AnimatePresence>

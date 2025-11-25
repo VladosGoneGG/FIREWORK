@@ -13,9 +13,9 @@ import SubcategoryOverlay from './components/SubcategoryOverlay/SubcategoryOverl
 import useOverlayFilters from './hooks/useOverlayFilters'
 import useStickToBottom from './utils/useStickToBottom'
 
-const COLUMN_H = 834 // если нужно ровно 834 — поставь 834
+const COLUMN_H = 834
 const DETAILS_H = 834
-const CENTER_W = 720 // информативный проп для ProductsPage
+const CENTER_W = 720
 
 function App() {
 	const [detailsMode, setDetailsMode] = useState(false)
@@ -24,7 +24,6 @@ function App() {
 	const [selectedFromSearch, setSelectedFromSearch] = useState(null)
 	const [isLanding, setIsLanding] = useState(true)
 
-	// ⬇️ центр: базовая высота COLUMN_H, снизу держим минимум 10px
 	const { ref: centerRef, height: centerHeight } = useStickToBottom(
 		COLUMN_H,
 		19
@@ -53,9 +52,7 @@ function App() {
 		!searchOpen &&
 		!String(searchQuery).trim()
 
-	// 3-колоночный режим: 240 | minmax(449,665) | 295, gap-x = 20
 	const gridNormal = '[grid-template-columns:240px_minmax(449px,665px)_295px]'
-	// Детали: minmax(709,1010) | 295, gap-x = 20
 	const gridDetails = '[grid-template-columns:minmax(709px,925px)_295px]'
 
 	return (
@@ -66,7 +63,7 @@ function App() {
 				<div className='overflow-x-auto'>
 					<main
 						className={[
-							'mx-auto w-full pb-6',
+							'mx-auto w-full pb-[20px]',
 							detailsMode
 								? 'min-w-[1024px] max-w-[1240px]'
 								: 'min-w-[1024px] max-w-[1240px]',
@@ -82,7 +79,6 @@ function App() {
 									className='relative w-[240px]'
 									style={{ height: COLUMN_H }}
 								>
-									{/* когда фильтр ЗАКРЫТ — категории + промопанель */}
 									{!filtersOpen && (
 										<>
 											<CategoryFilter
@@ -92,7 +88,6 @@ function App() {
 										</>
 									)}
 
-									{/* когда фильтр ОТКРЫТ — только оверлей, PromoPanel скрыта */}
 									<SubcategoryOverlay
 										isOpen={filtersOpen}
 										onClose={() => setFiltersOpen(false)}
@@ -113,44 +108,47 @@ function App() {
 							</div>
 						)}
 
-						{/* ЦЕНТР — базовая высота, на больших экранах растягиваем вниз до 10px от низа */}
-						<div className='scroll-hidden bg-transparent flex flex-col w-full overflow-visible pt-[2px] -mt-[2px] '>
+						{/* ЦЕНТР — одна и та же ProductsPage, но разное поведение скролла/отступа */}
+						<div className='scroll-hidden bg-transparent flex flex-col w-full overflow-visible pt-[2px] -mt-[2px]  '>
 							<div
 								ref={centerRef}
 								className='relative z-10 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] rounded-[20px] flex flex_col bg-white w-full overflow-visible'
 								style={{
 									height: detailsMode ? 'auto' : centerHeight,
-									marginBottom: detailsMode ? 0 : 10, // 10px от низа окна при достаточной высоте
+									marginBottom: detailsMode ? 0 : 10,
 								}}
 							>
-								<div
-									className={`flex-1 rounded-[20px] ${
-										detailsMode
-											? 'overflow-visible'
-											: 'min-h-0 overflow-y-auto scroll-hidden'
-									}`}
-								>
-									<ProductsPage
-										externalSelectedProduct={selectedFromSearch}
-										onToggleFilters={() => {
-											setIsLanding(false)
-											setFiltersOpen(v => !v)
-										}}
-										onDetailsModeChange={on => {
-											if (on) setIsLanding(false)
-											setDetailsMode(on)
-										}}
-										onConsumeExternalSelected={() =>
-											setSelectedFromSearch(null)
-										}
-										overlayFilters={appliedFilters}
-										overlayFiltersPreview={normalized}
-										onFiltersCountChange={setOverlayCount}
-										filtersOpen={filtersOpen}
-										narrow={!detailsMode}
-										narrowWidth={CENTER_W}
-										showSlider={showSliderOnHome}
-									/>
+								<div className='flex-1 rounded-[20px] min-h-0 overflow-hidden'>
+									<div
+										className={[
+											'h-full',
+											detailsMode
+												? 'overflow-visible'
+												: 'overflow-y-auto scroll-hidden mt-[10px] rounded-[20px]',
+										].join(' ')}
+									>
+										<ProductsPage
+											externalSelectedProduct={selectedFromSearch}
+											onToggleFilters={() => {
+												setIsLanding(false)
+												setFiltersOpen(v => !v)
+											}}
+											onDetailsModeChange={on => {
+												if (on) setIsLanding(false)
+												setDetailsMode(on)
+											}}
+											onConsumeExternalSelected={() =>
+												setSelectedFromSearch(null)
+											}
+											overlayFilters={appliedFilters}
+											overlayFiltersPreview={normalized}
+											onFiltersCountChange={setOverlayCount}
+											filtersOpen={filtersOpen}
+											narrow={!detailsMode}
+											narrowWidth={CENTER_W}
+											showSlider={showSliderOnHome}
+										/>
+									</div>
 								</div>
 							</div>
 						</div>
