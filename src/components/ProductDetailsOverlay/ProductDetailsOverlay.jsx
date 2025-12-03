@@ -10,11 +10,7 @@ import {
 	openDetails,
 	selectSelectedProduct,
 } from '../../store/slices/detailsSlice'
-
-const norm = s =>
-	String(s || '')
-		.trim()
-		.toLowerCase()
+import { normalizeString } from '../../utils/normalize'
 
 export default function ProductDetailsOverlay() {
 	const dispatch = useDispatch()
@@ -47,9 +43,9 @@ export default function ProductDetailsOverlay() {
 
 	const related = useMemo(() => {
 		if (!displayProduct) return []
-		const cat = norm(displayProduct.category)
+		const category = normalizeString(displayProduct.category)
 		return allItems.filter(
-			p => norm(p.category) === cat && p.id !== displayProduct.id
+			p => normalizeString(p.category) === category && p.id !== displayProduct.id
 		)
 	}, [allItems, displayProduct])
 

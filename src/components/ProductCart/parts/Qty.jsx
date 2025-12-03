@@ -1,19 +1,23 @@
-// src/components/Qty/Qty.jsx
+// src/components/ProductCart/parts/Qty.jsx
 import { motion } from 'motion/react'
 import { memo, useState } from 'react'
+
+// =============================
+// Константы градиентов
+// =============================
+const GRADIENTS = {
+	leftHover: 'linear-gradient(270deg, #efebe6 0%, #ccbefa 100%)',
+	rightHover: 'linear-gradient( 90deg, #efebe6 0%, #ccbefa 100%)',
+	leftActive: 'linear-gradient(270deg, #efebe6 0%, #ffffff 100%)',
+	rightActive: 'linear-gradient( 90deg, #efebe6 0%, #ffffff 100%)',
+}
 
 const Qty = ({ value, onDec, onInc, className = '' }) => {
 	const [hoverSide, setHoverSide] = useState(null) // 'left' | 'right' | null
 	const [activeSide, setActiveSide] = useState(null) // 'left' | 'right' | null
 
-	// градиенты подсветки
-	const leftHoverBg = 'linear-gradient(270deg, #efebe6 0%, #ccbefa 100%)'
-	const rightHoverBg = 'linear-gradient( 90deg, #efebe6 0%, #ccbefa 100%)'
-	const leftActiveBg = 'linear-gradient(270deg, #efebe6 0%, #ffffff 100%)'
-	const rightActiveBg = 'linear-gradient( 90deg, #efebe6 0%, #ffffff 100%)'
-
-	const bgLeft = activeSide === 'left' ? leftActiveBg : leftHoverBg
-	const bgRight = activeSide === 'right' ? rightActiveBg : rightHoverBg
+	const bgLeft = activeSide === 'left' ? GRADIENTS.leftActive : GRADIENTS.leftHover
+	const bgRight = activeSide === 'right' ? GRADIENTS.rightActive : GRADIENTS.rightHover
 
 	return (
 		<div

@@ -7,6 +7,7 @@ import {
 	removeItem,
 	updateQuantity,
 } from '../../store/slices/cartSlice'
+import { MIN_ORDER_AMOUNT } from '../../constants/orders'
 import { buildOrderPayload, sendOrder } from '../../utils/orderApi'
 import CheckoutForm from './CheckoutForm'
 import CartFooter from './parts/CartFooter'
@@ -14,7 +15,6 @@ import CartHeader from './parts/CartHeader'
 import CartItem from './parts/CartItem'
 import ProductCartSkeleton from './parts/ProductCartSkeleton'
 
-const MIN_ORDER = 4800
 const selectCart = s => s.cart
 
 const ProductCart = ({ loading = false }) => {
@@ -88,11 +88,14 @@ const ProductCart = ({ loading = false }) => {
 		await sendOrder(payload)
 		setSuccess(true)
 		setShowForm(false)
-		const t = setTimeout(() => {
+		
+		const timeoutId = setTimeout(() => {
 			dispatch(clearCart())
 			setSuccess(false)
 		}, 5000)
-		return () => clearTimeout(t)
+		
+		// Возвращаем функцию очистки для использования в useEffect при необходимости
+		return () => clearTimeout(timeoutId)
 	}
 
 	if (isLoading) return <ProductCartSkeleton />
@@ -150,7 +153,7 @@ const ProductCart = ({ loading = false }) => {
 			{!success && (
 				<CartFooter
 					total={total}
-					minOrder={MIN_ORDER}
+					minOrder={MIN_ORDER_AMOUNT}
 					onContinue={handleContinue}
 				/>
 			)}

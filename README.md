@@ -1,12 +1,44 @@
-# React + Vite
+# Firework Store
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Интернет-магазин фейерверков на React + Vite.
 
-Currently, two official plugins are available:
+## Настройка окружения
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Переменные окружения
 
-## Expanding the ESLint configuration
+Создайте файл `.env` в корне проекта со следующими переменными:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```env
+VITE_TELEGRAM_BOT_TOKEN=your_bot_token_here
+VITE_TELEGRAM_CHAT_ID=your_chat_id_here
+```
+
+**Важно:** Не коммитьте файл `.env` в репозиторий. Он должен быть добавлен в `.gitignore`.
+
+### Получение токена Telegram бота
+
+1. Создайте бота через [@BotFather](https://t.me/BotFather) в Telegram
+2. Получите токен бота
+3. Узнайте ID чата, куда будут отправляться заказы (можно использовать [@userinfobot](https://t.me/userinfobot))
+
+## Установка и запуск
+
+```bash
+npm install
+npm run dev
+```
+
+## Сборка для продакшена
+
+```bash
+npm run build
+```
+
+## Технологии
+
+- React 19
+- Vite
+- Redux Toolkit
+- React Router
+- Tailwind CSS
+- React Hook Form

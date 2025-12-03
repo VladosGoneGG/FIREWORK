@@ -8,12 +8,11 @@ import {
 	removeItem,
 	updateQuantity,
 } from '../../../store/slices/cartSlice'
+import { MIN_ORDER_AMOUNT } from '../../../constants/orders'
 import { buildOrderPayload, sendOrder } from '../../../utils/orderApi'
 import CheckoutForm from '../../ProductCart/CheckoutForm'
 import CartFooter from '../../ProductCart/parts/CartFooter'
 import CartItem from '../../ProductCart/parts/CartItem'
-
-const MIN_ORDER = 4800
 const selectCartItems = s => s?.cart?.items || []
 
 const num = v => (typeof v === 'number' ? v : Number(v) || 0)
@@ -185,7 +184,7 @@ function MobileCartAccordionItems({ height = 360, onClose }) {
 				{/* Футер — остаётся на месте */}
 				<CartFooter
 					total={total}
-					minOrder={MIN_ORDER}
+					minOrder={MIN_ORDER_AMOUNT}
 					onContinue={handleContinue}
 				/>
 			</div>

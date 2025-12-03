@@ -5,25 +5,29 @@ export const initialCartState = {
 	total: 0,
 }
 
-//  Цена за единицу
-const normNum = v => {
-	if (typeof v === 'number') return v
-	const s = String(v ?? '').replace(/[^\d]/g, '') // только цифры
-	return s ? Number(s) : 0
-}
-const getUnit = (it = {}) => {
-	const u = normNum(it.unitPrice)
-	if (u) return u
-	const d = normNum(it.discountPrice)
-	if (d) return d
-	return normNum(it.price)
+// =============================
+// Утилиты для работы с ценами
+// =============================
+const normalizeNumber = value => {
+	if (typeof value === 'number') return value
+	const digitsOnly = String(value ?? '').replace(/[^\d]/g, '')
+	return digitsOnly ? Number(digitsOnly) : 0
 }
 
-// ⬇️ тут главное исправление: qty = Number(...) || 1
-const calcTotal = items =>
-	items.reduce((sum, it) => {
-		const qty = Number(it?.quantity) || 1
-		return sum + getUnit(it) * qty
+const getUnitPrice = item => {
+	const unitPrice = normalizeNumber(item?.unitPrice)
+	if (unitPrice > 0) return unitPrice
+
+	const discountPrice = normalizeNumber(item?.discountPrice)
+	if (discountPrice > 0) return discountPrice
+
+	return normalizeNumber(item?.price)
+}
+
+const calculateTotal = items =>
+	items.reduce((sum, item) => {
+		const quantity = Number(item?.quantity) || 1
+		return sum + getUnitPrice(item) * quantity
 	}, 0)
 
 const cartSlice = createSlice({
@@ -31,28 +35,33 @@ const cartSlice = createSlice({
 	initialState: initialCartState,
 	reducers: {
 		addItem(state, { payload }) {
-			const idx = state.items.findIndex(i => i.id === payload.id)
-			if (idx >= 0) {
-				state.items[idx].quantity = (Number(state.items[idx].quantity) || 1) + 1
+			const existingItemIndex = state.items.findIndex(
+				item => item.id === payload.id
+			)
+
+			if (existingItemIndex >= 0) {
+				const currentQuantity = Number(state.items[existingItemIndex].quantity) || 1
+				state.items[existingItemIndex].quantity = currentQuantity + 1
 			} else {
 				state.items.push({
 					...payload,
-					unitPrice: getUnit(payload),
+					unitPrice: getUnitPrice(payload),
 					quantity: 1,
 				})
 			}
-			state.total = calcTotal(state.items)
+
+			state.total = calculateTotal(state.items)
 		},
 		updateQuantity(state, { payload: { id, quantity } }) {
-			const it = state.items.find(i => i.id === id)
-			if (it) {
-				it.quantity = Math.max(1, Number(quantity) || 1)
-				state.total = calcTotal(state.items)
+			const item = state.items.find(item => item.id === id)
+			if (item) {
+				item.quantity = Math.max(1, Number(quantity) || 1)
+				state.total = calculateTotal(state.items)
 			}
 		},
 		removeItem(state, { payload: id }) {
-			state.items = state.items.filter(i => i.id !== id)
-			state.total = calcTotal(state.items)
+			state.items = state.items.filter(item => item.id !== id)
+			state.total = calculateTotal(state.items)
 		},
 		clearCart(state) {
 			state.items = []

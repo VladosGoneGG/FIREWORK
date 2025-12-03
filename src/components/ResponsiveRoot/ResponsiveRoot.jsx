@@ -15,12 +15,15 @@ function ResponsiveRoot() {
 	const location = useLocation()
 
 	const { pathname } = location
-	const pageKey =
-		pathname === '/contacts'
-			? 'contacts'
-			: pathname === '/wholesale'
-			? 'wholesale'
-			: null
+	
+	// Определяем ключ статической страницы
+	const getPageKey = () => {
+		if (pathname === '/contacts') return 'contacts'
+		if (pathname === '/wholesale') return 'wholesale'
+		return null
+	}
+	
+	const pageKey = getPageKey()
 
 	useEffect(() => {
 		if (!isMobile) {

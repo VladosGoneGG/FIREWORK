@@ -1,6 +1,12 @@
 import axios from 'axios'
 
 // =============================
+// Конфигурация Telegram бота
+// =============================
+const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || ''
+const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID || ''
+
+// =============================
 //  Формирование полезной нагрузки
 // =============================
 export function buildOrderPayload(formData, cartState) {
@@ -10,7 +16,6 @@ export function buildOrderPayload(formData, cartState) {
 		price: it.discountPrice ?? it.price,
 	}))
 
-	// сумма
 	const total = items.reduce((sum, it) => sum + it.price * it.quantity, 0)
 
 	return {
@@ -29,13 +34,42 @@ export function buildOrderPayload(formData, cartState) {
 }
 
 // =============================
+// Форматирование сообщения для Telegram
+// =============================
+function formatTelegramMessage(payload) {
+	const user = payload.user[0]
+
+	let text = '<b>Новый заказ!</b>\n\n'
+	text += '<b>Покупатель:</b>\n'
+	text += `• Имя: <b>${user.name || 'не указано'}</b>\n`
+	text += `• Телефон: <b>${user.phone}</b>\n`
+	text += `• Способ получения: <b>${user.address}</b>\n`
+	text += `• Email: <i>${user.email || 'не указан'}</i>\n\n`
+
+	text += '<b>Товары:</b>\n'
+	payload.cart.forEach((item, index) => {
+		text += `${index + 1}. <b>${item.name}</b> — ${item.quantity} шт. × ${
+			item.price
+		} ₽\n`
+	})
+
+	text += `\n<b>Итого: ${payload.total} ₽</b>`
+
+	return text
+}
+
+// =============================
 // Отправка в Telegram
 // =============================
 async function sendToBot(text) {
-	const url = `https://api.telegram.org/bot${'8335753960:AAFSHTdziQsR9nLy7wHv_jFG1oyl8YqN6_c'}/sendMessage`
+	if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+		throw new Error('Telegram bot configuration is missing')
+	}
+
+	const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`
 
 	return axios.post(url, {
-		chat_id: -5010780518,
+		chat_id: TELEGRAM_CHAT_ID,
 		text,
 		parse_mode: 'HTML',
 	})
@@ -46,31 +80,11 @@ async function sendToBot(text) {
 // =============================
 export async function sendOrder(payload) {
 	try {
-		// === Форматируем текст для Telegram ===
-		const u = payload.user[0]
-
-		let text = `<b>Новый заказ!</b>\n\n`
-		text += `<b>Покупатель:</b>\n`
-		text += `• Имя: <b>${u.name || 'не указано'}</b>\n`
-		text += `• Телефон: <b>${u.phone}</b>\n`
-		text += `• Способ получения: <b>${u.address}</b>\n`
-		text += `• Email: <i>${u.email || 'не указан'}</i>\n\n`
-
-		text += `<b>Товары:</b>\n`
-
-		payload.cart.forEach((it, i) => {
-			text += `${i + 1}. <b>${it.name}</b> — ${it.quantity} шт. × ${
-				it.price
-			} ₽\n`
-		})
-
-		text += `\n<b>Итого: ${payload.total} ₽</b>`
-
-		// === Отправляем в Telegram ===
+		const text = formatTelegramMessage(payload)
 		await sendToBot(text)
 
-		// (Если будет свой бекенд — сюда ставишь POST на сервер)
-		await new Promise(res => setTimeout(res, 350))
+		// Имитация задержки для будущей интеграции с бекендом
+		await new Promise(resolve => setTimeout(resolve, 350))
 
 		return { ok: true }
 	} catch (err) {

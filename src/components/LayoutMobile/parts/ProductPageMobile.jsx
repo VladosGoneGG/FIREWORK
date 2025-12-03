@@ -229,7 +229,7 @@ const ProductPageMobile = () => {
 
 	// ====== Блоки ======
 	const FoundHeader = (
-		<div className='flex items-start pt-2.5 gap-2 px-1'>
+		<div className='flex items-start pb-2.5  gap-2 px-1'>
 			<div className='flex-1'>
 				<h3 className='text-[18px] lowercase font-baron leading-none text-black'>
 					найдено {Array.isArray(foundItems) ? foundItems.length : 0}

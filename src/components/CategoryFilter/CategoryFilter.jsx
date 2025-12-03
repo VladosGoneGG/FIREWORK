@@ -9,17 +9,8 @@ import { clearSearchQuery } from '../../store/slices/productsSlice'
 import CategoryRow from '../CategoryRow/CategoryRow'
 import SubcategoryRow from '../SubcategoryRow/SubcategoryRow'
 import CategoryFilterSkeleton from './CategoryFilterSkeleton'
-
-// ⬇️ ДОБАВЬ ЭТО:
+import { normalizeCategoryName, normalizeString } from '../../utils/normalize'
 import { useNavigate } from 'react-router-dom'
-
-const norm = name =>
-	name === 'Все'
-		? 'all'
-		: String(name || '')
-				.trim()
-				.toLowerCase()
-				.replaceAll('ё', 'е')
 
 const CategoryFilter = ({ onAnyCategoryClick }) => {
 	const dispatch = useDispatch()
@@ -45,14 +36,14 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 		const map = new Map()
 		for (const c of list) {
 			const subs = c.subcategories || []
-			for (const s of subs) map.set(norm(s.name), c.id)
+			for (const s of subs) map.set(normalizeCategoryName(s.name), c.id)
 		}
 		return map
 	}, [list])
 
 	useEffect(() => {
-		const selSub = norm(selectedSub || '')
-		const selCat = norm(selectedCategory || 'all')
+		const selSub = normalizeCategoryName(selectedSub || '')
+		const selCat = normalizeCategoryName(selectedCategory || 'all')
 
 		if (selSub) {
 			const parentId = subKeyToParentId.get(selSub)
@@ -72,7 +63,7 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 	const handleCategoryClick = useCallback(
 		cat => {
 			onAnyCategoryClick?.()
-			const key = norm(cat.name)
+			const key = normalizeCategoryName(cat.name)
 
 			dispatch(setCategorySmart(key))
 			dispatch(clearSearchQuery())
@@ -98,7 +89,7 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 	const handleSubClick = useCallback(
 		name => {
 			onAnyCategoryClick?.()
-			const subKey = norm(name)
+			const subKey = normalizeCategoryName(name)
 
 			try {
 				window.dispatchEvent(
@@ -123,16 +114,16 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 		)
 	}
 
-	const selCatKey = norm(selectedCategory || 'all')
-	const selSubKey = norm(selectedSub || '')
+	const selCatKey = normalizeCategoryName(selectedCategory || 'all')
+	const selSubKey = normalizeCategoryName(selectedSub || '')
 
 	return (
 		<aside className='w-[240px] h-auto bg-white rounded-[20px] p-2.5 shadow-[0_0_10px_0_rgba(0,0,0,0.2)] font-baron lowercase font-bold'>
 			<ul className='space-y-1'>
 				{list.map((cat, idx) => {
-					const key = norm(cat.name)
+					const key = normalizeCategoryName(cat.name)
 					const subs = cat.subcategories || []
-					const subKeys = subs.map(s => norm(s.name))
+					const subKeys = subs.map(s => normalizeCategoryName(s.name))
 					const isActiveCat = selCatKey === key || subKeys.includes(selSubKey)
 					const isOpen = expandedId === cat.id && hasSubsById.get(cat.id)
 
@@ -147,7 +138,7 @@ const CategoryFilter = ({ onAnyCategoryClick }) => {
 							{isOpen && (
 								<ul className='pl-9 mt-1 space-y-1'>
 									{subs.map(sub => {
-										const subKey = norm(sub.name)
+										const subKey = normalizeCategoryName(sub.name)
 										const isActiveSub = selSubKey === subKey
 										return (
 											<SubcategoryRow

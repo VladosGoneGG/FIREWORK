@@ -3,34 +3,57 @@ import { Controller, useForm } from 'react-hook-form'
 import telplace from '../../assets/SVG/placeTelef.svg'
 import PhoneInputRU from '../ui/PhoneInputRU'
 
-// ===== helpers =====
-const validateBirth = v => {
-	const re = /^(0[1-9]|[12]\d|3[01])\.(0[1-9]|1[0-2])\.(19\d{2}|20\d{2})$/
-	if (!re.test(v)) return 'формат: ДД.ММ.ГГГГ'
-	const [dd, mm, yyyy] = v.split('.').map(Number)
-	const dob = new Date(yyyy, mm - 1, dd)
-	if (Number.isNaN(dob.getTime())) return 'некорректная дата'
+// =============================
+// Утилиты валидации и форматирования
+// =============================
+const BIRTH_DATE_REGEX = /^(0[1-9]|[12]\d|3[01])\.(0[1-9]|1[0-2])\.(19\d{2}|20\d{2})$/
+const MIN_AGE = 16
+
+const validateBirth = value => {
+	if (!BIRTH_DATE_REGEX.test(value)) {
+		return 'формат: ДД.ММ.ГГГГ'
+	}
+
+	const [day, month, year] = value.split('.').map(Number)
+	const birthDate = new Date(year, month - 1, day)
+
+	if (Number.isNaN(birthDate.getTime())) {
+		return 'некорректная дата'
+	}
+
 	const today = new Date()
-	let age = today.getFullYear() - dob.getFullYear()
-	const m = today.getMonth() - dob.getMonth()
-	if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--
-	return age >= 16 || 'только 16+'
+	let age = today.getFullYear() - birthDate.getFullYear()
+	const monthDiff = today.getMonth() - birthDate.getMonth()
+
+	if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+		age--
+	}
+
+	return age >= MIN_AGE || 'только 16+'
 }
 
-const normalizeRuPhoneE164 = raw => {
-	const d = String(raw || '').replace(/\D/g, '')
-	if (d.length === 11) return '+7' + d.slice(-10)
-	if (d.length === 10) return '+7' + d
+const normalizeRuPhoneE164 = rawPhone => {
+	const digitsOnly = String(rawPhone || '').replace(/\D/g, '')
+
+	if (digitsOnly.length === 11) {
+		return '+7' + digitsOnly.slice(-10)
+	}
+	if (digitsOnly.length === 10) {
+		return '+7' + digitsOnly
+	}
+
 	return null
 }
 
 const formatBirthTyping = raw => {
-	const digits = String(raw || '')
-		.replace(/\D/g, '')
-		.slice(0, 8)
+	const digits = String(raw || '').replace(/\D/g, '').slice(0, 8)
+
 	if (!digits) return ''
 	if (digits.length <= 2) return digits
-	if (digits.length <= 4) return `${digits.slice(0, 2)}.${digits.slice(2)}`
+	if (digits.length <= 4) {
+		return `${digits.slice(0, 2)}.${digits.slice(2)}`
+	}
+
 	return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`
 }
 

@@ -1,6 +1,10 @@
 import { Component } from 'react'
 import ErrorPage500 from '../ErrorPage500/ErrorPage500'
 
+/**
+ * Компонент для перехвата ошибок React
+ * Отображает страницу ошибки при возникновении исключений в дочерних компонентах
+ */
 export default class ErrorBoundary extends Component {
 	constructor(props) {
 		super(props)

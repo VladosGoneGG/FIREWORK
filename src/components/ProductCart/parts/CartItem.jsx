@@ -1,12 +1,11 @@
 // src/components/ProductCart/parts/CartItem.jsx
 import { memo } from 'react'
 import { fmtPriceRub } from '../../../utils/format'
+import { getUnitPrice } from '../../../utils/price'
 import Qty from './Qty'
 
 const CartItem = ({ item, onDec, onInc }) => {
-	const toNum = v => (typeof v === 'number' ? v : Number(v) || 0)
-	const unitPrice =
-		toNum(item?.unitPrice) || toNum(item?.discountPrice) || toNum(item?.price)
+	const unitPrice = getUnitPrice(item)
 
 	const qty = Math.max(1, item.quantity || 1)
 	const lineTotal = unitPrice * qty

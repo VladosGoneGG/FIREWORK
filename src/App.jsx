@@ -13,9 +13,12 @@ import SubcategoryOverlay from './components/SubcategoryOverlay/SubcategoryOverl
 import useOverlayFilters from './hooks/useOverlayFilters'
 import useStickToBottom from './utils/useStickToBottom'
 
-const COLUMN_H = 834
-const DETAILS_H = 834
-const CENTER_W = 720
+// =============================
+// Константы размеров
+// =============================
+const COLUMN_HEIGHT = 834
+const DETAILS_HEIGHT = 834
+const CENTER_WIDTH = 720
 
 function App() {
 	const [detailsMode, setDetailsMode] = useState(false)
@@ -25,7 +28,7 @@ function App() {
 	const [isLanding, setIsLanding] = useState(true)
 
 	const { ref: centerRef, height: centerHeight } = useStickToBottom(
-		COLUMN_H,
+		COLUMN_HEIGHT,
 		19
 	)
 
@@ -77,7 +80,7 @@ function App() {
 							<div className='sticky top-0'>
 								<div
 									className='relative w-[240px]'
-									style={{ height: COLUMN_H }}
+									style={{ height: COLUMN_HEIGHT }}
 								>
 									{!filtersOpen && (
 										<>
@@ -145,7 +148,7 @@ function App() {
 											onFiltersCountChange={setOverlayCount}
 											filtersOpen={filtersOpen}
 											narrow={!detailsMode}
-											narrowWidth={CENTER_W}
+											narrowWidth={CENTER_WIDTH}
 											showSlider={showSliderOnHome}
 										/>
 									</div>
@@ -155,7 +158,7 @@ function App() {
 
 						{/* ПРАВАЯ КОЛОНКА — 295px по макету */}
 						<aside className='sticky top-0'>
-							<div className='w-[295px]' style={{ height: COLUMN_H }}>
+							<div className='w-[295px]' style={{ height: COLUMN_HEIGHT }}>
 								<ProductCart />
 							</div>
 						</aside>

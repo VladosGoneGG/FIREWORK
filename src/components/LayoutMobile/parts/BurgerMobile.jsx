@@ -357,10 +357,14 @@ const BurgerMobile = () => {
 									<div className='self-stretch p-2.5 space-y-5'>
 										<div className='flex flex-col gap-2.5'>
 											<div className='text-[#625a51] text-sm font-baron lowercase cursor-pointer'>
-												<Link to='/contacts'>контакты</Link>
+												<Link to='/contacts' onClick={handleClose}>
+													контакты
+												</Link>
 											</div>
-											<div className='text-[#625a51] text-sm font-baron lowercase'>
-												<Link to='/wholesale'>оптовикам</Link>
+											<div className='text-[#625a51] text-sm font-baron lowercase cursor-pointer'>
+												<Link to='/wholesale' onClick={handleClose}>
+													оптовикам
+												</Link>
 											</div>
 										</div>
 										<div className='flex flex-col gap-2.5'>

@@ -36,14 +36,11 @@ import {
 } from '../../store/slices/filtersSlice'
 
 import { useStaticPageKey } from '../../pages/StaticPageContext'
+import { normalizeString } from '../../utils/normalize'
 import StaticContactsBlock from './static/StaticContactsBlock'
 import StaticWholesaleBlock from './static/StaticWholesaleBlock'
 
 const PROMO_KEY = 'акции'
-const norm = s =>
-	String(s || '')
-		.trim()
-		.toLowerCase()
 
 const EASE = 'easeOut'
 const DURATION = 0.15
@@ -95,7 +92,7 @@ const ProductsPage = ({
 	const skipNextCategoryEffect = useRef(false)
 
 	const view = activeSub ? 'sub' : 'home'
-	const animKey = `${view}-${norm(selected)}-${sortKey}-${
+	const animKey = `${view}-${normalizeString(selected)}-${sortKey}-${
 		showFound ? 'found' : 'no-found'
 	}-${String(search).trim() ? 'q' : 'noq'}`
 
@@ -174,23 +171,23 @@ const ProductsPage = ({
 
 	const homeSections = useSections(homeDiscounted, homeNonDiscounted, selected)
 	const showHeaderFor = title =>
-		norm(title) !== PROMO_KEY || shouldShowSlider || hasStaticPage
+		normalizeString(title) !== PROMO_KEY || shouldShowSlider || hasStaticPage
 
 	const sections = useMemo(() => {
 		if (selected === 'all') return homeSections
 
-		if (norm(selected) === PROMO_KEY) {
+		if (normalizeString(selected) === PROMO_KEY) {
 			const promoItems = allItems.filter(p => discountedSet.has(p.id))
 			return [{ title: PROMO_KEY, items: promoItems }]
 		}
 
-		const sel = norm(selected)
-		const inCategory = allItems.filter(p => norm(p.category) === sel)
+		const sel = normalizeString(selected)
+		const inCategory = allItems.filter(p => normalizeString(p.category) === sel)
 		const catPromoItems = inCategory.filter(p => discountedSet.has(p.id))
 
 		const bySub = new Map()
 		for (const p of inCategory) {
-			const sub = norm(p.subcategory) || 'прочее'
+			const sub = normalizeString(p.subcategory) || 'прочее'
 			if (!bySub.has(sub)) bySub.set(sub, [])
 			bySub.get(sub).push(p)
 		}
@@ -212,7 +209,7 @@ const ProductsPage = ({
 	)
 
 	const promoSec = useMemo(
-		() => sectionsSorted.find(s => norm(s.title) === PROMO_KEY),
+		() => sectionsSorted.find(s => normalizeString(s.title) === PROMO_KEY),
 		[sectionsSorted]
 	)
 	const promoHasMore = !!promoSec && promoSec.items.length > 5
@@ -229,15 +226,12 @@ const ProductsPage = ({
 					? payload.products
 					: null
 
-			const n = s =>
-				String(s || '')
-					.trim()
-					.toLowerCase()
-
 			if (!products) {
-				const t = n(title)
+				const normalizedTitle = normalizeString(title)
 				products = allItems.filter(
-					p => n(p.category) === t || n(p.subcategory) === t
+					p =>
+						normalizeString(p.category) === normalizedTitle ||
+						normalizeString(p.subcategory) === normalizedTitle
 				)
 			}
 

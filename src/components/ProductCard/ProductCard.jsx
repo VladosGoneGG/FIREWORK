@@ -1,9 +1,6 @@
 import { useDispatch } from 'react-redux'
 import { addItem } from '../../store/slices/cartSlice'
-
-const formatPrice = n => new Intl.NumberFormat('ru-RU').format(n) + ' ₽'
-const fmtDur = sec =>
-	sec >= 60 ? `${Math.floor(sec / 60)}м ${sec % 60}с` : `${sec}с`
+import { fmtPriceRub, fmtSecFull } from '../../utils/format'
 
 const ProductCard = ({ product }) => {
 	const dispatch = useDispatch()
@@ -59,7 +56,7 @@ const ProductCard = ({ product }) => {
 				<div className='font-medium'>{caliber ?? '—'}</div>
 				<div className='opacity-60'>Длительность</div>
 				<div className='font-medium'>
-					{durationSec ? fmtDur(durationSec) : '—'}
+					{durationSec ? fmtSecFull(durationSec) : '—'}
 				</div>
 				<div className='opacity-60'>Эффектов</div>
 				<div className='font-medium'>{effectsCount ?? '—'}</div>
@@ -80,15 +77,15 @@ const ProductCard = ({ product }) => {
 					{discountPrice ? (
 						<>
 							<div className='text-[12px] line-through opacity-60'>
-								{formatPrice(price)}
+								{fmtPriceRub(price)}
 							</div>
 							<div className='text-[16px] font-semibold'>
-								{formatPrice(discountPrice)}
+								{fmtPriceRub(discountPrice)}
 							</div>
 						</>
 					) : (
 						<div className='text-[16px] font-semibold'>
-							{formatPrice(price)}
+							{fmtPriceRub(price)}
 						</div>
 					)}
 				</div>
