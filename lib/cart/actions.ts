@@ -1,6 +1,6 @@
 'use server'
 
-import { cartItemSchema } from './schema'
+import { cartItemSchema } from './schema.server'
 import { resolveCart, type ResolvedCart } from './pricing'
 import { z } from 'zod'
 

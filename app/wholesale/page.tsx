@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
 	title: 'Оптовые продажи',
 	description: 'Прайс-лист с остатками товара для оптовых покупателей.',
+	alternates: { canonical: '/wholesale' },
 }
 
 export default function WholesalePage() {

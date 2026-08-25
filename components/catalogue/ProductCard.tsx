@@ -21,7 +21,7 @@ export default function ProductCard({ product }: { product: Product }) {
 			<Link href={`/product/${product.slug}`} className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red">
 				<div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-[#f6f4f2] text-xs text-[#9c9c9c]">
 					{outOfStock && (
-						<span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
+						<span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white">
 							нет в наличии
 						</span>
 					)}
@@ -29,7 +29,7 @@ export default function ProductCard({ product }: { product: Product }) {
 				</div>
 
 				<div className="mt-2 min-h-0">
-					<p className="truncate text-[10px] uppercase tracking-wide text-[#9c9c9c]">
+					<p className="truncate text-xs uppercase tracking-wide text-[#9c9c9c]">
 						{product.manufacturer}
 					</p>
 					<h3 className="font-baron truncate text-sm leading-tight text-[#333]">
@@ -37,7 +37,7 @@ export default function ProductCard({ product }: { product: Product }) {
 					</h3>
 				</div>
 
-				<dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-[#625a51]">
+				<dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-[#625a51]">
 					<dt className="opacity-70">залпов</dt>
 					<dd className="font-medium">{product.shots}</dd>
 					<dt className="opacity-70">калибр</dt>
@@ -50,7 +50,7 @@ export default function ProductCard({ product }: { product: Product }) {
 			<div className="mt-3 flex items-end justify-between gap-2">
 				{discounted ? (
 					<div>
-						<div className="text-[11px] text-[#bd52e9] line-through">
+						<div className="text-xs text-[#bd52e9] line-through">
 							{formatPrice(product.price)} ₽
 						</div>
 						<div className="font-baron text-base font-semibold text-[#333]">
@@ -62,7 +62,7 @@ export default function ProductCard({ product }: { product: Product }) {
 						{formatPrice(currentPrice)} ₽
 					</div>
 				)}
-				<AddToCartButton productId={product.id} outOfStock={outOfStock} className="h-9 shrink-0 px-3" />
+				<AddToCartButton productId={product.id} outOfStock={outOfStock} className="h-11 shrink-0 px-3" />
 			</div>
 		</article>
 	)

@@ -41,7 +41,7 @@ export default function CartDrawer() {
 						type="button"
 						onClick={handleClose}
 						aria-label="Закрыть корзину"
-						className="rounded-full p-1.5 text-[#9c9c9c] hover:bg-[#f6f4f2] hover:text-[#333]"
+						className="flex h-11 w-11 items-center justify-center rounded-full text-[#9c9c9c] hover:bg-[#f6f4f2] hover:text-[#333] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
 					>
 						✕
 					</button>
@@ -76,14 +76,14 @@ export default function CartDrawer() {
 							) : (
 								<>
 									{resolved.removedProductIds.length > 0 && (
-										<div role="alert" className="rounded-xl bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+										<div role="alert" className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
 											{resolved.removedProductIds.length === 1
 												? 'один товар больше недоступен и был убран из корзины'
 												: `${resolved.removedProductIds.length} товара(ов) больше недоступны и были убраны из корзины`}
 											<button
 												type="button"
 												onClick={() => resolved.removedProductIds.forEach(removeItem)}
-												className="ml-2 underline"
+												className="ml-2 inline-block min-h-11 py-2 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
 											>
 												убрать
 											</button>
@@ -93,14 +93,14 @@ export default function CartDrawer() {
 										<div key={line.productId} className="flex items-center gap-3">
 											<div className="min-w-0 flex-1">
 												<p className="truncate text-sm text-[#333]">{line.name}</p>
-												<p className="text-[10px] text-[#9c9c9c]">{line.manufacturer}</p>
+												<p className="text-xs text-[#9c9c9c]">{line.manufacturer}</p>
 												<div className="mt-1 flex items-center gap-2">
 													<div className="flex items-center gap-1 rounded-full bg-[#f2f0ed]">
 														<button
 															type="button"
 															onClick={() => decrement(line.productId, line.quantity)}
 															aria-label="Уменьшить количество"
-															className="h-6 w-6 rounded-full text-sm hover:bg-black/10"
+															className="flex h-9 w-9 items-center justify-center rounded-full text-sm hover:bg-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
 														>
 															–
 														</button>
@@ -109,7 +109,7 @@ export default function CartDrawer() {
 															type="button"
 															onClick={() => addItem(line.productId)}
 															aria-label="Увеличить количество"
-															className="h-6 w-6 rounded-full text-sm hover:bg-black/10"
+															className="flex h-9 w-9 items-center justify-center rounded-full text-sm hover:bg-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
 														>
 															+
 														</button>

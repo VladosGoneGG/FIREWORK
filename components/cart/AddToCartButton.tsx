@@ -30,7 +30,7 @@ export default function AddToCartButton({
 				addItem(productId)
 				openCart()
 			}}
-			className={`font-baron rounded-xl text-sm transition ${
+			className={`font-baron rounded-xl text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red ${
 				outOfStock
 					? 'cursor-not-allowed bg-[#e5e2de] text-[#9c9c9c]'
 					: 'bg-[#cbb7ff] text-[#333] hover:bg-firework-red hover:text-white'

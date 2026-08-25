@@ -7,8 +7,16 @@
 // themselves (phone format, birth date, delivery/address) can never drift
 // between the two.
 
+// Server-only: this module's zod schemas are meaningful client-bundle
+// weight (~280KB) if ever imported for their runtime value rather than
+// just their types — see lib/cart/schema.server.ts's docblock for the
+// concrete case that motivated this guard. CheckoutForm.tsx only ever
+// imports `type SubmitOrderResult` from here, which is erased at compile
+// time; this import makes a future accidental value-import fail the
+// build instead of silently bloating the client bundle again.
+import 'server-only'
 import { z } from 'zod'
-import { cartItemSchema } from '@/lib/cart/schema'
+import { cartItemSchema } from '@/lib/cart/schema.server'
 import { normalizeRuPhoneE164 } from './phone'
 import { validateBirth } from './validateBirthDate'
 

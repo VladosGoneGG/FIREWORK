@@ -22,17 +22,17 @@ export default function SortLinks({
 	}
 
 	return (
-		<div className="font-baron flex gap-2 text-[11px] lowercase text-[#625a51]">
+		<div className="font-baron flex items-center gap-1 text-xs lowercase text-[#625a51]">
 			<Link
 				href={hrefFor('price-asc')}
-				className={value === 'price-asc' ? 'font-medium text-firework-red' : 'hover:text-firework-red'}
+				className={`flex min-h-11 items-center px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red ${value === 'price-asc' ? 'font-medium text-firework-red' : 'hover:text-firework-red'}`}
 			>
 				дешевле сначала
 			</Link>
 			<span aria-hidden>·</span>
 			<Link
 				href={hrefFor('price-desc')}
-				className={value === 'price-desc' ? 'font-medium text-firework-red' : 'hover:text-firework-red'}
+				className={`flex min-h-11 items-center px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red ${value === 'price-desc' ? 'font-medium text-firework-red' : 'hover:text-firework-red'}`}
 			>
 				дороже сначала
 			</Link>

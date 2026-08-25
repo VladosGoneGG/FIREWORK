@@ -97,9 +97,9 @@ export default function CheckoutForm({
 						required: 'укажите номер',
 						validate: v => (normalizeRuPhoneE164(v) ? true : 'введите 10 цифр'),
 					})}
-					className="h-9 w-full rounded-lg bg-stone-100 px-3 text-xs outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
+					className="h-11 w-full rounded-lg bg-stone-100 px-3 text-xs outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
 				/>
-				{errors.phone && <p className="text-[10px] text-red-600">{errors.phone.message}</p>}
+				{errors.phone && <p className="text-xs text-red-600">{errors.phone.message}</p>}
 			</div>
 
 			<div>
@@ -110,9 +110,9 @@ export default function CheckoutForm({
 					id="checkout-lastName"
 					placeholder="Фамилия"
 					{...register('lastName', { required: 'фамилия обязательна' })}
-					className="h-9 w-full rounded-lg bg-stone-100 px-3 text-xs outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
+					className="h-11 w-full rounded-lg bg-stone-100 px-3 text-xs outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
 				/>
-				{errors.lastName && <p className="text-[10px] text-red-600">{errors.lastName.message}</p>}
+				{errors.lastName && <p className="text-xs text-red-600">{errors.lastName.message}</p>}
 			</div>
 
 			<div>
@@ -123,9 +123,9 @@ export default function CheckoutForm({
 					id="checkout-firstName"
 					placeholder="Имя"
 					{...register('firstName', { required: 'имя обязательно' })}
-					className="h-9 w-full rounded-lg bg-stone-100 px-3 text-xs outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
+					className="h-11 w-full rounded-lg bg-stone-100 px-3 text-xs outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
 				/>
-				{errors.firstName && <p className="text-[10px] text-red-600">{errors.firstName.message}</p>}
+				{errors.firstName && <p className="text-xs text-red-600">{errors.firstName.message}</p>}
 			</div>
 
 			<div>
@@ -138,31 +138,31 @@ export default function CheckoutForm({
 					inputMode="numeric"
 					maxLength={10}
 					{...register('birthDate', { required: 'дата рождения обязательна', validate: validateBirth })}
-					className="h-9 w-full rounded-lg bg-stone-100 px-3 text-xs outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
+					className="h-11 w-full rounded-lg bg-stone-100 px-3 text-xs outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
 				/>
-				{errors.birthDate && <p className="text-[10px] text-red-600">{errors.birthDate.message}</p>}
-				<p className="mt-1 text-[10px] text-[#9c9c9c]">продажа пиротехники лицам младше 16 лет запрещена</p>
+				{errors.birthDate && <p className="text-xs text-red-600">{errors.birthDate.message}</p>}
+				<p className="mt-1 text-xs text-[#9c9c9c]">продажа пиротехники лицам младше 16 лет запрещена</p>
 			</div>
 
 			<div className="flex gap-2">
 				<button
 					type="button"
 					onClick={() => setValue('delivery', 'pickup')}
-					className={`h-9 flex-1 rounded-lg text-xs ${delivery === 'pickup' ? 'bg-firework-red text-white' : 'bg-stone-100 text-[#333]'}`}
+					className={`h-11 flex-1 rounded-lg text-xs ${delivery === 'pickup' ? 'bg-firework-red text-white' : 'bg-stone-100 text-[#333]'}`}
 				>
 					самовывоз
 				</button>
 				<button
 					type="button"
 					onClick={() => setValue('delivery', 'delivery')}
-					className={`h-9 flex-1 rounded-lg text-xs ${delivery === 'delivery' ? 'bg-firework-red text-white' : 'bg-stone-100 text-[#333]'}`}
+					className={`h-11 flex-1 rounded-lg text-xs ${delivery === 'delivery' ? 'bg-firework-red text-white' : 'bg-stone-100 text-[#333]'}`}
 				>
 					доставка
 				</button>
 			</div>
 
 			{delivery === 'pickup' ? (
-				<p className="rounded-lg border border-stone-200 px-3 py-2 text-center text-[11px] text-[#625a51]">
+				<p className="rounded-lg border border-stone-200 px-3 py-2 text-center text-xs text-[#625a51]">
 					каховская 1А/С
 				</p>
 			) : (
@@ -176,14 +176,14 @@ export default function CheckoutForm({
 						{...register('address', {
 							required: delivery === 'delivery' ? 'укажите адрес' : false,
 						})}
-						className="h-9 w-full rounded-lg bg-stone-100 px-3 text-xs outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
+						className="h-11 w-full rounded-lg bg-stone-100 px-3 text-xs outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
 					/>
-					{errors.address && <p className="text-[10px] text-red-600">{errors.address.message}</p>}
+					{errors.address && <p className="text-xs text-red-600">{errors.address.message}</p>}
 				</div>
 			)}
 
 			{phase === 'error' && (
-				<div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[11px] text-red-700">
+				<div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
 					{errorMessage}
 				</div>
 			)}

@@ -3,7 +3,7 @@
 // degrades to an empty cart rather than crashing the app (audit finding
 // H6: the old app's loadCart() trusted whatever JSON.parse returned).
 
-import { cartStateSchema, EMPTY_CART_STATE, type CartState } from './schema'
+import { EMPTY_CART_STATE, isValidCartState, type CartState } from './schema'
 
 const STORAGE_KEY = 'cart:v2'
 
@@ -47,9 +47,9 @@ export function loadCart(): CartState {
 	try {
 		const raw = window.localStorage.getItem(STORAGE_KEY)
 		if (raw) {
-			const parsed = cartStateSchema.safeParse(JSON.parse(raw))
-			if (parsed.success) return parsed.data
-			// Present but doesn't match the schema (corrupt, hand-edited, or a
+			const parsed: unknown = JSON.parse(raw)
+			if (isValidCartState(parsed)) return parsed
+			// Present but doesn't match the shape (corrupt, hand-edited, or a
 			// future version going backward) — fall through rather than trust it.
 		}
 	} catch {

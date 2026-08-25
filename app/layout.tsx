@@ -3,6 +3,7 @@ import localFont from 'next/font/local'
 import CartDrawer from '@/components/cart/CartDrawer'
 import { CartProvider } from '@/components/cart/CartProvider'
 import SiteHeader from '@/components/layout/SiteHeader'
+import { siteUrl } from './robots'
 import './globals.css'
 
 // Brand display/body face, ported from src/assets/fonts (see globals.css
@@ -19,7 +20,9 @@ const baronNeue = localFont({
 })
 
 export const metadata: Metadata = {
+	metadataBase: new URL(siteUrl()),
 	title: { default: 'Салюты — крупнейший магазин пиротехники', template: '%s — Салюты' },
+	twitter: { card: 'summary' },
 }
 
 export const viewport: Viewport = {

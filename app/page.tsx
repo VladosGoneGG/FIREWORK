@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import CategoryNav from '@/components/catalogue/CategoryNav'
 import ProductGrid from '@/components/catalogue/ProductGrid'
 import SearchForm from '@/components/catalogue/SearchForm'
@@ -10,9 +11,14 @@ import { applySort, type SortKey } from '@/lib/sort'
 // No title here: the layout's default already reads exactly right for
 // the home page, and setting an identical one would get suffixed by the
 // title template ("... — Салюты — Салюты").
+const description =
+	'Салюты, фонтаны, петарды, вертушки, ракеты и фейерверки в Нижнем Новгороде. Сертифицированная продукция.'
+
 export const metadata: Metadata = {
-	description:
-		'Салюты, фонтаны, петарды, вертушки, ракеты и фейерверки в Нижнем Новгороде. Сертифицированная продукция.',
+	description,
+	alternates: { canonical: '/' },
+	openGraph: { title: 'Салюты — крупнейший магазин пиротехники', description, type: 'website', url: '/' },
+	twitter: { card: 'summary', title: 'Салюты — крупнейший магазин пиротехники', description },
 }
 
 const isSortKey = (v: unknown): v is SortKey => v === 'price-asc' || v === 'price-desc'
@@ -41,9 +47,23 @@ export default async function Home({
 						<h1 className="font-baron text-lg lowercase text-[#333]">
 							найдено {results.length}
 						</h1>
-						<SortLinks basePath="/" searchParams={params} value={sort} />
+						{results.length > 0 && <SortLinks basePath="/" searchParams={params} value={sort} />}
 					</div>
-					<ProductGrid products={results} />
+					{results.length > 0 ? (
+						<ProductGrid products={results} />
+					) : (
+						<div className="rounded-2xl bg-white p-8 text-center">
+							<p className="font-baron text-sm text-[#625a51]">
+								по запросу «{query}» ничего не найдено
+							</p>
+							<Link
+								href="/"
+								className="font-baron text-firework-red mt-3 inline-block text-xs hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
+							>
+								смотреть весь каталог
+							</Link>
+						</div>
+					)}
 				</div>
 			</div>
 		)

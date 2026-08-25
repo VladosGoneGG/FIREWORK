@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
 	title: 'Контакты',
 	description: 'Контакты, адрес и реквизиты ИП Федяков Иван Владимирович.',
+	alternates: { canonical: '/contacts' },
 }
 
 export default function ContactsPage() {

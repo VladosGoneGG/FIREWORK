@@ -34,7 +34,9 @@ export async function generateMetadata({
 	return {
 		title: product.name,
 		description,
-		openGraph: { title: product.name, description, type: 'website' },
+		alternates: { canonical: `/product/${product.slug}` },
+		openGraph: { title: product.name, description, type: 'website', url: `/product/${product.slug}` },
+		twitter: { card: 'summary', title: product.name, description },
 	}
 }
 
@@ -78,7 +80,7 @@ export default async function ProductPage({
 				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
 			/>
 
-			<nav className="font-baron text-[11px] lowercase text-[#9c9c9c]" aria-label="Хлебные крошки">
+			<nav className="font-baron text-xs lowercase text-[#9c9c9c]" aria-label="Хлебные крошки">
 				<Link href="/" className="hover:text-firework-red">
 					главная
 				</Link>{' '}
@@ -94,7 +96,7 @@ export default async function ProductPage({
 				</div>
 
 				<div className="space-y-3 rounded-2xl bg-white p-4 shadow-[0_0_10px_0_rgba(0,0,0,0.08)]">
-					<p className="text-[11px] uppercase tracking-wide text-[#9c9c9c]">
+					<p className="text-xs uppercase tracking-wide text-[#9c9c9c]">
 						{product.manufacturer}
 					</p>
 					<h1 className="font-baron text-xl leading-tight text-[#333]">{product.name}</h1>
@@ -114,7 +116,7 @@ export default async function ProductPage({
 						</div>
 					)}
 
-					<dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[12px] text-[#625a51]">
+					<dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-[#625a51]">
 						<dt className="opacity-70">залпов</dt>
 						<dd className="font-medium">{product.shots}</dd>
 						<dt className="opacity-70">калибр</dt>
@@ -130,13 +132,13 @@ export default async function ProductPage({
 					</dl>
 
 					<p
-						className={`text-[11px] ${product.stock > 0 ? 'text-green-700' : 'text-red-600'}`}
+						className={`text-xs ${product.stock > 0 ? 'text-green-700' : 'text-red-600'}`}
 					>
 						{product.stock > 0 ? `в наличии ${product.stock} шт` : 'нет в наличии'}
 					</p>
 
 					{product.certificateNumber && (
-						<p className="text-[10px] text-[#9c9c9c]">
+						<p className="text-xs text-[#9c9c9c]">
 							сертификат: {product.certificateNumber}
 						</p>
 					)}

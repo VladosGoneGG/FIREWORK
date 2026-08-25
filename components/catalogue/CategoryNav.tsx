@@ -14,7 +14,7 @@ export default function CategoryNav({
 				<li>
 					<Link
 						href="/"
-						className={`block rounded-xl px-3 py-2 transition ${
+						className={`flex min-h-11 items-center rounded-xl px-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red ${
 							!activeSlug ? 'font-medium text-firework-red' : 'text-[#333] hover:text-firework-red'
 						}`}
 					>
@@ -27,7 +27,7 @@ export default function CategoryNav({
 						<li key={c.id}>
 							<Link
 								href={`/category/${c.slug}`}
-								className={`block rounded-xl px-3 py-2 transition ${
+								className={`flex min-h-11 items-center rounded-xl px-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red ${
 									activeSlug === c.slug
 										? 'font-medium text-firework-red'
 										: 'text-[#333] hover:text-firework-red'
