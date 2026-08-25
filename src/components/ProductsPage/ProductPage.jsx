@@ -35,7 +35,7 @@ import {
 	setShowFound,
 } from '../../store/slices/filtersSlice'
 
-import { useStaticPageKey } from '../../pages/StaticPageContext'
+import { useStaticPageKey } from '../../staticPages/StaticPageContext'
 import { normalizeString } from '../../utils/normalize'
 import StaticContactsBlock from './static/StaticContactsBlock'
 import StaticWholesaleBlock from './static/StaticWholesaleBlock'

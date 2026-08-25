@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens ported from src/index.css (the Vite app's stylesheet).
+ * Kept as a single source during the migration; src/index.css stays
+ * untouched for the old app until it is removed in the final cleanup
+ * phase. Font tokens differ from the old file: BaronNeue now comes from
+ * next/font/local (see app/layout.tsx) instead of a raw @font-face, and
+ * Calibri is dropped — it is a proprietary Microsoft typeface bundled
+ * without a verified web-embedding licence (see SECURITY_INCIDENT.md's
+ * sibling finding in the audit report, "Licensing risk — Calibri").
+ */
+@theme inline {
+	/* Цвета */
+	--color-firework-red: #c054eb; /* основной фирменный (визуально — фиолетовый, оставляем имя токена как есть) */
+	--color-firework-blue: #1d0353; /* тёмный фирменный */
+
+	/* Цвета для состояний кнопки */
+	--color-firework-hover: #bd52e9; /* hover */
+	--color-firework-active: #efebe6; /* active */
+
+	/* Градиент */
+	--background-image-firework-radial: radial-gradient(
+		142.27% 173.76% at -13.16% 0%,
+		#1d0353 0%,
+		#c054eb 100%
+	);
+
+	/* Шрифты — переменные приходят из next/font/local в layout.tsx */
+	--font-baron: var(--font-baron-neue), sans-serif;
+}
+
+@layer utilities {
+	@keyframes wiggle-subtle {
+		0% {
+			transform: translate3d(0, 0, 0);
+		}
+		40% {
+			transform: translate3d(0, -1px, 0);
+		}
+		70% {
+			transform: translate3d(0, 0.5px, 0);
+		}
+		100% {
+			transform: translate3d(0, 0, 0);
+		}
+	}
+	.animate-wiggle-subtle {
+		animation: wiggle-subtle 180ms ease-out both;
+	}
+}
+
+@layer base {
+	html {
+		background-color: #efebe6;
+	}
+	body {
+		line-height: 1.5;
+		color: #333;
+		margin: 0;
+		padding: 0;
+	}
+
+	.scroll-hidden {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+	.scroll-hidden::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+.bg-firework-radial {
+	background-image: radial-gradient(
+		142.27% 173.76% at -13.16% 0%,
+		#1d0353 0%,
+		#c054eb 100%
+	);
+}
+
+/* === КОМПОНЕНТ КНОПКИ === */
+@layer components {
+	.btn-firework {
+		@apply text-white rounded-[10px] w-[220px] h-[50px]
+      bg-firework-radial transition-colors duration-200 cursor-pointer;
+	}
+	.btn-firework:hover {
+		@apply bg-none bg-firework-hover;
+	}
+	.btn-firework:active {
+		@apply bg-none !text-[#c054eb] bg-firework-active;
+	}
+}
