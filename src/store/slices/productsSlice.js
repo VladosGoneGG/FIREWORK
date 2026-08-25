@@ -107,8 +107,17 @@ const productsSlice = createSlice({
 			if (!Array.isArray(next.shots)) next.shots = state.filters.shots
 			if (!Array.isArray(next.power)) next.power = state.filters.power
 
-			next.inStockOnly = !!action.payload?.inStockOnly
-			next.hasCertificate = !!action.payload?.hasCertificate
+			// H11: раньше эти два поля безусловно перезаписывались из payload,
+			// поэтому частичный setFilters({types: [...]}) без inStockOnly/
+			// hasCertificate молча сбрасывал их в false. Трогаем поле только
+			// если оно реально пришло в этом вызове — иначе оставляем то,
+			// что уже сохранено через {...state.filters, ...action.payload}.
+			if (Object.prototype.hasOwnProperty.call(action.payload || {}, 'inStockOnly')) {
+				next.inStockOnly = !!action.payload.inStockOnly
+			}
+			if (Object.prototype.hasOwnProperty.call(action.payload || {}, 'hasCertificate')) {
+				next.hasCertificate = !!action.payload.hasCertificate
+			}
 
 			state.filters = next
 		},

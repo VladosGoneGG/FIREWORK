@@ -25,7 +25,11 @@ const ProductCart = ({ loading = false }) => {
 
 	const formRef = useRef(null)
 	const [showForm, setShowForm] = useState(false)
-	const [success, setSuccess] = useState(false)
+	// 'idle' | 'submitting' | 'success' | 'error'
+	const [phase, setPhase] = useState('idle')
+	const [errorMessage, setErrorMessage] = useState('')
+	const success = phase === 'success'
+	const submitting = phase === 'submitting'
 
 	// прокручиваемая область и сама форма:
 	const listScrollRef = useRef(null)
@@ -45,11 +49,15 @@ const ProductCart = ({ loading = false }) => {
 	)
 
 	useEffect(() => {
+		// Не трогаем экран успеха: корзина уже очищена сервером-подтверждением,
+		// а экран должен остаться, пока пользователь сам его не закроет.
+		if (phase === 'success') return
 		if (!items.length) {
 			setShowForm(false)
-			setSuccess(false)
+			setPhase('idle')
+			setErrorMessage('')
 		}
-	}, [items.length])
+	}, [items.length, phase])
 
 	const list = useMemo(() => items, [items])
 
@@ -66,6 +74,8 @@ const ProductCart = ({ loading = false }) => {
 	}
 
 	const handleContinue = async () => {
+		if (submitting) return // защита от повторной отправки (клиентская часть H5)
+
 		if (!showForm) {
 			setShowForm(true)
 			// даём дорисоваться DOM, фокусируем телефон и прокручиваем НИЗ формы в видимую область
@@ -84,19 +94,31 @@ const ProductCart = ({ loading = false }) => {
 	}
 
 	const handleOrderSubmitted = async formData => {
+		if (submitting) return // повторный вызов пока предыдущий ещё в полёте
+
+		setPhase('submitting')
+		setErrorMessage('')
+
 		const payload = buildOrderPayload(formData, { items, total })
-		await sendOrder(payload)
-		setSuccess(true)
-		setShowForm(false)
-		
-		const timeoutId = setTimeout(() => {
+		const result = await sendOrder(payload)
+
+		if (result?.ok) {
+			// Корзину очищаем только по подтверждению — не по таймеру и не
+			// «на всякий случай» до ответа сервера.
 			dispatch(clearCart())
-			setSuccess(false)
-		}, 5000)
-		
-		// Возвращаем функцию очистки для использования в useEffect при необходимости
-		return () => clearTimeout(timeoutId)
+			setShowForm(false)
+			setPhase('success')
+		} else {
+			// Заказ НЕ отправлен: показываем ошибку, ничего не теряем.
+			// Форма и корзина остаются как есть, пользователь может повторить.
+			setErrorMessage(
+				result?.message || 'Не удалось отправить заказ. Попробуйте ещё раз.'
+			)
+			setPhase('error')
+		}
 	}
+
+	const handleDismissSuccess = () => setPhase('idle')
 
 	if (isLoading) return <ProductCartSkeleton />
 
@@ -134,17 +156,35 @@ const ProductCart = ({ loading = false }) => {
 
 				{showForm && !success && list.length > 0 && (
 					<div ref={formContainerRef} className='mt-3'>
+						{phase === 'error' && (
+							<div
+								role='alert'
+								className='mb-2 rounded-[10px] bg-red-50 px-3 py-2 text-[11px] text-red-700'
+							>
+								{errorMessage}
+							</div>
+						)}
 						<CheckoutForm ref={formRef} onSubmitted={handleOrderSubmitted} />
 					</div>
 				)}
 
 				{success && (
-					<div className='absolute z-20 inset-0 flex justify-center items-center bg-white p-6 pointer-events-auto'>
-						<div className='flex flex-col gap-[24px] justify-center items-center'>
-							<img src={sucessSvg} alt='Успех' />
-							<div className='text-[12px] font-baron text-stone-700'>
-								как только заказ будет собран, вам придёт SMS-оповещение
+					<div
+						role='status'
+						className='absolute z-20 inset-0 flex justify-center items-center bg-white p-6 pointer-events-auto'
+					>
+						<div className='flex flex-col gap-[24px] justify-center items-center text-center'>
+							<img src={sucessSvg} alt='' />
+							<div className='text-[12px] font-baron text-stone-700 max-w-[220px]'>
+								заказ принят. как только его соберут, вам придёт SMS-оповещение
 							</div>
+							<button
+								type='button'
+								onClick={handleDismissSuccess}
+								className='btn-firework h-[40px] px-6 rounded-[10px] text-[13px]'
+							>
+								продолжить покупки
+							</button>
 						</div>
 					</div>
 				)}
@@ -155,6 +195,7 @@ const ProductCart = ({ loading = false }) => {
 					total={total}
 					minOrder={MIN_ORDER_AMOUNT}
 					onContinue={handleContinue}
+					submitting={submitting}
 				/>
 			)}
 		</aside>

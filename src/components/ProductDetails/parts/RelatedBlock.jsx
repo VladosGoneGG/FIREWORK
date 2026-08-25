@@ -68,8 +68,6 @@ const RelatedBlock = ({
 		}
 	}, [])
 
-	if (!related.length) return null
-
 	const itemsDesktop = useMemo(
 		() => related.slice(0, visiblePerRow),
 		[related, visiblePerRow]
@@ -77,6 +75,8 @@ const RelatedBlock = ({
 
 	// мобилка: максимум 6 карточек
 	const itemsMobile = useMemo(() => related.slice(0, MOBILE_LIMIT), [related])
+
+	if (!related.length) return null
 
 	const fewCardsInRow = visiblePerRow <= FEW_PER_ROW
 

@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react'
 import { fmtPriceRub } from '../../../utils/format'
 
-const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
+const CartFooter = ({ total = 0, minOrder = 0, onContinue, submitting = false }) => {
 	const { enough, missing } = useMemo(() => {
 		const miss = Math.max(0, (minOrder || 0) - (total || 0))
 		return {
@@ -11,7 +11,7 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 	}, [total, minOrder])
 
 	const handleClick = () => {
-		if (enough) onContinue?.()
+		if (enough && !submitting) onContinue?.()
 	}
 
 	return (
@@ -33,7 +33,8 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 			<button
 				type='button'
 				onClick={handleClick}
-				disabled={!enough}
+				disabled={!enough || submitting}
+				aria-busy={submitting}
 				className={[
 					'w-[275px] mt-3 h-[50px] rounded-[12px] text-[15px] font-baron lowercase transition-colors',
 					'max-[1040px]:mx-auto',
@@ -42,10 +43,12 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 						? 'btn-firework isolate text-white' // градиент + ховер/актив из твоего CSS
 						: 'bg-[#efebe7] text-[#bd52e9]', // пассивная кнопка без оверлеев
 				].join(' ')}
-				aria-label={enough ? 'продолжить' : 'добавьте ещё'}
-				title={enough ? 'продолжить' : 'добавьте ещё'}
+				aria-label={submitting ? 'отправка заказа' : enough ? 'продолжить' : 'добавьте ещё'}
+				title={submitting ? 'отправка заказа' : enough ? 'продолжить' : 'добавьте ещё'}
 			>
-				{enough ? (
+				{submitting ? (
+					<span className='relative z-[1]'>отправляем…</span>
+				) : enough ? (
 					<span className='relative z-[1]'>продолжить</span>
 				) : (
 					<span className='relative z-[1]'>

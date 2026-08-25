@@ -13,11 +13,6 @@ const ProductDetails = ({
 	onOpenSubcategory,
 	onSelectProduct,
 }) => {
-	if (!product) return null
-
-	const img = product.images?.[0]
-	const inStock = Number.isFinite(product.stock) ? product.stock : 15
-
 	useEffect(() => {
 		const isMobile = () =>
 			typeof window !== 'undefined' &&
@@ -38,6 +33,11 @@ const ProductDetails = ({
 			window.removeEventListener('nav:open-subcategory', handleNav)
 		}
 	}, [onBack])
+
+	if (!product) return null
+
+	const img = product.images?.[0]
+	const inStock = Number.isFinite(product.stock) ? product.stock : 15
 
 	return (
 		<section
