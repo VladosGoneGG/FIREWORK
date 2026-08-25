@@ -43,9 +43,6 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "dist",
-    "src",
-    "vite.config.js"
+    "node_modules"
   ]
 }

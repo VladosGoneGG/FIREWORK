@@ -1,14 +1,12 @@
 @import 'tailwindcss';
 
 /*
- * Design tokens ported from src/index.css (the Vite app's stylesheet).
- * Kept as a single source during the migration; src/index.css stays
- * untouched for the old app until it is removed in the final cleanup
- * phase. Font tokens differ from the old file: BaronNeue now comes from
- * next/font/local (see app/layout.tsx) instead of a raw @font-face, and
- * Calibri is dropped — it is a proprietary Microsoft typeface bundled
- * without a verified web-embedding licence (see SECURITY_INCIDENT.md's
- * sibling finding in the audit report, "Licensing risk — Calibri").
+ * Design tokens for the brand: colors, the button gradient, and the
+ * BaronNeue font token (the actual font files load via next/font/local
+ * in app/layout.tsx, not a raw @font-face). Calibri — part of the
+ * original brand assets — was deliberately not carried over: a bundled
+ * proprietary Microsoft typeface with no verified web-embedding licence
+ * (see SECURITY_INCIDENT.md's sibling finding, "Licensing risk — Calibri").
  */
 @theme inline {
 	/* Цвета */

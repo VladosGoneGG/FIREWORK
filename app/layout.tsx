@@ -6,14 +6,17 @@ import SiteHeader from '@/components/layout/SiteHeader'
 import { siteUrl } from './robots'
 import './globals.css'
 
-// Brand display/body face, ported from src/assets/fonts (see globals.css
-// for why Calibri was dropped rather than ported). Weight files match the
-// old @font-face declarations: 400 regular, 700 bold, 900 black.
+// Brand display/body face — three weights, matching the brand's original
+// @font-face declarations (400 regular, 700 bold, 900 black). Calibri
+// (the fourth weight in the original brand assets) was never carried
+// over — a bundled proprietary Microsoft font with no verified
+// web-embedding licence (see the audit's "Licensing risk — Calibri"
+// finding).
 const baronNeue = localFont({
 	src: [
-		{ path: '../src/assets/fonts/BaronNeue.woff2', weight: '400', style: 'normal' },
-		{ path: '../src/assets/fonts/BaronNeueBold.woff2', weight: '700', style: 'normal' },
-		{ path: '../src/assets/fonts/BaronNeueBlack.woff2', weight: '900', style: 'normal' },
+		{ path: '../assets/fonts/BaronNeue.woff2', weight: '400', style: 'normal' },
+		{ path: '../assets/fonts/BaronNeueBold.woff2', weight: '700', style: 'normal' },
+		{ path: '../assets/fonts/BaronNeueBlack.woff2', weight: '900', style: 'normal' },
 	],
 	variable: '--font-baron-neue',
 	display: 'swap',
