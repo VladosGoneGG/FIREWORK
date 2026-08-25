@@ -1,10 +1,15 @@
-import axios from 'axios'
-
 // =============================
-// Конфигурация Telegram бота
+// БЕЗОПАСНОСТЬ (см. SECURITY_INCIDENT.md)
 // =============================
-const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || ''
-const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID || ''
+// Раньше здесь читался токен Telegram-бота из VITE_TELEGRAM_BOT_TOKEN и
+// запрос уходил напрямую из браузера. Любая переменная VITE_* попадает в
+// клиентский бандл в открытом виде, поэтому секрет утекал каждому
+// посетителю. Токен отозван; клиентская отправка удалена без замены.
+//
+// На статическом Vite-хостинге нет безопасного места для секрета — сервер
+// появится только на этапе миграции на Next.js (Server Action, см. P6 в
+// отчёте аудита). До тех пор sendOrder() честно сообщает, что реальная
+// отправка недоступна, вместо того чтобы притворяться успехом.
 
 // =============================
 //  Формирование полезной нагрузки
@@ -33,10 +38,9 @@ export function buildOrderPayload(formData, cartState) {
 	}
 }
 
-// =============================
-// Форматирование сообщения для Telegram
-// =============================
-function formatTelegramMessage(payload) {
+// Формат сообщения для Telegram — часть бизнес-поведения, сохраняем
+// один-в-один для будущего Server Action (см. orders/telegram.ts в P6).
+export function formatTelegramMessage(payload) {
 	const user = payload.user[0]
 
 	let text = '<b>Новый заказ!</b>\n\n'
@@ -59,36 +63,16 @@ function formatTelegramMessage(payload) {
 }
 
 // =============================
-// Отправка в Telegram
+// Отправка заказа
 // =============================
-async function sendToBot(text) {
-	if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-		throw new Error('Telegram bot configuration is missing')
-	}
-
-	const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`
-
-	return axios.post(url, {
-		chat_id: TELEGRAM_CHAT_ID,
-		text,
-		parse_mode: 'HTML',
-	})
-}
-
-// =============================
-// Отправка заказа: на сервер + Telegram
-// =============================
-export async function sendOrder(payload) {
-	try {
-		const text = formatTelegramMessage(payload)
-		await sendToBot(text)
-
-		// Имитация задержки для будущей интеграции с бекендом
-		await new Promise(resolve => setTimeout(resolve, 350))
-
-		return { ok: true }
-	} catch (err) {
-		console.error('Ошибка при отправке заказа:', err)
-		return { ok: false, error: err }
+// Пока нет сервера — реальная отправка недоступна. Возвращаем явную ошибку
+// с кодом, а не притворяемся успехом (было: C2 в аудите). Вызывающий код
+// обязан показать пользователю ошибку и сохранить корзину.
+export async function sendOrder() {
+	return {
+		ok: false,
+		code: 'transport_unavailable',
+		message:
+			'Оформление заказа временно недоступно. Пожалуйста, свяжитесь с нами по телефону.',
 	}
 }
