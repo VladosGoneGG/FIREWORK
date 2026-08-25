@@ -24,6 +24,8 @@
 // directly — swapping in a real data source later means replacing that
 // one file, not touching call sites.
 
+import { slugify } from '@/lib/slugify'
+
 export interface Product {
 	id: number
 	slug: string
@@ -64,26 +66,6 @@ const random = mulberry32(20260825) // fixed seed — see module docblock
 
 const pick = <T,>(arr: T[]): T => arr[Math.floor(random() * arr.length)]
 const rnd = (a: number, b: number) => Math.floor(random() * (b - a + 1)) + a
-
-// ================== Transliteration (for readable, stable slugs) ========
-const TRANSLIT: Record<string, string> = {
-	а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z',
-	и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r',
-	с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'ts', ч: 'ch', ш: 'sh',
-	щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
-}
-
-function slugify(name: string, id: number): string {
-	const translit = name
-		.toLowerCase()
-		.split('')
-		.map(ch => TRANSLIT[ch] ?? ch)
-		.join('')
-	const kebab = translit
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-	return `${kebab}-${id}`
-}
 
 // ================== Vocab ==================
 const MFR = ['PIROFF', 'Joker', 'Maxsem', 'РусСалют', 'Fieria']

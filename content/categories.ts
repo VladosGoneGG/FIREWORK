@@ -1,6 +1,8 @@
 // Static reference data — ported from src/mocks/mockCategories.js. No
 // randomness involved, so nothing to make deterministic here.
 
+import { slugify } from '@/lib/slugify'
+
 export interface Subcategory {
 	id: number
 	name: string
@@ -9,10 +11,11 @@ export interface Subcategory {
 export interface Category {
 	id: number
 	name: string
+	slug: string
 	subcategories: Subcategory[]
 }
 
-export const categories: Category[] = [
+const raw: Omit<Category, 'slug'>[] = [
 	{ id: 0, name: 'все', subcategories: [] },
 	{
 		id: 1,
@@ -94,5 +97,10 @@ export const categories: Category[] = [
 		],
 	},
 ]
+
+export const categories: Category[] = raw.map(c => ({
+	...c,
+	slug: c.name === 'все' ? 'all' : slugify(c.name),
+}))
 
 export default categories

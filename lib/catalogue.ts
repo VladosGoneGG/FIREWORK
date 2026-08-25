@@ -32,6 +32,10 @@ export async function getCategories(): Promise<Category[]> {
 	return categoriesFixture
 }
 
+export async function getCategoryBySlug(slug: string): Promise<Category | null> {
+	return categoriesFixture.find(c => c.slug === slug) ?? null
+}
+
 export async function getRelatedProducts(product: Product, limit = 10): Promise<Product[]> {
 	return productsFixture
 		.filter(p => p.category === product.category && p.id !== product.id)

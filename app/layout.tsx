@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
+import SiteHeader from '@/components/layout/SiteHeader'
 import './globals.css'
 
 // Brand display/body face, ported from src/assets/fonts (see globals.css
@@ -16,7 +17,7 @@ const baronNeue = localFont({
 })
 
 export const metadata: Metadata = {
-	title: 'Салюты',
+	title: { default: 'Салюты — крупнейший магазин пиротехники', template: '%s — Салюты' },
 }
 
 export const viewport: Viewport = {
@@ -30,7 +31,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
 	return (
 		<html lang="ru" className={baronNeue.variable}>
-			<body>{children}</body>
+			<body>
+				<SiteHeader />
+				<main className="mx-auto max-w-[1240px] px-4 py-5">{children}</main>
+			</body>
 		</html>
 	)
 }
