@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import AddToCartButton from '@/components/cart/AddToCartButton'
 import ProductGrid from '@/components/catalogue/ProductGrid'
 import {
 	getCurrentPrice,
@@ -139,6 +140,12 @@ export default async function ProductPage({
 							сертификат: {product.certificateNumber}
 						</p>
 					)}
+
+					<AddToCartButton
+						productId={product.id}
+						outOfStock={product.stock <= 0}
+						className="h-11 w-full"
+					/>
 				</div>
 			</div>
 

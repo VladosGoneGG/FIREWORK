@@ -1,8 +1,8 @@
 import Link from 'next/link'
+import CartButton from '@/components/cart/CartButton'
 
-// Server Component — no cart/search-modal/burger-menu yet (cart is P5;
-// this is deliberately just the parts of the old Header that are pure
-// content: city, tagline, legal name, logo-as-home-link).
+// Server Component — the cart button below is the one Client Component
+// leaf (it needs the cart's item count); everything else here is static.
 export default function SiteHeader() {
 	return (
 		<header className="w-full bg-white shadow-[0_0_10px_0_rgba(0,0,0,0.08)]">
@@ -14,9 +14,12 @@ export default function SiteHeader() {
 					</span>
 					<span>ип федяков и.в.</span>
 				</div>
-				<Link href="/" className="font-baron text-xl font-bold text-[#1d0353]">
-					Салюты
-				</Link>
+				<div className="flex items-center justify-between gap-3">
+					<Link href="/" className="font-baron text-xl font-bold text-[#1d0353]">
+						Салюты
+					</Link>
+					<CartButton />
+				</div>
 			</div>
 		</header>
 	)

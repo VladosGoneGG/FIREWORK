@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
+import CartDrawer from '@/components/cart/CartDrawer'
+import { CartProvider } from '@/components/cart/CartProvider'
 import SiteHeader from '@/components/layout/SiteHeader'
 import './globals.css'
 
@@ -32,8 +34,11 @@ export default function RootLayout({
 	return (
 		<html lang="ru" className={baronNeue.variable}>
 			<body>
-				<SiteHeader />
-				<main className="mx-auto max-w-[1240px] px-4 py-5">{children}</main>
+				<CartProvider>
+					<SiteHeader />
+					<main className="mx-auto max-w-[1240px] px-4 py-5">{children}</main>
+					<CartDrawer />
+				</CartProvider>
 			</body>
 		</html>
 	)
