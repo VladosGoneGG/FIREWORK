@@ -28,41 +28,33 @@
 
 	/* Шрифты — переменные приходят из next/font/local в layout.tsx */
 	--font-baron: var(--font-baron-neue), sans-serif;
+
+	/* Анимации Dialog (components/ui/Dialog.tsx). Tailwind v4 generates the
+	   animate-fade-in / animate-slide-in-right utilities from these
+	   --animate-* tokens automatically — but it does NOT generate the
+	   @keyframes themselves, and (found live, at 430px width: the cart
+	   drawer was rendering permanently off-screen at translateX(380px),
+	   i.e. stuck at the animation's 0% frame) a @keyframes block declared
+	   inside @layer utilities is silently dropped by Tailwind's v4 CSS
+	   pipeline rather than emitted. They must be plain top-level rules. */
+	--animate-fade-in: fade-in 150ms ease-out;
+	--animate-slide-in-right: slide-in-right 180ms ease-out;
 }
 
-@layer utilities {
-	@keyframes fade-in {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
+@keyframes fade-in {
+	from {
+		opacity: 0;
 	}
-	@keyframes slide-in-right {
-		from {
-			transform: translateX(100%);
-		}
-		to {
-			transform: translateX(0);
-		}
+	to {
+		opacity: 1;
 	}
-	@keyframes wiggle-subtle {
-		0% {
-			transform: translate3d(0, 0, 0);
-		}
-		40% {
-			transform: translate3d(0, -1px, 0);
-		}
-		70% {
-			transform: translate3d(0, 0.5px, 0);
-		}
-		100% {
-			transform: translate3d(0, 0, 0);
-		}
+}
+@keyframes slide-in-right {
+	from {
+		transform: translateX(100%);
 	}
-	.animate-wiggle-subtle {
-		animation: wiggle-subtle 180ms ease-out both;
+	to {
+		transform: translateX(0);
 	}
 }
 

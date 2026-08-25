@@ -75,7 +75,7 @@ export default function Dialog({
 	return createPortal(
 		<div className="fixed inset-0 z-50">
 			<div
-				className="motion-safe:animate-[fade-in_150ms_ease-out] absolute inset-0 bg-black/40"
+				className="motion-safe:animate-fade-in absolute inset-0 bg-black/40"
 				onClick={onClose}
 				aria-hidden
 			/>
@@ -86,8 +86,8 @@ export default function Dialog({
 				aria-labelledby={titleId}
 				className={
 					side === 'right'
-						? 'motion-safe:animate-[slide-in-right_180ms_ease-out] absolute right-0 top-0 h-full w-full max-w-[380px] overflow-y-auto bg-white shadow-xl'
-						: 'motion-safe:animate-[fade-in_150ms_ease-out] absolute left-1/2 top-1/2 max-h-[85vh] w-full max-w-[480px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white shadow-xl'
+						? 'motion-safe:animate-slide-in-right absolute right-0 top-0 h-full w-full max-w-[380px] overflow-y-auto bg-white shadow-xl'
+						: 'motion-safe:animate-fade-in absolute left-1/2 top-1/2 max-h-[85vh] w-full max-w-[480px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white shadow-xl'
 				}
 			>
 				{children}
