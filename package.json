@@ -7,7 +7,7 @@
 		"dev": "vite --base /",
 		"build": "vite build",
 		"lint": "eslint .",
-		"lint:next": "eslint --config eslint.next.config.mjs app",
+		"lint:next": "eslint --config eslint.next.config.mjs app lib content",
 		"preview": "vite preview",
 		"test": "vitest run",
 		"dev:next": "next dev",
