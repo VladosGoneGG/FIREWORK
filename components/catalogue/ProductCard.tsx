@@ -1,7 +1,25 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import AddToCartButton from '@/components/cart/AddToCartButton'
 import { getCurrentPrice, hasValidDiscount, type Product } from '@/lib/catalogue'
 import { formatDuration, formatPrice } from '@/lib/format'
+
+function Param({
+	icon,
+	title,
+	children,
+}: {
+	icon: string
+	title?: string
+	children: React.ReactNode
+}) {
+	return (
+		<div className="flex items-center gap-[7px]" title={title}>
+			<Image src={icon} alt="" width={21} height={21} aria-hidden />
+			<span>{children}</span>
+		</div>
+	)
+}
 
 // Server Component — AddToCartButton is the only client-side piece
 // (cart state, localStorage); everything else here costs nothing on the
@@ -17,52 +35,70 @@ export default function ProductCard({ product }: { product: Product }) {
 	const outOfStock = product.stock <= 0
 
 	return (
-		<article className="group flex flex-col rounded-2xl bg-white p-3 shadow-[0_0_10px_0_rgba(0,0,0,0.08)] transition hover:shadow-[0_0_16px_0_rgba(0,0,0,0.14)]">
-			<Link href={`/product/${product.slug}`} className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red">
-				<div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-[#f6f4f2] text-xs text-[#9c9c9c]">
-					{outOfStock && (
-						<span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white">
-							нет в наличии
-						</span>
+		<article className="font-baron h-[233px] w-full shrink-0 flex-[1_0_121px] max-w-[150px] rounded-[10px] bg-[#F2F2F2] p-[5px] transition-[background-color,box-shadow,transform] duration-300 ease-in-out hover:-translate-y-[1px] hover:bg-[#efebe6] hover:shadow-[0_0px_5px_rgba(0,0,0,0.15)] focus-within:ring-2 focus-within:ring-[#bd52e9]">
+			<div className="flex h-full w-full flex-col">
+				<Link
+					href={`/product/${product.slug}`}
+					className="flex flex-1 flex-col focus-visible:outline-none"
+				>
+					<div className="relative h-[111px] w-full overflow-hidden rounded-[5px] bg-white shadow-[0_0_5px_0_rgba(0,0,0,0.15)]">
+						<Image
+							src="/SVG/full-block.svg"
+							alt=""
+							fill
+							className="object-cover"
+						/>
+						{outOfStock && (
+							<span className="absolute left-1 top-1 rounded-[6px] bg-black/60 px-1.5 py-[1px] text-[9px] text-white">
+								Нет в наличии
+							</span>
+						)}
+					</div>
+
+					<div className="pt-[5px] text-left">
+						<h3 className="font-barlow line-clamp-1 break-words text-[13px] font-semibold leading-tight text-[#333]">
+							{product.name}
+						</h3>
+						<div className="text-[8px] font-bold lowercase text-[#625a51]">
+							{product.manufacturer || '—'}
+						</div>
+					</div>
+
+					<div className="flex justify-center gap-2.5 text-[12px] leading-none text-[#625A51]">
+						<div className="flex h-[25px] w-[65px] flex-col gap-0.5 whitespace-nowrap">
+							<Param icon="/SVG/rocket.svg">{product.shots ?? '—'}</Param>
+							<Param icon="/SVG/time.svg" title={formatDuration(product.durationSec)}>
+								{formatDuration(product.durationSec)}
+							</Param>
+						</div>
+						<div className="flex h-[25px] w-[50px] flex-col whitespace-nowrap">
+							<Param icon="/SVG/radius.svg">{product.caliber ?? '—'}</Param>
+							<Param icon="/SVG/star.svg">{product.effectsCount ?? '—'}</Param>
+						</div>
+					</div>
+				</Link>
+
+				<div className="mt-auto flex items-end justify-between">
+					{discounted ? (
+						<div className="ml-1 pt-2">
+							<div className="relative bottom-2.5 h-[2.5px] text-[12px] font-bold lowercase text-[#BD52E9] line-through">
+								{formatPrice(product.price)}
+							</div>
+							<div className="text-[15px] font-bold text-[#333]">
+								{formatPrice(currentPrice)}
+								<span className="font-baron relative top-0.5 left-[1px] text-[8px] lowercase">
+									руб.
+								</span>
+							</div>
+						</div>
+					) : (
+						<div className="ml-1 pb-[3px] pt-2 text-[15px] font-bold text-[#333]">
+							{formatPrice(currentPrice)}
+							<span className="font-baron relative top-0.5 text-[8px] lowercase">руб.</span>
+						</div>
 					)}
-					нет фото
+					<AddToCartButton productId={product.id} outOfStock={outOfStock} />
 				</div>
-
-				<div className="mt-2 min-h-0">
-					<p className="truncate text-xs uppercase tracking-wide text-[#9c9c9c]">
-						{product.manufacturer}
-					</p>
-					<h3 className="font-baron truncate text-sm leading-tight text-[#333]">
-						{product.name}
-					</h3>
-				</div>
-
-				<dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-[#625a51]">
-					<dt className="opacity-70">залпов</dt>
-					<dd className="font-medium">{product.shots}</dd>
-					<dt className="opacity-70">калибр</dt>
-					<dd className="font-medium">{product.caliber}″</dd>
-					<dt className="opacity-70">длительность</dt>
-					<dd className="font-medium">{formatDuration(product.durationSec)}</dd>
-				</dl>
-			</Link>
-
-			<div className="mt-3 flex items-end justify-between gap-2">
-				{discounted ? (
-					<div>
-						<div className="text-xs text-[#bd52e9] line-through">
-							{formatPrice(product.price)} ₽
-						</div>
-						<div className="font-baron text-base font-semibold text-[#333]">
-							{formatPrice(currentPrice)} ₽
-						</div>
-					</div>
-				) : (
-					<div className="font-baron text-base font-semibold text-[#333]">
-						{formatPrice(currentPrice)} ₽
-					</div>
-				)}
-				<AddToCartButton productId={product.id} outOfStock={outOfStock} className="h-11 shrink-0 px-3" />
 			</div>
 		</article>
 	)

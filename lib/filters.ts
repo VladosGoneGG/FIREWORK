@@ -27,7 +27,10 @@ export interface Filters {
 	hasCertificate?: boolean
 }
 
-const norm = (s: unknown): string =>
+// Exported for the filter panel's tag editor (components/catalogue/filters/TagsEditor.tsx),
+// which needs the identical ё/е-fold normalization when displaying/deduping tags
+// client-side — reusing this beats re-deriving the same fold rule twice.
+export const norm = (s: unknown): string =>
 	String(s ?? '')
 		.trim()
 		.toLowerCase()

@@ -6,6 +6,16 @@ const nextConfig: NextConfig = {
 	// resolves) — see Dockerfile, which copies exactly this output rather
 	// than shipping the whole repo + full node_modules into the image.
 	output: 'standalone',
+	images: {
+		// The restored brand icons/placeholder art are all first-party SVGs
+		// under public/SVG — Next's image optimizer refuses to serve SVG
+		// unless explicitly allowed. CSP/sandbox flags are Next's own
+		// documented mitigation for the one real risk (an SVG could embed
+		// script) when doing so.
+		dangerouslyAllowSVG: true,
+		contentDispositionType: 'attachment',
+		contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+	},
 }
 
 export default nextConfig

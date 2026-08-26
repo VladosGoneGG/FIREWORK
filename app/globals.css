@@ -24,8 +24,14 @@
 		#c054eb 100%
 	);
 
-	/* Шрифты — переменные приходят из next/font/local в layout.tsx */
+	/* Шрифты — переменные приходят из next/font/local и next/font/google в layout.tsx */
 	--font-baron: var(--font-baron-neue), sans-serif;
+	--font-barlow: var(--font-barlow), sans-serif;
+	--font-inter: var(--font-inter), sans-serif;
+
+	/* Токены кнопки-«кожи» (btn-firework, btn-firework-filter) */
+	--btn-r: 10px;
+	--skin-inset: 1px;
 
 	/* Анимации Dialog (components/ui/Dialog.tsx). Tailwind v4 generates the
 	   animate-fade-in / animate-slide-in-right utilities from these
@@ -96,5 +102,66 @@
 	}
 	.btn-firework:active {
 		@apply bg-none !text-[#c054eb] bg-firework-active;
+	}
+
+	/* Filter-panel "показать" button — gradient skin via ::before, hover/active
+	   overlay via ::after, ported verbatim from the original's btn-firework-filter
+	   (index.css) since it's a distinct construction from .btn-firework, not a
+	   duplicate: no fixed size, and the active state fades the gradient to 0
+	   instead of swapping to a flat color. */
+	.btn-firework-filter {
+		@apply relative cursor-pointer text-white;
+		background: transparent;
+		border-radius: var(--btn-r);
+		overflow: hidden;
+		isolation: isolate;
+		backface-visibility: hidden;
+		contain: paint;
+		transform: translateZ(0);
+		-webkit-tap-highlight-color: transparent;
+	}
+	.btn-firework-filter::before {
+		content: '';
+		position: absolute;
+		inset: var(--skin-inset);
+		border-radius: calc(var(--btn-r) - var(--skin-inset));
+		background: var(--background-image-firework-radial);
+		opacity: 1;
+		transition: opacity 150ms ease-out;
+		will-change: opacity;
+		z-index: 0;
+	}
+	.btn-firework-filter::after {
+		content: '';
+		position: absolute;
+		inset: var(--skin-inset);
+		border-radius: calc(var(--btn-r) - var(--skin-inset));
+		background: transparent;
+		opacity: 0;
+		transition: opacity 300ms ease-in-out;
+		will-change: opacity;
+		z-index: 0;
+	}
+	.btn-firework-filter > * {
+		position: relative;
+		z-index: 1;
+		color: #fff;
+	}
+	.btn-firework-filter:hover::after {
+		background: var(--color-firework-hover);
+		opacity: 1;
+	}
+	.btn-firework-filter:active {
+		background: var(--color-firework-active);
+	}
+	.btn-firework-filter:active::before {
+		opacity: 0;
+	}
+	.btn-firework-filter:active::after {
+		opacity: 0;
+	}
+	.btn-firework-filter:active,
+	.btn-firework-filter:active * {
+		color: #625a51;
 	}
 }

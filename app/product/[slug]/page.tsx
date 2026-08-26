@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import AddToCartButton from '@/components/cart/AddToCartButton'
+import PriceQtyButton from '@/components/cart/PriceQtyButton'
+import ProductDetailReveal from '@/components/catalogue/ProductDetailReveal'
 import ProductGrid from '@/components/catalogue/ProductGrid'
 import {
 	getCurrentPrice,
@@ -11,7 +13,6 @@ import {
 	hasValidDiscount,
 } from '@/lib/catalogue'
 import { formatDuration, formatPrice } from '@/lib/format'
-import { powerBucket } from '@/lib/filters'
 import { slugify } from '@/lib/slugify'
 
 export async function generateStaticParams() {
@@ -38,6 +39,17 @@ export async function generateMetadata({
 		openGraph: { title: product.name, description, type: 'website', url: `/product/${product.slug}` },
 		twitter: { card: 'summary', title: product.name, description },
 	}
+}
+
+function Param({ icon, children, title }: { icon: string; children: React.ReactNode; title?: string }) {
+	return (
+		<div className="flex items-center gap-1 text-[12px] text-[#6b6b6b]">
+			<Image src={icon} alt="" width={21} height={21} className="shrink-0" />
+			<span className="max-w-[44px] min-w-0 truncate font-medium text-[#4a4a4a]" title={title}>
+				{children}
+			</span>
+		</div>
+	)
 }
 
 export default async function ProductPage({
@@ -72,91 +84,118 @@ export default async function ProductPage({
 		},
 	}
 
+	// The original's product detail view (ProductDetails.jsx) is a compound
+	// composition, not one photo: a big decorative hero (MediaBlock, the
+	// SAME fireworksSvg.svg on every product, not per-product art) sits
+	// beside a self-contained SideInfoCard — its own small 200×200
+	// object-contain product photo, name, manufacturer, a 2×2 icon+value
+	// parameter grid (shots/caliber/duration/effects, in that exact order,
+	// 21×21 icons), stock line, old price, and the qty+price CTA. Restored
+	// 1:1 rather than the single-image/definition-list version this page
+	// had before.
 	return (
-		<div className="space-y-8">
-			{/* JSON-LD we constructed above from typed fields, not user input */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-			/>
+		<ProductDetailReveal>
+			<div className="space-y-2.5 pt-[10px]">
+				{/* JSON-LD we constructed above from typed fields, not user input */}
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+				/>
 
-			<nav className="font-baron text-xs lowercase text-[#9c9c9c]" aria-label="Хлебные крошки">
-				<Link href="/" className="hover:text-firework-red">
-					главная
-				</Link>{' '}
-				/{' '}
-				<Link href={`/category/${slugify(product.category)}`} className="hover:text-firework-red">
-					{product.category}
-				</Link>
-			</nav>
+				<nav className="font-baron px-1 text-xs lowercase text-[#9c9c9c]" aria-label="Хлебные крошки">
+					<Link href="/" className="hover:text-firework-red">
+						главная
+					</Link>{' '}
+					/{' '}
+					<Link href={`/category/${slugify(product.category)}`} className="hover:text-firework-red">
+						{product.category}
+					</Link>
+				</nav>
 
-			<div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_320px]">
-				<div className="flex aspect-video items-center justify-center rounded-2xl bg-[#f6f4f2] text-sm text-[#9c9c9c]">
-					нет фото
+				<div className="flex flex-col gap-2.5 min-[681px]:flex-row min-[681px]:items-stretch min-[681px]:gap-[10px]">
+					{/* MediaBlock: decorative hero, identical on every product */}
+					<div className="relative h-[240px] min-w-0 flex-1 overflow-hidden rounded-[10px] bg-[#f6f4f2] min-[681px]:h-[400px]">
+						<Image src="/SVG/fireworksSvg.svg" alt="" fill className="rounded-[12px] object-cover" />
+						<div className="pointer-events-none absolute inset-0 grid place-items-center">
+							<div className="grid place-items-center rounded-[10px] px-3 py-2 shadow-lg">
+								<Image src="/SVG/overlay.svg" alt="" width={50} height={50} aria-hidden />
+							</div>
+						</div>
+					</div>
+
+					{/* SideInfoCard */}
+					<aside className="flex w-full flex-shrink-0 items-start gap-[10px] min-[681px]:w-[200px] min-[681px]:flex-col">
+						<div className="grid h-52 w-48 shrink-0 place-items-center rounded-[20px] bg-[#f6f4f2] min-[681px]:h-[200px] min-[681px]:w-full min-[681px]:rounded-[12px]">
+							<Image
+								src="/SVG/full-block.svg"
+								alt={product.name}
+								width={160}
+								height={160}
+								className="h-full w-full object-contain"
+							/>
+						</div>
+
+						<div className="flex min-w-0 flex-1 flex-col items-start bg-white px-1.5 pt-2.5 min-[681px]:flex-none min-[681px]:pt-0">
+							<h1
+								className="font-baron w-full truncate text-[18px] leading-tight text-[#333] max-[1039px]:text-[14px] min-[681px]:w-[150px]"
+								title={product.name}
+							>
+								{product.name}
+							</h1>
+
+							<div className="font-baron mt-[5px] text-[10px] text-[#625a51] uppercase">
+								<span className="lowercase">производитель:</span> {product.manufacturer || '—'}
+							</div>
+
+							<div className="font-baron ml-1 mt-2.5 grid grid-cols-2 gap-x-2 gap-y-2 text-[12px]">
+								<Param icon="/SVG/rocket.svg">{product.shots ?? '—'}</Param>
+								<Param icon="/SVG/radius.svg">{product.caliber ?? '—'}</Param>
+								<Param icon="/SVG/time.svg" title={formatDuration(product.durationSec)}>
+									{formatDuration(product.durationSec)}
+								</Param>
+								<Param icon="/SVG/star.svg">{product.effectsCount ?? '—'}</Param>
+							</div>
+
+							<p
+								className={`font-baron mt-[5px] ml-1 mb-[7px] text-[13px] leading-[13px] whitespace-nowrap lowercase ${discounted ? '' : 'mb-[26px]'} ${
+									product.stock > 0 ? 'text-[#098D00]' : 'text-red-600'
+								}`}
+							>
+								{product.stock > 0 ? (
+									<>
+										в наличии <span>{product.stock}</span> шт
+									</>
+								) : (
+									'нет в наличии'
+								)}
+							</p>
+
+							{discounted && (
+								<div className="font-baron relative right-1.5 bottom-1.5 text-[14px] text-[#BD52E9] line-through decoration-1">
+									{formatPrice(product.price)}
+								</div>
+							)}
+
+							<div className="w-full min-[681px]:-ml-1.5 min-[681px]:w-[200px]">
+								<PriceQtyButton productId={product.id} unitPrice={price} outOfStock={product.stock <= 0} />
+							</div>
+						</div>
+					</aside>
 				</div>
 
-				<div className="space-y-3 rounded-2xl bg-white p-4 shadow-[0_0_10px_0_rgba(0,0,0,0.08)]">
-					<p className="text-xs uppercase tracking-wide text-[#9c9c9c]">
-						{product.manufacturer}
-					</p>
-					<h1 className="font-baron text-xl leading-tight text-[#333]">{product.name}</h1>
-
-					{discounted ? (
-						<div>
-							<div className="text-sm text-[#bd52e9] line-through">
-								{formatPrice(product.price)} ₽
-							</div>
-							<div className="font-baron text-2xl font-semibold text-[#333]">
-								{formatPrice(price)} ₽
-							</div>
-						</div>
-					) : (
-						<div className="font-baron text-2xl font-semibold text-[#333]">
-							{formatPrice(price)} ₽
-						</div>
-					)}
-
-					<dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-[#625a51]">
-						<dt className="opacity-70">залпов</dt>
-						<dd className="font-medium">{product.shots}</dd>
-						<dt className="opacity-70">калибр</dt>
-						<dd className="font-medium">{product.caliber}″</dd>
-						<dt className="opacity-70">длительность</dt>
-						<dd className="font-medium">{formatDuration(product.durationSec)}</dd>
-						<dt className="opacity-70">эффектов</dt>
-						<dd className="font-medium">{product.effectsCount}</dd>
-						<dt className="opacity-70">мощность</dt>
-						<dd className="font-medium">{powerBucket(product)}</dd>
-						<dt className="opacity-70">воспламенение</dt>
-						<dd className="font-medium">{product.ignitionType}</dd>
-					</dl>
-
-					<p
-						className={`text-xs ${product.stock > 0 ? 'text-green-700' : 'text-red-600'}`}
-					>
-						{product.stock > 0 ? `в наличии ${product.stock} шт` : 'нет в наличии'}
-					</p>
-
-					{product.certificateNumber && (
-						<p className="text-xs text-[#9c9c9c]">
-							сертификат: {product.certificateNumber}
+				<div className="rounded-[12px] bg-transparent p-2">
+					<div className="scroll-hidden max-h-[120px] w-full overflow-y-auto">
+						<div className="font-baron mb-1 text-[18px] font-semibold">Описание:</div>
+						<p className="text-[16px] opacity-80">{product.description || 'Описание товара отсутствует.'}</p>
+						<div className="font-baron mt-3 mb-1 text-[18px] font-semibold">Сертификат</div>
+						<p className="text-[16px] opacity-80">
+							{product.certificateNumber?.trim() || '—'}
 						</p>
-					)}
-
-					<AddToCartButton
-						productId={product.id}
-						outOfStock={product.stock <= 0}
-						className="h-11 w-full"
-					/>
+					</div>
 				</div>
+
+				{related.length > 0 && <ProductGrid title="добавь в набор" products={related} />}
 			</div>
-
-			<section className="space-y-2 rounded-2xl bg-white p-4 shadow-[0_0_10px_0_rgba(0,0,0,0.08)]">
-				<h2 className="font-baron text-sm font-semibold text-[#333]">описание</h2>
-				<p className="text-sm text-[#625a51]">{product.description}</p>
-			</section>
-
-			{related.length > 0 && <ProductGrid title="добавь в набор" products={related} />}
-		</div>
+		</ProductDetailReveal>
 	)
 }

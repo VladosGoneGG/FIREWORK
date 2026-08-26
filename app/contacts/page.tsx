@@ -8,7 +8,8 @@ export const metadata: Metadata = {
 
 export default function ContactsPage() {
 	return (
-		<div className="mx-auto flex max-w-[720px] flex-col gap-8 rounded-2xl bg-white p-6 shadow-[0_0_10px_0_rgba(0,0,0,0.08)]">
+		<div className="mx-auto max-w-[1240px] px-4 py-5">
+			<div className="mx-auto flex max-w-[720px] flex-col gap-8 rounded-2xl bg-white p-6 shadow-[0_0_10px_0_rgba(0,0,0,0.08)]">
 			<div className="font-baron space-y-3">
 				<p className="text-lg text-[#625a51]">контакты:</p>
 				<ul className="space-y-1">
@@ -66,6 +67,7 @@ export default function ContactsPage() {
 					</li>
 				</ul>
 				<p className="text-sm text-[#bd52e9]">сертификат профессионального пиротехника</p>
+			</div>
 			</div>
 		</div>
 	)

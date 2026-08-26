@@ -7,22 +7,16 @@ vi.mock('@/lib/cart/actions', () => ({
 	resolveCartAction: (...args: unknown[]) => resolveCartAction(...args),
 }))
 
-// Imported after the mock so CartDrawer's dependency graph picks it up.
+// Imported after the mock so CartAside's dependency graph picks it up.
 const { CartProvider, useCart } = await import('./CartProvider')
-const { default: CartDrawer } = await import('./CartDrawer')
+const { default: CartAside } = await import('./CartAside')
 
 function Trigger() {
-	const { addItem, openCart } = useCart()
-	return (
-		<button
-			onClick={() => {
-				addItem(1)
-				openCart()
-			}}
-		>
-			add-and-open
-		</button>
-	)
+	const { addItem } = useCart()
+	// CartAside is always visible (a docked column, not an open/close
+	// overlay) — the trigger only needs to add the item, unlike the old
+	// CartDrawer test which also had to call openCart().
+	return <button onClick={() => addItem(1)}>add</button>
 }
 
 beforeEach(() => {
@@ -30,7 +24,7 @@ beforeEach(() => {
 	resolveCartAction.mockReset()
 })
 
-describe('CartDrawer — minimum order threshold', () => {
+describe('CartAside — minimum order threshold', () => {
 	it('disables checkout and shows the shortfall below ₽4,800', async () => {
 		resolveCartAction.mockResolvedValue({
 			lines: [
@@ -55,10 +49,10 @@ describe('CartDrawer — minimum order threshold', () => {
 		render(
 			<CartProvider>
 				<Trigger />
-				<CartDrawer />
+				<CartAside />
 			</CartProvider>
 		)
-		await act(async () => screen.getByText('add-and-open').click())
+		await act(async () => screen.getByText('add').click())
 
 		const button = await screen.findByRole('button', { name: /не хватает ещё/ })
 		expect((button as HTMLButtonElement).disabled).toBe(true)
@@ -92,10 +86,10 @@ describe('CartDrawer — minimum order threshold', () => {
 		render(
 			<CartProvider>
 				<Trigger />
-				<CartDrawer />
+				<CartAside />
 			</CartProvider>
 		)
-		await act(async () => screen.getByText('add-and-open').click())
+		await act(async () => screen.getByText('add').click())
 
 		const button = await screen.findByRole('button', { name: 'продолжить' })
 		expect((button as HTMLButtonElement).disabled).toBe(false)
@@ -111,10 +105,10 @@ describe('CartDrawer — minimum order threshold', () => {
 		render(
 			<CartProvider>
 				<Trigger />
-				<CartDrawer />
+				<CartAside />
 			</CartProvider>
 		)
-		await act(async () => screen.getByText('add-and-open').click())
+		await act(async () => screen.getByText('add').click())
 
 		const alert = await screen.findByRole('alert')
 		expect(alert.textContent).toMatch(/больше недоступен/)

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import CategoryNav from '@/components/catalogue/CategoryNav'
+import FilterToggleButton from '@/components/catalogue/FilterToggleButton'
 import ProductGrid from '@/components/catalogue/ProductGrid'
-import SearchForm from '@/components/catalogue/SearchForm'
-import SortLinks from '@/components/catalogue/SortLinks'
-import { getCategories, getProducts } from '@/lib/catalogue'
+import SortDropdown from '@/components/catalogue/SortDropdown'
+import PromoSlider from '@/components/home/PromoSlider'
+import { getProducts } from '@/lib/catalogue'
 import { applyFilters, filterDiscounted } from '@/lib/filters'
 import { applySort, type SortKey } from '@/lib/sort'
 
@@ -32,39 +32,36 @@ export default async function Home({
 	const query = params.q?.trim() ?? ''
 	const sort: SortKey = isSortKey(params.sort) ? params.sort : 'price-asc'
 
-	const [allProducts, categories] = await Promise.all([getProducts(), getCategories()])
+	const allProducts = await getProducts()
 
 	if (query) {
 		const results = applySort(applyFilters(allProducts, { search: query }), sort)
 		return (
-			<div className="grid grid-cols-1 gap-5 md:grid-cols-[240px_1fr]">
-				<div className="md:sticky md:top-5 md:self-start">
-					<CategoryNav categories={categories} />
-				</div>
-				<div className="space-y-4">
-					<SearchForm defaultValue={query} />
-					<div className="flex items-center justify-between">
-						<h1 className="font-baron text-lg lowercase text-[#333]">
-							найдено {results.length}
-						</h1>
-						{results.length > 0 && <SortLinks basePath="/" searchParams={params} value={sort} />}
+			<div className="space-y-4 pt-[10px]">
+				<div className="flex items-start justify-between gap-2 pl-1">
+					<h1 className="font-baron text-lg leading-none text-[#333] lowercase">
+						найдено {results.length}
+					</h1>
+					<div className="ml-auto flex items-end gap-2">
+						<FilterToggleButton />
+						{results.length > 0 && <SortDropdown basePath="/" searchParams={params} value={sort} />}
 					</div>
-					{results.length > 0 ? (
-						<ProductGrid products={results} />
-					) : (
-						<div className="rounded-2xl bg-white p-8 text-center">
-							<p className="font-baron text-sm text-[#625a51]">
-								по запросу «{query}» ничего не найдено
-							</p>
-							<Link
-								href="/"
-								className="font-baron text-firework-red mt-3 inline-block text-xs hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
-							>
-								смотреть весь каталог
-							</Link>
-						</div>
-					)}
 				</div>
+				{results.length > 0 ? (
+					<ProductGrid products={results} />
+				) : (
+					<div className="rounded-2xl bg-white p-8 text-center">
+						<p className="font-baron text-sm text-[#625a51]">
+							по запросу «{query}» ничего не найдено
+						</p>
+						<Link
+							href="/"
+							className="font-baron text-firework-red mt-3 inline-block text-xs hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-firework-red"
+						>
+							смотреть весь каталог
+						</Link>
+					</div>
+				)}
 			</div>
 		)
 	}
@@ -81,20 +78,16 @@ export default async function Home({
 	}
 
 	return (
-		<div className="grid grid-cols-1 gap-5 md:grid-cols-[240px_1fr]">
-			<div className="md:sticky md:top-5 md:self-start">
-				<CategoryNav categories={categories} />
+		<div className="space-y-6 pt-[10px]">
+			<PromoSlider />
+			<div className="flex items-end justify-end gap-2">
+				<FilterToggleButton />
+				<SortDropdown basePath="/" searchParams={params} value={sort} />
 			</div>
-			<div className="space-y-6">
-				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-					<SearchForm />
-					<SortLinks basePath="/" searchParams={params} value={sort} />
-				</div>
-				{discounted.length > 0 && <ProductGrid title="акции" products={discounted} />}
-				{[...byCategory.entries()].map(([category, items]) => (
-					<ProductGrid key={category} title={category} products={applySort(items, sort)} />
-				))}
-			</div>
+			{discounted.length > 0 && <ProductGrid title="акции" products={discounted} />}
+			{[...byCategory.entries()].map(([category, items]) => (
+				<ProductGrid key={category} title={category} products={applySort(items, sort)} />
+			))}
 		</div>
 	)
 }
