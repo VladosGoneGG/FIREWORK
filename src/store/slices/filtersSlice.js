@@ -75,6 +75,8 @@ const filtersSlice = createSlice({
 		},
 		resetForm(state) {
 			state.form = { ...initialForm }
+			state.applied = null
+			state.showFound = false
 		},
 		applyNow(state) {
 			state.applied = cleanForm(state.form)

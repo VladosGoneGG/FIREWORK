@@ -10,7 +10,6 @@ import PromoPanel from './components/PromoPanel/PromoPanel'
 import SearchBar from './components/Search/SearchBar'
 import SearchModal from './components/Search/SearchModal'
 import SubcategoryOverlay from './components/SubcategoryOverlay/SubcategoryOverlay'
-import useOverlayFilters from './hooks/useOverlayFilters'
 import useStickToBottom from './utils/useStickToBottom'
 
 // =============================
@@ -18,7 +17,6 @@ import useStickToBottom from './utils/useStickToBottom'
 // =============================
 const COLUMN_HEIGHT = 834
 const DETAILS_HEIGHT = 834
-const CENTER_WIDTH = 720
 
 function App() {
 	const [detailsMode, setDetailsMode] = useState(false)
@@ -36,16 +34,6 @@ function App() {
 		s => s.categories.selectedCategory || 'all'
 	)
 	const searchQuery = useSelector(s => s.products.searchQuery || '')
-
-	const { form, setField, reset: resetForm, normalized } = useOverlayFilters()
-	const [appliedFilters, setAppliedFilters] = useState({})
-	const [overlayCount, setOverlayCount] = useState(0)
-
-	const applyOverlay = () => setAppliedFilters({ ...normalized })
-	const clearOverlay = () => {
-		resetForm()
-		setAppliedFilters({})
-	}
 
 	const showSliderOnHome =
 		isLanding &&
@@ -94,18 +82,8 @@ function App() {
 									<SubcategoryOverlay
 										isOpen={filtersOpen}
 										onClose={() => setFiltersOpen(false)}
-										onApply={() => {
-											setIsLanding(false)
-											applyOverlay()
-										}}
-										onReset={() => {
-											setIsLanding(false)
-											clearOverlay()
-										}}
-										resultsCount={overlayCount}
-										form={form}
-										setField={setField}
-										reset={resetForm}
+										onApply={() => setIsLanding(false)}
+										onReset={() => setIsLanding(false)}
 									/>
 								</div>
 							</div>
@@ -143,12 +121,7 @@ function App() {
 											onConsumeExternalSelected={() =>
 												setSelectedFromSearch(null)
 											}
-											overlayFilters={appliedFilters}
-											overlayFiltersPreview={normalized}
-											onFiltersCountChange={setOverlayCount}
 											filtersOpen={filtersOpen}
-											narrow={!detailsMode}
-											narrowWidth={CENTER_WIDTH}
 											showSlider={showSliderOnHome}
 										/>
 									</div>

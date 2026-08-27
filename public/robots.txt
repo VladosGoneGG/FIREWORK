@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vladosgonegg.github.io/FIREWORK/sitemap.xml

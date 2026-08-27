@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 
+import useEscapeToClose from '../../hooks/useEscapeToClose'
 import {
 	selectFiltersForm,
 	selectPreviewCount,
@@ -33,6 +34,8 @@ export default function SubcategoryOverlay({
 	useEffect(() => {
 		if (isOpen) setVisible(true)
 	}, [isOpen])
+
+	useEscapeToClose(isOpen, onClose)
 
 	// размеры по макету
 	const W = 240

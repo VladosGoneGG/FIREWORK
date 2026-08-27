@@ -5,11 +5,6 @@ import HeaderMobile from './parts/HeaderMobile'
 import ProductPageMobile from './parts/ProductPageMobile'
 import SliderMobile from './parts/SliderMobile'
 
-// =============================
-// Константы
-// =============================
-const HEADER_HEIGHT = 62
-
 const STATIC_PAGES = ['/contacts', '/wholesale']
 
 const LayoutMobile = () => {
@@ -20,9 +15,9 @@ const LayoutMobile = () => {
 		<div className='bg-white w-auto h-[100dvh] md:h-[100vh]'>
 			<div className='relative scroll-hidden h-full overflow-y-auto overscroll-contain'>
 				<HeaderMobile />
-			<div className={`pt-[${HEADER_HEIGHT}px] mb-[80px]`}>
-				{/* ⬇️ просто не рисуем слайдер на статике, остальное не трогаем */}
-				{!isStaticPage && <SliderMobile />}
+				<div className=' mb-[80px]'>
+					{/* ⬇️ просто не рисуем слайдер на статике, остальное не трогаем */}
+					{!isStaticPage && <SliderMobile />}
 					<ProductPageMobile />
 				</div>
 				<BottomBarMobile />

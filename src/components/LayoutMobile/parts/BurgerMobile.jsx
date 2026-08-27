@@ -4,6 +4,8 @@ import { createPortal } from 'react-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 
+import useBodyScrollLock from '../../../hooks/useBodyScrollLock'
+import useEscapeToClose from '../../../hooks/useEscapeToClose'
 import { setCategorySmart } from '../../../store/slices/categoriesSlice'
 import { clearApplied } from '../../../store/slices/filtersSlice'
 import {
@@ -100,9 +102,6 @@ const BurgerMobile = () => {
 	const handleClose = useCallback(() => {
 		setFiltersOpen(false)
 		setOpen(false)
-		try {
-			document.body.style.overflow = ''
-		} catch {}
 	}, [])
 
 	const closeAndNotify = useCallback(
@@ -169,14 +168,8 @@ const BurgerMobile = () => {
 		[dispatch, closeAndNotify]
 	)
 
-	useEffect(() => {
-		if (!open) return
-		const prev = document.body.style.overflow
-		document.body.style.overflow = 'hidden'
-		return () => {
-			document.body.style.overflow = prev
-		}
-	}, [open])
+	useBodyScrollLock(open)
+	useEscapeToClose(open, handleClose)
 
 	const onApplyFilters = useCallback(() => {
 		dispatch(setFilters(form))
@@ -348,6 +341,7 @@ const BurgerMobile = () => {
 														resultsCount={resultsCount}
 														onApply={onApplyFilters}
 														onReset={onResetFilters}
+														onClose={() => setFiltersOpen(false)}
 													/>
 												</motion.div>
 											)}

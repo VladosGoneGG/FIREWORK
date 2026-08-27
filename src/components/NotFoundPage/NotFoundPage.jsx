@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import HeaderMobile from '../LayoutMobile/parts/HeaderMobile'
 import PressableButton from '../PressableButton/PressableButton'
+import Seo from '../Seo/Seo'
 
 const NotFoundPage = () => {
 	return (
@@ -11,6 +12,12 @@ const NotFoundPage = () => {
 				max-[1040px]:flex max-[1040px]:flex-col
 			'
 		>
+			<Seo
+				title='Страница не найдена — Салюты'
+				description='Запрошенная страница не найдена.'
+				path='/404'
+				noindex
+			/>
 			<div className='hidden max-[1040px]:block'>
 				<HeaderMobile />
 			</div>

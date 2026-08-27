@@ -26,6 +26,11 @@ const ProductCart = ({ loading = false }) => {
 	const formRef = useRef(null)
 	const [showForm, setShowForm] = useState(false)
 	const [success, setSuccess] = useState(false)
+	const successTimeoutRef = useRef(null)
+
+	useEffect(() => {
+		return () => clearTimeout(successTimeoutRef.current)
+	}, [])
 
 	// прокручиваемая область и сама форма:
 	const listScrollRef = useRef(null)
@@ -88,14 +93,12 @@ const ProductCart = ({ loading = false }) => {
 		await sendOrder(payload)
 		setSuccess(true)
 		setShowForm(false)
-		
-		const timeoutId = setTimeout(() => {
+
+		clearTimeout(successTimeoutRef.current)
+		successTimeoutRef.current = setTimeout(() => {
 			dispatch(clearCart())
 			setSuccess(false)
 		}, 5000)
-		
-		// Возвращаем функцию очистки для использования в useEffect при необходимости
-		return () => clearTimeout(timeoutId)
 	}
 
 	if (isLoading) return <ProductCartSkeleton />

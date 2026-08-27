@@ -1,6 +1,6 @@
 // src/components/LayoutMobile/parts/ProductPageMobile.jsx
 import { AnimatePresence, motion } from 'framer-motion'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -219,10 +219,15 @@ const ProductPageMobile = () => {
 	}, [selectedCategory, selectedSub, allItems, pageKey, navigate, dispatch])
 
 	// ====== Если на статике начали показывать товары — уходим на '/' ======
+	// (но не если товары уже были показаны ДО перехода на статику — иначе
+	// переход на /contacts с активной категорией тут же отбрасывает обратно)
+	const prevPageKeyRef = useRef(pageKey)
 	useEffect(() => {
 		const showingProducts =
 			shouldShowFound || activeSub || norm(selectedCategory) !== 'all'
-		if (pageKey && showingProducts) {
+		const justArrived = prevPageKeyRef.current !== pageKey
+		prevPageKeyRef.current = pageKey
+		if (pageKey && showingProducts && !justArrived) {
 			navigate('/', { replace: true })
 		}
 	}, [pageKey, shouldShowFound, activeSub, selectedCategory, navigate])

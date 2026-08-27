@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import ProductDetails from '../../components/ProductDetails/ProductDetails'
+import useBodyScrollLock from '../../hooks/useBodyScrollLock'
+import useEscapeToClose from '../../hooks/useEscapeToClose'
 import useMediaQuery from '../../hooks/useMediaQuery'
 import {
 	closeDetails,
@@ -41,6 +43,8 @@ export default function ProductDetailsOverlay() {
 
 	const displayProduct = isMobile ? product || stickyProduct : null
 
+	useBodyScrollLock(!!displayProduct)
+
 	const related = useMemo(() => {
 		if (!displayProduct) return []
 		const category = normalizeString(displayProduct.category)
@@ -53,6 +57,8 @@ export default function ProductDetailsOverlay() {
 		setStickyProduct(null)
 		dispatch(closeDetails())
 	}
+
+	useEscapeToClose(!!displayProduct, handleClose)
 
 	const handleSelectProduct = p => {
 		dispatch(openDetails(p)) // или openDetails({ id: p.id }) если у тебя так

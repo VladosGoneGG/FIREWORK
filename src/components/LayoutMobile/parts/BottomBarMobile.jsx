@@ -1,6 +1,8 @@
 // src/components/LayoutMobile/parts/BottomBarMobile.jsx
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import useBodyScrollLock from '../../../hooks/useBodyScrollLock'
+import useEscapeToClose from '../../../hooks/useEscapeToClose'
 import SearchBar from '../../Search/SearchBar'
 import MobileCartAccordionItems from './MobileCartAccordionItems'
 import ProductCartMobile from './ProductCartMobile'
@@ -10,15 +12,8 @@ const BottomBarMobile = () => {
 	const toggle = () => setOpen(v => !v)
 	const close = () => setOpen(false)
 
-	// блокировка скролла body при открытии
-	useEffect(() => {
-		if (!open) return
-		const prev = document.body.style.overflow
-		document.body.style.overflow = 'hidden'
-		return () => {
-			document.body.style.overflow = prev
-		}
-	}, [open])
+	useBodyScrollLock(open)
+	useEscapeToClose(open, close)
 
 	// 🔒 безопасный таргет высоты (по умолчанию 520), пересчёт после монтирования и на ресайзах
 	const [targetHeight, setTargetHeight] = useState(520)
