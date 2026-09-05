@@ -9,10 +9,17 @@ services:
       - PORT=3000
       - NODE_ENV=production
       - API_KEY=${API_KEY}
+      - FTP_DATA_DIR=${FTP_DATA_DIR:-/var/ftp/data}
+      - RETAIL_CSV_FILE=${RETAIL_CSV_FILE:-РОЗНИЦА_сайт_пример.csv}
+      - WHOLESALE_XLSX_FILE=${WHOLESALE_XLSX_FILE:-ОПТОВЫЕ цены_сайт_пример.xlsx}
     volumes:
       # Named volume seeded from the image's ./data on first run, then
-      # persists products.json / data/orders / uploaded CSVs across deploys.
+      # persists products.json across deploys.
       - backend_data:/app/data
+      # Read-only view of the vsftpd dropbox (local user "exchange",
+      # chrooted to /var/ftp) — the backend only ever reads the retail CSV
+      # and wholesale XLSX from here, never writes/renames/deletes.
+      - /var/ftp/data:/var/ftp/data:ro
     restart: unless-stopped
 
   web:
