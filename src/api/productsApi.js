@@ -6,8 +6,21 @@ import axios from 'axios'
 // API_KEY в этот файл никогда не попадает.
 
 // Одна страница каталога (карточки для списка/главной) — а не все товары разом.
-export async function getCatalogPage({ page = 1, limit = 48 } = {}) {
-	const { data } = await axios.get('/api/catalog', { params: { page, limit } })
+// category/search — серверная фильтрация (см. catalog.service.js на бэкенде);
+// signal — AbortController.signal, чтобы отменять устаревший запрос при
+// быстрой смене категории/поискового запроса.
+export async function getCatalogPage({
+	page = 1,
+	limit = 48,
+	category,
+	search,
+	signal,
+} = {}) {
+	const params = { page, limit }
+	if (category) params.category = category
+	if (search) params.search = search
+
+	const { data } = await axios.get('/api/catalog', { params, signal })
 	return data
 }
 

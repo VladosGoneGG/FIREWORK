@@ -8,6 +8,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import useCatalogFilterQuery from '../../hooks/useCatalogFilterQuery'
 import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import useProductsBoot from '../../hooks/useProductsBoot'
 import useRelated from '../../hooks/useRelated'
@@ -16,6 +17,7 @@ import { setCategorySmart } from '../../store/slices/categoriesSlice'
 import {
 	fetchProductDetail,
 	fetchProductsPage,
+	isDiscountedProduct,
 	selectDiscountedProducts,
 	selectFilteredProducts,
 } from '../../store/slices/productsSlice'
@@ -195,6 +197,17 @@ const ProductsPage = ({
 	const showHeaderFor = title =>
 		normalizeString(title) !== PROMO_KEY || shouldShowSlider || hasStaticPage
 
+	// Категория/поиск больше не докачивают весь каталог — берём только то,
+	// что сервер уже отфильтровал по выбранной категории (см.
+	// useCatalogFilterQuery / fetchQueryPage). Активен только для 'home'
+	// вида: подкатегория/акции ("посмотреть ещё") используют свой снимок
+	// activeSub.products и сюда не попадают (view === 'sub').
+	const catalogQuery = useCatalogFilterQuery({
+		category: selected,
+		search,
+		active: view === 'home',
+	})
+
 	const sections = useMemo(() => {
 		if (selected === 'all') return homeSections
 
@@ -203,13 +216,14 @@ const ProductsPage = ({
 			return [{ title: PROMO_KEY, items: promoItems }]
 		}
 
-		const sel = normalizeString(selected)
-		const inCategory = allItems.filter(p => normalizeString(p.category) === sel)
-		const catPromoItems = inCategory.filter(p => discountedSet.has(p.id))
+		// Сервер уже вернул только товары этой категории — дополнительная
+		// фильтрация по имени категории не нужна.
+		const inCategory = catalogQuery.items
+		const catPromoItems = inCategory.filter(isDiscountedProduct)
 
 		const bySub = new Map()
 		for (const p of inCategory) {
-			if (discountedSet.has(p.id)) continue
+			if (isDiscountedProduct(p)) continue
 			const sub = normalizeString(p.subcategory) || 'прочее'
 			if (!bySub.has(sub)) bySub.set(sub, [])
 			bySub.get(sub).push(p)
@@ -223,7 +237,7 @@ const ProductsPage = ({
 			result.push({ title: prettyTitle, items })
 		}
 		return result
-	}, [selected, allItems, discountedSet, homeSections])
+	}, [selected, allItems, discountedSet, homeSections, catalogQuery.items])
 
 	const sectionsSorted = useMemo(
 		() =>
@@ -327,20 +341,17 @@ const ProductsPage = ({
 
 	const canLoadMore = !!pagination?.hasNext
 
-	// Категория и поиск фильтруются по уже загруженным allItems, а не по
-	// бэкенду — если выбрана конкретная категория или идёт поиск, докачиваем
-	// остаток каталога, иначе результат может "потерять" товары с более
-	// поздних страниц (или поиск на секунду покажет "ничего не найдено").
-	const isSearching = !!String(search).trim()
-	useEffect(() => {
-		if ((selected !== 'all' || isSearching) && canLoadMore && status !== 'loading') {
-			loadMoreProducts()
-		}
-	}, [selected, isSearching, canLoadMore, status, loadMoreProducts])
+	// Пока выбрана конкретная категория или идёт поиск — источник "load
+	// more"/статуса переключается на server-side отфильтрованный
+	// catalogQuery вместо глобальной домашней пагинации.
+	const isFiltering = catalogQuery.isFiltering
+	const effectiveStatus = isFiltering ? catalogQuery.status : status
+	const effectiveCanLoadMore = isFiltering ? catalogQuery.canLoadMore : canLoadMore
+	const effectiveLoadMore = isFiltering ? catalogQuery.loadMore : loadMoreProducts
 
-	const homeSentinelRef = useInfiniteScroll(loadMoreProducts, {
-		enabled: canLoadMore && status !== 'loading' && view === 'home',
-		deps: [allItems.length],
+	const homeSentinelRef = useInfiniteScroll(effectiveLoadMore, {
+		enabled: effectiveCanLoadMore && effectiveStatus !== 'loading' && view === 'home',
+		deps: [isFiltering ? catalogQuery.items.length : allItems.length],
 	})
 
 	const FilterBar = (
@@ -486,9 +497,9 @@ const ProductsPage = ({
 														sortKey
 													)}
 													onSelectProduct={openDetails}
-													onLoadMore={loadMoreProducts}
-													canLoadMore={canLoadMore}
-													loadingMore={status === 'loading'}
+													onLoadMore={effectiveLoadMore}
+													canLoadMore={effectiveCanLoadMore}
+													loadingMore={effectiveStatus === 'loading'}
 												/>
 											</motion.div>
 										) : hasStaticPage ? (
@@ -524,6 +535,11 @@ const ProductsPage = ({
 												exit='exit'
 												className='space-y-6'
 											>
+												{isFiltering && effectiveStatus === 'loading' && !sectionsSorted.length && (
+													<div className='py-8 text-center text-[10px] text-[#625a51] lowercase font-baron'>
+														загрузка…
+													</div>
+												)}
 												{sectionsSorted.map(sec => (
 													<div key={sec.title}>
 														<ProductSection
@@ -531,13 +547,13 @@ const ProductsPage = ({
 															products={sec.items}
 															onSelectProduct={openDetails}
 															onOpenSubcategory={openSubcategory}
-															loading={status === 'loading'}
+															loading={effectiveStatus === 'loading'}
 															showHeader={showHeaderFor(sec.title)}
 															uncapped={selected !== 'all'}
 														/>
 													</div>
 												))}
-												{canLoadMore && (
+												{effectiveCanLoadMore && (
 													<div ref={homeSentinelRef} className='h-2' />
 												)}
 											</motion.div>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+import useCatalogFilterQuery from '../../../hooks/useCatalogFilterQuery'
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll'
 import useProductsBoot from '../../../hooks/useProductsBoot'
 import useSections from '../../../hooks/useSections'
@@ -14,7 +15,9 @@ import {
 	fetchProductsPage,
 	selectDiscountedProducts,
 	selectFilteredProducts,
+	selectFilters,
 } from '../../../store/slices/productsSlice'
+import { applyAdvancedFilter as applyProductFilters } from '../../../utils/filters'
 
 import {
 	clearApplied,
@@ -72,24 +75,42 @@ const ProductPageMobile = () => {
 	const showFoundFlag = useSelector(selectShowFound)
 	const foundItems = useSelector(selectFoundItems)
 
+	const productsFilters = useSelector(selectFilters)
+
 	// ===== local =====
 	const isSearching = !!String(search).trim()
 	const shouldShowFound = isSearching || showFoundFlag
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
 	const [activeSub, setActiveSub] = useState(null)
 
+	// Категория/поиск больше не докачивают весь каталог — берём только то,
+	// что сервер уже отфильтровал (см. desktop-версию/useCatalogFilterQuery).
+	// Неактивен, пока открыта подкатегория/акции (activeSub) — там свой
+	// снимок товаров, серверная category/search фильтрация туда не лезет.
+	const catalogQuery = useCatalogFilterQuery({
+		category: selectedCategory,
+		search,
+		active: !activeSub,
+	})
+
 	// ===== data prep =====
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
 		[discountedAll]
 	)
+	// "Живые" фильтры (модалка в BurgerMobile) применяются поверх
+	// отфильтрованных сервером товаров, когда выбрана категория/поиск —
+	// иначе как раньше, поверх обычного накопленного каталога.
+	const baseFiltered = catalogQuery.isFiltering
+		? applyProductFilters(catalogQuery.items, productsFilters)
+		: filtered
 	const homeDiscounted = useMemo(
-		() => filtered.filter(p => discountedSet.has(p.id)),
-		[filtered, discountedSet]
+		() => baseFiltered.filter(p => discountedSet.has(p.id)),
+		[baseFiltered, discountedSet]
 	)
 	const homeNonDiscounted = useMemo(
-		() => filtered.filter(p => !discountedSet.has(p.id)),
-		[filtered, discountedSet]
+		() => baseFiltered.filter(p => !discountedSet.has(p.id)),
+		[baseFiltered, discountedSet]
 	)
 
 	const sections = useSections(
@@ -192,23 +213,18 @@ const ProductPageMobile = () => {
 
 	const canLoadMore = !!pagination?.hasNext
 
-	// Категория и поиск фильтруются по уже загруженным allItems, а не по
-	// бэкенду (см. desktop-версию) — если выбрана конкретная категория или
-	// идёт поиск, докачиваем остаток каталога, иначе результат может
-	// "потерять" товары с поздних страниц.
-	useEffect(() => {
-		if (
-			(norm(selectedCategory) !== 'all' || isSearching) &&
-			canLoadMore &&
-			status !== 'loading'
-		) {
-			loadMoreProducts()
-		}
-	}, [selectedCategory, isSearching, canLoadMore, status, loadMoreProducts])
+	// Пока выбрана категория или идёт поиск — статус/пагинация берутся из
+	// server-side отфильтрованного catalogQuery, а не из глобальной
+	// домашней пагинации (см. desktop-версию).
+	const isFiltering = catalogQuery.isFiltering
+	const effectiveStatus = isFiltering ? catalogQuery.status : status
+	const effectiveCanLoadMore = isFiltering ? catalogQuery.canLoadMore : canLoadMore
+	const effectiveLoadMore = isFiltering ? catalogQuery.loadMore : loadMoreProducts
 
-	const homeSentinelRef = useInfiniteScroll(loadMoreProducts, {
-		enabled: canLoadMore && status !== 'loading' && !activeSub && !shouldShowFound,
-		deps: [allItems.length],
+	const homeSentinelRef = useInfiniteScroll(effectiveLoadMore, {
+		enabled:
+			effectiveCanLoadMore && effectiveStatus !== 'loading' && !activeSub && !shouldShowFound,
+		deps: [isFiltering ? catalogQuery.items.length : allItems.length],
 	})
 
 	// ====== Реакция на поиск ======
@@ -293,9 +309,9 @@ const ProductPageMobile = () => {
 			<FoundSection
 				products={applySort(foundItems || [], sortKey)}
 				onSelectProduct={openDetailsRedux}
-				onLoadMore={loadMoreProducts}
-				canLoadMore={!!pagination?.hasNext}
-				loadingMore={status === 'loading'}
+				onLoadMore={effectiveLoadMore}
+				canLoadMore={effectiveCanLoadMore}
+				loadingMore={effectiveStatus === 'loading'}
 			/>
 		</motion.div>
 	)
@@ -333,6 +349,11 @@ const ProductPageMobile = () => {
 			exit='exit'
 			className='space-y-6'
 		>
+			{isFiltering && effectiveStatus === 'loading' && !sectionsSorted.length && (
+				<div className='py-8 text-center text-[10px] text-[#625a51] lowercase font-baron'>
+					загрузка…
+				</div>
+			)}
 			{sectionsSorted.map(sec => (
 				<motion.div
 					key={sec.title}
@@ -347,13 +368,13 @@ const ProductPageMobile = () => {
 						products={sec.items}
 						onSelectProduct={openDetailsRedux}
 						onOpenSubcategory={openSubcategory}
-						loading={status === 'loading'}
+						loading={effectiveStatus === 'loading'}
 						showHeader
 						uncapped={norm(selectedCategory) !== 'all'}
 					/>
 				</motion.div>
 			))}
-			{canLoadMore && <div ref={homeSentinelRef} className='h-2' />}
+			{effectiveCanLoadMore && <div ref={homeSentinelRef} className='h-2' />}
 		</motion.div>
 	)
 

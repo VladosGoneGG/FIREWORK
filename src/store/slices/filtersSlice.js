@@ -93,6 +93,7 @@ export default filtersSlice.reducer
 
 // ---------- Базовые селекторы ----------
 const selectProductsItems = s => s.products?.items || []
+const selectQueryItems = s => s.products?.query?.items || []
 const selectSearchRaw = s => s.products?.searchQuery || ''
 export const selectFiltersForm = s => s.filters.form
 export const selectAppliedFilters = s => s.filters.applied
@@ -104,23 +105,6 @@ const norm = v =>
 		.toLowerCase()
 		.replaceAll('ё', 'е')
 		.trim()
-
-const matchesSearch = (p, qn) => {
-	if (!qn) return true
-	const haystack = [
-		p?.name,
-		p?.manufacturer,
-		p?.category,
-		p?.subcategory,
-		...(Array.isArray(p?.tags) ? p.tags : []),
-		p?.description,
-		p?.sku,
-	]
-		.filter(Boolean)
-		.map(norm)
-		.join(' | ')
-	return haystack.includes(qn)
-}
 
 // ---------- Мемоизированные селекторы ----------
 
@@ -137,17 +121,24 @@ export const selectPreviewCount = createSelector(
 // FoundSection = поиск ∩ applied-фильтры. Возвращаем:
 // - null — если нет ни поиска, ни applied (чтобы секция скрывалась);
 // - массив (тот же самый экземпляр при одинаковых входах) — иначе.
+//
+// Текстовый поиск теперь фильтруется на сервере (см. fetchQueryPage /
+// useCatalogFilterQuery) — поэтому при активном поиске базой служит
+// products.query.items (уже отфильтрованный сервером набор), а не весь
+// накопленный каталог. matchesSearch больше не нужен для этого случая:
+// повторная фильтрация по searchRaw на клиенте могла бы на секунду
+// показать пустой результат, пока debounce ещё не долетел до сервера.
+// Если поиска нет, а есть только "продвинутые" фильтры (модалка "фильтр"),
+// поведение не меняется — они по-прежнему применяются к всему каталогу.
 export const selectFoundItems = createSelector(
-	[selectProductsItems, selectAppliedFilters, selectSearchRaw],
-	(items, applied, searchRaw) => {
-		const qn = norm(searchRaw)
-		const hasSearch = qn.length > 0
+	[selectProductsItems, selectQueryItems, selectAppliedFilters, selectSearchRaw],
+	(items, queryItems, applied, searchRaw) => {
+		const hasSearch = norm(searchRaw).length > 0
 		const hasApplied = !!applied
 
 		if (!hasSearch && !hasApplied) return null
 
-		let base = items
-		if (hasSearch) base = base.filter(p => matchesSearch(p, qn))
+		let base = hasSearch ? queryItems : items
 		if (hasApplied) base = applyAdvancedFilter(base, applied)
 
 		return base

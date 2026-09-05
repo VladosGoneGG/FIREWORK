@@ -138,6 +138,63 @@ export const fetchProductDetail = createAsyncThunk(
 	}
 )
 
+// Одна страница каталога, отфильтрованная сервером по category/search —
+// используется вместо докачки всего каталога при выборе категории или
+// поиске (см. useCatalogFilterQuery). thunkAPI.signal передаётся в axios,
+// поэтому dispatch(...).abort() реально отменяет сетевой запрос.
+export const fetchQueryPage = createAsyncThunk(
+	'products/fetchQueryPage',
+	async ({ category, search, page = 1, limit = 48 } = {}, { signal, rejectWithValue }) => {
+		try {
+			const data = await getCatalogPage({ page, limit, category, search, signal })
+			return {
+				items: (data?.items || []).map(normalizeCatalogItem),
+				pagination: data?.pagination || null,
+			}
+		} catch (err) {
+			return rejectWithValue(
+				err?.response?.data?.error || err?.message || 'Ошибка загрузки товаров'
+			)
+		}
+	}
+)
+
+const QUERY_CACHE_TTL_MS = 2 * 60 * 1000
+const QUERY_CACHE_MAX_ENTRIES = 8
+
+export function makeQueryKey(category, search) {
+	const c = String(category || '').trim().toLowerCase()
+	const s = String(search || '').trim().toLowerCase()
+	return `${c}|${s}`
+}
+
+// Не createAsyncThunk: сначала проверяет лёгкий in-memory кэш (переключение
+// обратно на недавно открытую категорию/запрос — без сети), и только если
+// кэша нет или он устарел — реально идёт в API. Возвращает то, что вернул
+// dispatch(fetchQueryPage(...)) (со свойством .abort()) либо null, если
+// обошлись кэшем — вызывающая сторона может это использовать для отмены
+// предыдущего запроса при быстрой смене категории/поиска.
+export function loadCatalogQuery({ category, search } = {}) {
+	return (dispatch, getState) => {
+		const key = makeQueryKey(category, search)
+		const cached = getState().products.queryCache[key]
+		const isFresh = cached && Date.now() - cached.updatedAt < QUERY_CACHE_TTL_MS
+
+		if (isFresh) {
+			dispatch(
+				productsSlice.actions.hydrateQueryFromCache({
+					key,
+					category: category || null,
+					search: search || '',
+				})
+			)
+			return null
+		}
+
+		return dispatch(fetchQueryPage({ category, search, page: 1 }))
+	}
+}
+
 // ================== Helpers ==================
 const norm = s =>
 	String(s || '')
@@ -188,6 +245,19 @@ const INITIAL_FILTERS = {
 	hasCertificate: false,
 }
 
+const INITIAL_QUERY = {
+	key: null,
+	category: null,
+	search: '',
+	page: 0,
+	limit: 48,
+	items: [],
+	hasNext: false,
+	totalItems: 0,
+	status: 'idle',
+	error: null,
+}
+
 const productsSlice = createSlice({
 	name: 'products',
 	initialState: {
@@ -197,6 +267,13 @@ const productsSlice = createSlice({
 		pagination: null, // { page, limit, totalItems, totalPages, hasNext, hasPrev }
 		searchQuery: '',
 		filters: INITIAL_FILTERS,
+
+		// Отдельное состояние для category/search-фильтрованного просмотра —
+		// заполняется через fetchQueryPage/loadCatalogQuery, не смешивается
+		// с items/pagination выше (те остаются для обычного "все товары"
+		// домашнего просмотра с постраничной подгрузкой при скролле).
+		query: INITIAL_QUERY,
+		queryCache: {}, // key -> { items, page, hasNext, totalItems, limit, updatedAt }
 	},
 	reducers: {
 		setSearchQuery: (state, action) => {
@@ -228,9 +305,110 @@ const productsSlice = createSlice({
 		resetFilters(state) {
 			state.filters = INITIAL_FILTERS
 		},
+
+		// Мгновенная гидратация query из кэша (см. loadCatalogQuery) — без сети.
+		hydrateQueryFromCache(state, action) {
+			const { key, category, search } = action.payload
+			const cached = state.queryCache[key]
+			if (!cached) return
+
+			state.query = {
+				key,
+				category,
+				search,
+				page: cached.page,
+				limit: cached.limit,
+				items: cached.items,
+				hasNext: cached.hasNext,
+				totalItems: cached.totalItems,
+				status: 'succeeded',
+				error: null,
+			}
+		},
 	},
 	extraReducers: builder => {
 		builder
+			.addCase(fetchQueryPage.pending, (state, action) => {
+				const { category, search, page = 1 } = action.meta.arg || {}
+				const key = makeQueryKey(category, search)
+
+				if (page <= 1 || state.query.key !== key) {
+					// Новый ключ (или повторная страница 1) — сбрасываем сразу,
+					// чтобы старые результаты предыдущей категории/запроса
+					// никогда не "мигнули" на экране поверх новых.
+					state.query = {
+						...INITIAL_QUERY,
+						key,
+						category: category || null,
+						search: search || '',
+						status: 'loading',
+					}
+				} else {
+					state.query.status = 'loading'
+				}
+			})
+			.addCase(fetchQueryPage.fulfilled, (state, action) => {
+				const { category, search, page = 1 } = action.meta.arg || {}
+				const key = makeQueryKey(category, search)
+
+				// Guard от гонки: пока этот запрос летел, пользователь мог
+				// переключиться на другую категорию/запрос — тогда результат
+				// уже неактуален и не должен затирать текущее состояние
+				// (пример: искали "роза", потом сразу "тюльпан" — ответ на
+				// "роза" пришёл позже и должен быть проигнорирован).
+				if (state.query.key !== key) return
+
+				const pagination = action.payload.pagination
+				const resolvedPage = pagination?.page ?? page
+
+				state.query.status = 'succeeded'
+				state.query.error = null
+				state.query.page = resolvedPage
+				state.query.hasNext = !!pagination?.hasNext
+				state.query.totalItems = pagination?.totalItems ?? 0
+
+				if (resolvedPage <= 1) {
+					state.query.items = action.payload.items
+				} else {
+					const known = new Set(state.query.items.map(p => p.id))
+					for (const item of action.payload.items) {
+						if (!known.has(item.id)) state.query.items.push(item)
+					}
+				}
+
+				// Write-through в простой in-memory кэш — переключение обратно
+				// на недавнюю категорию/запрос не бьёт по сети снова.
+				const cacheKeys = Object.keys(state.queryCache)
+				if (cacheKeys.length >= QUERY_CACHE_MAX_ENTRIES && !state.queryCache[key]) {
+					let oldestKey = cacheKeys[0]
+					for (const k of cacheKeys) {
+						if (state.queryCache[k].updatedAt < state.queryCache[oldestKey].updatedAt) {
+							oldestKey = k
+						}
+					}
+					delete state.queryCache[oldestKey]
+				}
+				state.queryCache[key] = {
+					items: state.query.items,
+					page: state.query.page,
+					hasNext: state.query.hasNext,
+					totalItems: state.query.totalItems,
+					limit: state.query.limit,
+					updatedAt: Date.now(),
+				}
+			})
+			.addCase(fetchQueryPage.rejected, (state, action) => {
+				// Отменённый (abort) запрос — просто игнорируем, это не ошибка,
+				// его результат больше никому не нужен.
+				if (action.meta.aborted) return
+
+				const { category, search } = action.meta.arg || {}
+				const key = makeQueryKey(category, search)
+				if (state.query.key !== key) return // тоже устарело — игнор
+
+				state.query.status = 'failed'
+				state.query.error = action.payload || action.error?.message || 'Ошибка'
+			})
 			.addCase(fetchProductsPage.pending, state => {
 				state.status = 'loading'
 				state.error = null
@@ -267,15 +445,17 @@ export const { setSearchQuery, clearSearchQuery, setFilters, resetFilters } =
 
 /* ===================== Селекторы ===================== */
 export const selectFilters = s => s.products.filters
+export const selectQueryState = s => s.products.query
+
+export function isDiscountedProduct(p) {
+	const d = Number(p?.discountPrice)
+	const base = Number(p?.price)
+	return Number.isFinite(d) && d > 0 && (!Number.isFinite(base) || d < base)
+}
 
 export const selectDiscountedProducts = createSelector(
 	[s => s.products.items],
-	items =>
-		items.filter(p => {
-			const d = Number(p?.discountPrice)
-			const base = Number(p?.price)
-			return Number.isFinite(d) && d > 0 && (!Number.isFinite(base) || d < base)
-		})
+	items => items.filter(isDiscountedProduct)
 )
 
 // Главный селектор (правка: корректная проверка price.max)
