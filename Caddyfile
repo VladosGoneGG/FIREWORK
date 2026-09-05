@@ -1,0 +1,25 @@
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Public route — the backend mounts it directly, no auth, no rewrite.
+	handle /downloads/* {
+		reverse_proxy backend:3000
+	}
+
+	# Everything else under /api/* maps to the backend's /api/v1/* routes.
+	# The backend requires a Bearer token on every /api/v1/* request; in dev
+	# the Vite proxy injected it server-side, here Caddy does the same job.
+	handle /api/* {
+		uri replace /api /api/v1 1
+		reverse_proxy backend:3000 {
+			header_up Authorization "Bearer {$API_KEY}"
+		}
+	}
+
+	# SPA: serve the built files, falling back to index.html for client-side routes.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

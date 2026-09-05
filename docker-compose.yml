@@ -1,0 +1,41 @@
+services:
+  backend:
+    # Expects the api-salutka repo checked out as a sibling of this one:
+    #   some-folder/
+    #     FIREWORK-original/   <- this repo (docker compose runs from here)
+    #     api-salutka/
+    build: ../api-salutka
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - API_KEY=${API_KEY}
+    volumes:
+      # Named volume seeded from the image's ./data on first run, then
+      # persists products.json / data/orders / uploaded CSVs across deploys.
+      - backend_data:/app/data
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      args:
+        VITE_BASE_PATH: /
+        VITE_TELEGRAM_BOT_TOKEN: ${VITE_TELEGRAM_BOT_TOKEN:-}
+        VITE_TELEGRAM_CHAT_ID: ${VITE_TELEGRAM_CHAT_ID:-}
+    environment:
+      - DOMAIN=${DOMAIN:-salutxprime.ru}
+      - API_KEY=${API_KEY}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend_data:
+  caddy_data:
+  caddy_config:

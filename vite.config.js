@@ -13,7 +13,9 @@ export default defineConfig(({ mode }) => {
 
 	return {
 		plugins: [react(), tailwindcss()],
-		base: isProd ? '/FIREWORK/' : '/',
+		// GitHub Pages serves this as a project site under /FIREWORK/; the VPS
+		// deploy serves it from the domain root, so it overrides via build arg.
+		base: env.VITE_BASE_PATH || (isProd ? '/FIREWORK/' : '/'),
 		server: {
 			proxy: {
 				// Browser calls relative /api/products; dev proxy forwards it to
