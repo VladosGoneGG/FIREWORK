@@ -7,11 +7,8 @@ const initialForm = {
 	tags: [],
 	types: [],
 	manufacturers: [],
-	ignitionType: [],
 	shots: [],
 	power: [],
-	view: [],
-	size: [],
 	price: { min: null, max: null },
 	time: { min: null, max: null },
 }
@@ -29,16 +26,7 @@ function setByPath(obj, path, value) {
 
 function cleanForm(form) {
 	const f = JSON.parse(JSON.stringify(form || {}))
-	const arrFields = [
-		'tags',
-		'types',
-		'manufacturers',
-		'ignitionType',
-		'shots',
-		'power',
-		'view',
-		'size',
-	]
+	const arrFields = ['tags', 'types', 'manufacturers', 'shots', 'power']
 	for (const k of arrFields) {
 		if (!Array.isArray(f[k]) || f[k].length === 0) delete f[k]
 	}

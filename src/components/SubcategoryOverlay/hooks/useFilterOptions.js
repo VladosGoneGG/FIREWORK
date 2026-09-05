@@ -22,12 +22,6 @@ const useFilterOptions = items => {
 		() => deriveOptions('manufacturer'),
 		[deriveOptions]
 	)
-	const IGNITIONS = useMemo(
-		() => deriveOptions('ignitionType'),
-		[deriveOptions]
-	)
-	const VIEWS = useMemo(() => deriveOptions('view'), [deriveOptions])
-	const SIZES = useMemo(() => deriveOptions('size'), [deriveOptions])
 	const POWERS = useMemo(() => deriveOptions('power'), [deriveOptions])
 
 	const SHOTS_PRESETS = [1, 2, 3, 4, 50, 100]
@@ -35,9 +29,6 @@ const useFilterOptions = items => {
 	return {
 		PRODUCT_TYPES,
 		MANUFACTURERS,
-		IGNITIONS,
-		VIEWS,
-		SIZES,
 		POWERS,
 		SHOTS_PRESETS,
 	}

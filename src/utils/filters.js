@@ -60,9 +60,6 @@ function tagsMatch(requiredTags, product) {
 				product?.manufacturer,
 				product?.category,
 				product?.subcategory,
-				product?.view,
-				product?.ignitionType,
-				product?.size,
 				product?.power,
 		  ]
 				.flatMap(x => String(x || '').split(/[^\p{L}\p{N}\-]+/u))
@@ -81,11 +78,8 @@ function tagsMatch(requiredTags, product) {
  *   tags: string[],
  *   types: string[],            // по category
  *   manufacturers: string[],
- *   ignitionType: string[],
  *   shots: (1|2|3|4|50|100)[],
  *   power: string[],            // 'слабый' | 'мощный'
- *   view: string[],
- *   size: string[],             // 'маленький' | 'большой'
  *   price: { min, max },
  *   time: { min, max }          // по durationSec
  * }
@@ -97,10 +91,7 @@ export function applyAdvancedFilter(items, form = {}) {
 	// Подготовили выбранные множества
 	const selTypes = toSet(form.types)
 	const selMfr = toSet(form.manufacturers)
-	const selIgnition = toSet(form.ignitionType)
 	const selPower = toSet(form.power)
-	const selView = toSet(form.view)
-	const selSize = toSet(form.size)
 
 	const selShots = new Set(toArr(form.shots)) // для кастомной функции
 
@@ -151,34 +142,16 @@ export function applyAdvancedFilter(items, form = {}) {
 			if (!selMfr.has(m)) return false
 		}
 
-		// 5) Тип воспламенения
-		if (selIgnition.size) {
-			const t = norm(p?.ignitionType)
-			if (!selIgnition.has(t)) return false
-		}
-
-		// 6) Хлопки
+		// 5) Хлопки
 		if (!shotsMatch(selShots, p?.shots)) return false
 
-		// 7) Мощность
+		// 6) Мощность
 		if (selPower.size) {
 			const pw = norm(p?.power)
 			if (!selPower.has(pw)) return false
 		}
 
-		// 8) Вид
-		if (selView.size) {
-			const v = norm(p?.view)
-			if (!selView.has(v)) return false
-		}
-
-		// 9) Размер
-		if (selSize.size) {
-			const s = norm(p?.size)
-			if (!selSize.has(s)) return false
-		}
-
-		// 10) Теги (все должны присутствовать)
+		// 7) Теги (все должны присутствовать)
 		if (!tagsMatch(form?.tags, p)) return false
 
 		return true

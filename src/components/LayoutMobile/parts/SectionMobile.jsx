@@ -13,12 +13,13 @@ const SectionMobile = ({
 	onOpenSubcategory,
 	loading = false,
 	showHeader = true,
+	uncapped = false,
 }) => {
 	const [visibleCount, setVisibleCount] = useState(INITIAL)
 
 	useEffect(() => {
-		setVisibleCount(Math.min(INITIAL, products.length || 0))
-	}, [products])
+		setVisibleCount(uncapped ? products.length || 0 : Math.min(INITIAL, products.length || 0))
+	}, [products, uncapped])
 
 	const visible = useMemo(
 		() => products.slice(0, visibleCount),

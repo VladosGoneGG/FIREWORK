@@ -8,11 +8,14 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import useProductsBoot from '../../hooks/useProductsBoot'
 import useRelated from '../../hooks/useRelated'
 import useSections from '../../hooks/useSections'
 import { setCategorySmart } from '../../store/slices/categoriesSlice'
 import {
+	fetchProductDetail,
+	fetchProductsPage,
 	selectDiscountedProducts,
 	selectFilteredProducts,
 } from '../../store/slices/productsSlice'
@@ -39,6 +42,7 @@ import { useStaticPageKey } from '../../pages/StaticPageContext'
 import { normalizeString } from '../../utils/normalize'
 import StaticContactsBlock from './static/StaticContactsBlock'
 import StaticWholesaleBlock from './static/StaticWholesaleBlock'
+import ProductStatusState from './ProductStatusState'
 
 const PROMO_KEY = 'акции'
 
@@ -74,6 +78,8 @@ const ProductsPage = ({
 	const pageKey = pageKeyProp ?? pageKeyCtx ?? null
 
 	const status = useSelector(s => s.products.status)
+	const productsError = useSelector(s => s.products.error)
+	const pagination = useSelector(s => s.products.pagination)
 	const selected = useSelector(s => s.categories.selectedCategory || 'all')
 	const allItems = useSelector(s => s.products.items)
 	const filtered = useSelector(selectFilteredProducts)
@@ -86,6 +92,20 @@ const ProductsPage = ({
 
 	const [selectedProduct, setSelectedProduct] = useState(null)
 	const [activeSub, setActiveSub] = useState(null)
+
+	// Карточка каталога не содержит сертификат/описание — как только
+	// fetchProductDetail подгрузит их, эта запись в products.items станет
+	// полнее, и открытую карточку нужно обновить тем же объектом.
+	const selectedProductFromStore = useSelector(s =>
+		selectedProduct
+			? s.products.items.find(p => p.id === selectedProduct.id) || null
+			: null
+	)
+	useEffect(() => {
+		if (selectedProductFromStore && selectedProductFromStore !== selectedProduct) {
+			setSelectedProduct(selectedProductFromStore)
+		}
+	}, [selectedProductFromStore, selectedProduct])
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
 
 	const anchorRef = useRef(null)
@@ -115,6 +135,8 @@ const ProductsPage = ({
 		setActiveSub(null)
 		setSelectedProduct(externalSelectedProduct)
 		dispatch(setShowFound(false))
+		if (externalSelectedProduct.id)
+			dispatch(fetchProductDetail(externalSelectedProduct.id))
 		onConsumeExternalSelected?.()
 	}, [externalSelectedProduct, onConsumeExternalSelected, dispatch])
 
@@ -187,6 +209,7 @@ const ProductsPage = ({
 
 		const bySub = new Map()
 		for (const p of inCategory) {
+			if (discountedSet.has(p.id)) continue
 			const sub = normalizeString(p.subcategory) || 'прочее'
 			if (!bySub.has(sub)) bySub.set(sub, [])
 			bySub.get(sub).push(p)
@@ -212,7 +235,7 @@ const ProductsPage = ({
 		() => sectionsSorted.find(s => normalizeString(s.title) === PROMO_KEY),
 		[sectionsSorted]
 	)
-	const promoHasMore = !!promoSec && promoSec.items.length > 5
+	const promoHasMore = selected === 'all' && !!promoSec && promoSec.items.length > 5
 
 	const openSubcategory = useCallback(
 		payload => {
@@ -285,8 +308,40 @@ const ProductsPage = ({
 		[activeList, sortKey]
 	)
 
-	const openDetails = useCallback(p => setSelectedProduct(p), [])
+	const openDetails = useCallback(
+		p => {
+			setSelectedProduct(p)
+			if (p?.id) dispatch(fetchProductDetail(p.id))
+		},
+		[dispatch]
+	)
 	const closeDetails = useCallback(() => setSelectedProduct(null), [])
+
+	// Догружает следующую страницу каталога (нужна для "загрузить ещё" —
+	// категория могла попасть на грузку частично, если открыта до того,
+	// как все её товары успели подъехать).
+	const loadMoreProducts = useCallback(() => {
+		if (status === 'loading' || !pagination?.hasNext) return
+		dispatch(fetchProductsPage({ page: pagination.page + 1 }))
+	}, [dispatch, status, pagination])
+
+	const canLoadMore = !!pagination?.hasNext
+
+	// Категория и поиск фильтруются по уже загруженным allItems, а не по
+	// бэкенду — если выбрана конкретная категория или идёт поиск, докачиваем
+	// остаток каталога, иначе результат может "потерять" товары с более
+	// поздних страниц (или поиск на секунду покажет "ничего не найдено").
+	const isSearching = !!String(search).trim()
+	useEffect(() => {
+		if ((selected !== 'all' || isSearching) && canLoadMore && status !== 'loading') {
+			loadMoreProducts()
+		}
+	}, [selected, isSearching, canLoadMore, status, loadMoreProducts])
+
+	const homeSentinelRef = useInfiniteScroll(loadMoreProducts, {
+		enabled: canLoadMore && status !== 'loading' && view === 'home',
+		deps: [allItems.length],
+	})
 
 	const FilterBar = (
 		<div className='relative'>
@@ -404,96 +459,117 @@ const ProductsPage = ({
 									</motion.div>
 								)}
 
-								<AnimatePresence mode='wait' initial={false}>
-									{showFound || String(search).trim() ? (
-										<motion.div
-											key={`found-${animKey}`}
-											layout='position'
-											transition={LAYOUT_T}
-											variants={BLOCK}
-											initial='hidden'
-											animate='show'
-											exit='exit'
-										>
-											<FoundSection
-												products={applySort(
-													Array.isArray(foundItems) ? foundItems : [],
-													sortKey
+								{!hasStaticPage &&
+								(status === 'failed' ||
+									(status === 'succeeded' && !allItems.length)) ? (
+									<ProductStatusState
+										status={status}
+										error={productsError}
+										isEmpty={!allItems.length}
+										onRetry={() => dispatch(fetchProductsPage({ page: 1 }))}
+									/>
+								) : (
+									<AnimatePresence mode='wait' initial={false}>
+										{showFound || String(search).trim() ? (
+											<motion.div
+												key={`found-${animKey}`}
+												layout='position'
+												transition={LAYOUT_T}
+												variants={BLOCK}
+												initial='hidden'
+												animate='show'
+												exit='exit'
+											>
+												<FoundSection
+													products={applySort(
+														Array.isArray(foundItems) ? foundItems : [],
+														sortKey
+													)}
+													onSelectProduct={openDetails}
+													onLoadMore={loadMoreProducts}
+													canLoadMore={canLoadMore}
+													loadingMore={status === 'loading'}
+												/>
+											</motion.div>
+										) : hasStaticPage ? (
+											<motion.div
+												key={`static-${pageKey}-${animKey}`}
+												layout='position'
+												transition={LAYOUT_T}
+												variants={BLOCK}
+												initial='hidden'
+												animate='show'
+												exit='exit'
+												className='space-y-6'
+											>
+												{pageKey === 'contacts' && (
+													<div>
+														<StaticContactsBlock />
+													</div>
 												)}
-												onSelectProduct={openDetails}
-											/>
-										</motion.div>
-									) : hasStaticPage ? (
-										<motion.div
-											key={`static-${pageKey}-${animKey}`}
-											layout='position'
-											transition={LAYOUT_T}
-											variants={BLOCK}
-											initial='hidden'
-											animate='show'
-											exit='exit'
-											className='space-y-6'
-										>
-											{pageKey === 'contacts' && (
-												<div>
-													<StaticContactsBlock />
-												</div>
-											)}
-											{pageKey === 'wholesale' && (
-												<div>
-													<StaticWholesaleBlock />
-												</div>
-											)}
-										</motion.div>
-									) : view === 'home' ? (
-										<motion.div
-											key={`home-${animKey}`}
-											layout='position'
-											transition={LAYOUT_T}
-											variants={BLOCK}
-											initial='hidden'
-											animate='show'
-											exit='exit'
-											className='space-y-6'
-										>
-											{sectionsSorted.map(sec => (
-												<div key={sec.title}>
-													<ProductSection
-														title={sec.title}
-														products={sec.items}
-														onSelectProduct={openDetails}
-														onOpenSubcategory={openSubcategory}
-														loading={status === 'loading'}
-														showHeader={showHeaderFor(sec.title)}
-													/>
-												</div>
-											))}
-										</motion.div>
-									) : (
-										<motion.div
-											key={`sub-${animKey}`}
-											layout='position'
-											transition={LAYOUT_T}
-											variants={BLOCK}
-											initial='hidden'
-											animate='show'
-											exit='exit'
-										>
-											<SubcategoryPanel
-												title={activeSub?.title}
-												products={subSorted}
-												onSelectProduct={openDetails}
-												onOpenFilters={() => {
-													dispatch(setShowFound(false))
-													onToggleFilters?.()
-												}}
-												filtersOpen={!!filtersOpen}
-												sortKey={sortKey}
-												onChangeSort={setSortKey}
-											/>
-										</motion.div>
-									)}
-								</AnimatePresence>
+												{pageKey === 'wholesale' && (
+													<div>
+														<StaticWholesaleBlock />
+													</div>
+												)}
+											</motion.div>
+										) : view === 'home' ? (
+											<motion.div
+												key={`home-${animKey}`}
+												layout='position'
+												transition={LAYOUT_T}
+												variants={BLOCK}
+												initial='hidden'
+												animate='show'
+												exit='exit'
+												className='space-y-6'
+											>
+												{sectionsSorted.map(sec => (
+													<div key={sec.title}>
+														<ProductSection
+															title={sec.title}
+															products={sec.items}
+															onSelectProduct={openDetails}
+															onOpenSubcategory={openSubcategory}
+															loading={status === 'loading'}
+															showHeader={showHeaderFor(sec.title)}
+															uncapped={selected !== 'all'}
+														/>
+													</div>
+												))}
+												{canLoadMore && (
+													<div ref={homeSentinelRef} className='h-2' />
+												)}
+											</motion.div>
+										) : (
+											<motion.div
+												key={`sub-${animKey}`}
+												layout='position'
+												transition={LAYOUT_T}
+												variants={BLOCK}
+												initial='hidden'
+												animate='show'
+												exit='exit'
+											>
+												<SubcategoryPanel
+													title={activeSub?.title}
+													products={subSorted}
+													onSelectProduct={openDetails}
+													onOpenFilters={() => {
+														dispatch(setShowFound(false))
+														onToggleFilters?.()
+													}}
+													filtersOpen={!!filtersOpen}
+													sortKey={sortKey}
+													onChangeSort={setSortKey}
+													onLoadMore={loadMoreProducts}
+													canLoadMore={canLoadMore}
+													loadingMore={status === 'loading'}
+												/>
+											</motion.div>
+										)}
+									</AnimatePresence>
+								)}
 							</motion.div>
 						)}
 					</AnimatePresence>

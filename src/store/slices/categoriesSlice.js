@@ -1,9 +1,23 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import mockCategories from '../../mocks/mockCategories'
+import { getCategories } from '../../api/productsApi'
 
+// Лёгкий эндпоинт: список категорий, а не все 580 товаров ради их названий.
 export const fetchCategories = createAsyncThunk(
 	'categories/fetchCategories',
-	async () => mockCategories
+	async () => {
+		const data = await getCategories()
+
+		const list = (Array.isArray(data) ? data : []).map(c => ({
+			id: c.code ?? c.name,
+			name: c.name,
+			code: c.code ?? null,
+			subcategories: [], // источник не отдаёт иерархию подкатегорий
+		}))
+
+		// Псевдо-категория "все" — CategoryFilter ожидает её первым элементом
+		// списка (индекс 0 = иконка "все", клик сбрасывает выбор категории).
+		return [{ id: 'all', name: 'все', subcategories: [] }, ...list]
+	}
 )
 
 const norm = s =>

@@ -26,6 +26,7 @@ const ProductCart = ({ loading = false }) => {
 	const formRef = useRef(null)
 	const [showForm, setShowForm] = useState(false)
 	const [success, setSuccess] = useState(false)
+	const [submitError, setSubmitError] = useState(false)
 	const successTimeoutRef = useRef(null)
 
 	useEffect(() => {
@@ -90,7 +91,14 @@ const ProductCart = ({ loading = false }) => {
 
 	const handleOrderSubmitted = async formData => {
 		const payload = buildOrderPayload(formData, { items, total })
-		await sendOrder(payload)
+		const result = await sendOrder(payload)
+
+		if (!result.ok) {
+			setSubmitError(true)
+			return
+		}
+
+		setSubmitError(false)
 		setSuccess(true)
 		setShowForm(false)
 
@@ -138,6 +146,11 @@ const ProductCart = ({ loading = false }) => {
 				{showForm && !success && list.length > 0 && (
 					<div ref={formContainerRef} className='mt-3'>
 						<CheckoutForm ref={formRef} onSubmitted={handleOrderSubmitted} />
+						{submitError && (
+							<div className='mt-2 text-[11px] text-red-500 font-baron text-center'>
+								не удалось отправить заказ, попробуйте ещё раз
+							</div>
+						)}
 					</div>
 				)}
 

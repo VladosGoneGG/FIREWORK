@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+import useInfiniteScroll from '../../../hooks/useInfiniteScroll'
 import useProductsBoot from '../../../hooks/useProductsBoot'
 import useSections from '../../../hooks/useSections'
 import { setCategorySmart } from '../../../store/slices/categoriesSlice'
 import { closeDetails, openDetails } from '../../../store/slices/detailsSlice'
 import {
+	fetchProductDetail,
+	fetchProductsPage,
 	selectDiscountedProducts,
 	selectFilteredProducts,
 } from '../../../store/slices/productsSlice'
@@ -27,6 +30,7 @@ import SectionMobile from './SectionMobile'
 // используем уже имеющиеся стат-блоки
 import StaticContactsBlock from '../../ProductsPage/static/StaticContactsBlock'
 import StaticWholesaleBlock from '../../ProductsPage/static/StaticWholesaleBlock'
+import ProductStatusState from '../../ProductsPage/ProductStatusState'
 
 const norm = s =>
 	String(s || '')
@@ -55,6 +59,8 @@ const ProductPageMobile = () => {
 
 	// ===== store =====
 	const status = useSelector(s => s.products.status)
+	const productsError = useSelector(s => s.products.error)
+	const pagination = useSelector(s => s.products.pagination)
 	const selectedCategory = useSelector(
 		s => s.categories.selectedCategory || 'all'
 	)
@@ -169,10 +175,41 @@ const ProductPageMobile = () => {
 
 	const openDetailsRedux = useCallback(
 		p => {
-			if (p) dispatch(openDetails(p))
+			if (p) {
+				dispatch(openDetails(p))
+				if (p.id) dispatch(fetchProductDetail(p.id))
+			}
 		},
 		[dispatch]
 	)
+
+	// Догружает следующую страницу каталога (см. desktop-версию) — актуально,
+	// когда категория открыта до того, как все её товары успели подъехать.
+	const loadMoreProducts = useCallback(() => {
+		if (status === 'loading' || !pagination?.hasNext) return
+		dispatch(fetchProductsPage({ page: pagination.page + 1 }))
+	}, [dispatch, status, pagination])
+
+	const canLoadMore = !!pagination?.hasNext
+
+	// Категория и поиск фильтруются по уже загруженным allItems, а не по
+	// бэкенду (см. desktop-версию) — если выбрана конкретная категория или
+	// идёт поиск, докачиваем остаток каталога, иначе результат может
+	// "потерять" товары с поздних страниц.
+	useEffect(() => {
+		if (
+			(norm(selectedCategory) !== 'all' || isSearching) &&
+			canLoadMore &&
+			status !== 'loading'
+		) {
+			loadMoreProducts()
+		}
+	}, [selectedCategory, isSearching, canLoadMore, status, loadMoreProducts])
+
+	const homeSentinelRef = useInfiniteScroll(loadMoreProducts, {
+		enabled: canLoadMore && status !== 'loading' && !activeSub && !shouldShowFound,
+		deps: [allItems.length],
+	})
 
 	// ====== Реакция на поиск ======
 	useEffect(() => {
@@ -256,6 +293,9 @@ const ProductPageMobile = () => {
 			<FoundSection
 				products={applySort(foundItems || [], sortKey)}
 				onSelectProduct={openDetailsRedux}
+				onLoadMore={loadMoreProducts}
+				canLoadMore={!!pagination?.hasNext}
+				loadingMore={status === 'loading'}
 			/>
 		</motion.div>
 	)
@@ -276,6 +316,9 @@ const ProductPageMobile = () => {
 				sortKey={sortKey}
 				onOpenFilters={() => {}}
 				mobile
+				onLoadMore={loadMoreProducts}
+				canLoadMore={!!pagination?.hasNext}
+				loadingMore={status === 'loading'}
 			/>
 		</motion.div>
 	)
@@ -306,11 +349,34 @@ const ProductPageMobile = () => {
 						onOpenSubcategory={openSubcategory}
 						loading={status === 'loading'}
 						showHeader
+						uncapped={norm(selectedCategory) !== 'all'}
 					/>
 				</motion.div>
 			))}
+			{canLoadMore && <div ref={homeSentinelRef} className='h-2' />}
 		</motion.div>
 	)
+
+	const statusBlock = (
+		<motion.div
+			key='status-mobile'
+			layout='position'
+			variants={FX}
+			initial='initial'
+			animate='enter'
+			exit='exit'
+		>
+			<ProductStatusState
+				status={status}
+				error={productsError}
+				isEmpty={!allItems.length}
+				onRetry={() => dispatch(fetchProductsPage({ page: 1 }))}
+			/>
+		</motion.div>
+	)
+
+	const hasStatusIssue =
+		status === 'failed' || (status === 'succeeded' && !allItems.length)
 
 	const staticBlock =
 		pageKey === 'contacts' ? (
@@ -340,7 +406,9 @@ const ProductPageMobile = () => {
 	return (
 		<div className='px-3 py-3'>
 			<AnimatePresence initial={false}>
-				{shouldShowFound
+				{!pageKey && hasStatusIssue
+					? statusBlock
+					: shouldShowFound
 					? foundBlock
 					: activeSub
 					? subBlock

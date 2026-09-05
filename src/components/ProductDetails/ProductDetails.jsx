@@ -58,7 +58,12 @@ const ProductDetails = ({
 						'min-[681px]:h-[400px]', // фикс 400px ТОЛЬКО на десктопе
 					].join(' ')}
 				>
-					<MediaBlock img={fireworksSvg} name={product.name} onBack={onBack} />
+					<MediaBlock
+						img={fireworksSvg}
+						video={product.video}
+						name={product.name}
+						onBack={onBack}
+					/>
 
 					<div className='min-[681px]:flex-none min-[681px]:w-[200px] min-w-0 flex justify-end'>
 						<SideInfoCard product={product} img={img} inStock={inStock} />

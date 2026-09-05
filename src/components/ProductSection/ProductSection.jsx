@@ -21,11 +21,12 @@ const ProductSection = ({
 	onOpenSubcategory,
 	loading = false,
 	showHeader = true,
+	uncapped = false,
 }) => {
 	const hasProducts = products && products.length > 0
 	const total = hasProducts ? products.length : 0
 
-	const visibleCount = hasProducts ? getVisibleCount(total) : 0
+	const visibleCount = hasProducts ? (uncapped ? total : getVisibleCount(total)) : 0
 
 	const visibleProducts = useMemo(
 		() =>

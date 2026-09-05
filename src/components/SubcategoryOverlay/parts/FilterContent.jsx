@@ -101,16 +101,6 @@ const FilterContent = ({
 				<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
 
 				<FilterSection
-					title='тип'
-					options={filterOptions.IGNITIONS}
-					checkedValues={toArr(form?.ignitionType)}
-					onToggle={val => toggleArr('ignitionType', val)}
-					normalize
-				/>
-
-				<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
-
-				<FilterSection
 					title='хлопки'
 					options={filterOptions.SHOTS_PRESETS}
 					checkedValues={toArr(form?.shots)}
@@ -124,26 +114,6 @@ const FilterContent = ({
 					options={filterOptions.POWERS}
 					checkedValues={toArr(form?.power)}
 					onToggle={val => toggleArr('power', val)}
-					normalize
-				/>
-
-				<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
-
-				<FilterSection
-					title='вид'
-					options={filterOptions.VIEWS}
-					checkedValues={toArr(form?.view)}
-					onToggle={val => toggleArr('view', val)}
-					normalize
-				/>
-
-				<div className='self-stretch my-2 h-0.5 bg-[#EFEBE6] rounded-[20px]' />
-
-				<FilterSection
-					title='размер'
-					options={filterOptions.SIZES}
-					checkedValues={toArr(form?.size)}
-					onToggle={val => toggleArr('size', val)}
 					normalize
 				/>
 
@@ -245,27 +215,6 @@ const FilterContent = ({
 			<Divider />
 
 			<div>
-				<div className='text-black text-[12px] font-baron mb-2 mx-2'>тип</div>
-				<div className='flex flex-col gap-1'>
-					{filterOptions.IGNITIONS.map(t => {
-						const checked = toArr(form?.ignitionType)
-							.map(normalizeString)
-							.includes(normalizeString(t))
-						return (
-							<WhiteCheckRow
-								key={t}
-								label={t}
-								checked={checked}
-								onToggle={() => toggleArr('ignitionType', t)}
-							/>
-						)
-					})}
-				</div>
-			</div>
-
-			<Divider />
-
-			<div>
 				<div className='text-black text-[12px] font-baron mb-2 mx-2'>
 					количество хлопков
 				</div>
@@ -301,50 +250,6 @@ const FilterContent = ({
 								label={p}
 								checked={checked}
 								onToggle={() => toggleArr('power', p)}
-							/>
-						)
-					})}
-				</div>
-			</div>
-
-			<Divider />
-
-			<div>
-				<div className='text-black text-[12px] font-baron mb-2 mx-2'>вид</div>
-				<div className='flex flex-col gap-1'>
-					{filterOptions.VIEWS.map(v => {
-						const checked = toArr(form?.view)
-							.map(normalizeString)
-							.includes(normalizeString(v))
-						return (
-							<WhiteCheckRow
-								key={v}
-								label={v}
-								checked={checked}
-								onToggle={() => toggleArr('view', v)}
-							/>
-						)
-					})}
-				</div>
-			</div>
-
-			<Divider />
-
-			<div>
-				<div className='text-black text-[12px] font-baron mb-2 mx-2'>
-					размер
-				</div>
-				<div className='flex flex-col gap-1'>
-					{filterOptions.SIZES.map(s => {
-						const checked = toArr(form?.size)
-							.map(normalizeString)
-							.includes(normalizeString(s))
-						return (
-							<WhiteCheckRow
-								key={s}
-								label={s}
-								checked={checked}
-								onToggle={() => toggleArr('size', s)}
 							/>
 						)
 					})}

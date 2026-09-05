@@ -1,6 +1,7 @@
 // src/components/SubcategoryPanel/SubcategoryPanel.jsx
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo, useMemo } from 'react'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import ProductCardMiniMobile from '../LayoutMobile/parts/ProductCardMiniMobile'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 import SortDropdown from '../ui/SortDropdown'
@@ -19,6 +20,9 @@ const FEW_PER_ROW_LIMIT = 4 // если товаров ≤ 4 — расширя�
  * - sortKey?: string
  * - onChangeSort?: (key) => void
  * - mobile?: boolean   // если true — рисуем мобильные карточки и мобильную сетку
+ * - onLoadMore?: () => void   // подгрузить следующую страницу каталога
+ * - canLoadMore?: boolean     // показывать ли сторожевой элемент для infinite scroll
+ * - loadingMore?: boolean
  */
 const SubcategoryPanel = memo(function SubcategoryPanel({
 	title = 'Категория',
@@ -29,11 +33,19 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 	sortKey,
 	onChangeSort,
 	mobile = false,
+	onLoadMore,
+	canLoadMore = false,
+	loadingMore = false,
 }) {
 	const items = useMemo(
 		() => (Array.isArray(products) ? products : []),
 		[products]
 	)
+
+	const sentinelRef = useInfiniteScroll(onLoadMore || (() => {}), {
+		enabled: canLoadMore && !loadingMore,
+		deps: [items.length],
+	})
 
 	const FX = {
 		initial: { opacity: 0, y: -8 },
@@ -125,6 +137,16 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 			{!items.length && (
 				<div className='text-center text-neutral-400 py-8'>
 					Ничего не найдено
+				</div>
+			)}
+
+			{canLoadMore && (
+				<div ref={sentinelRef} className='flex justify-center py-3'>
+					{loadingMore && (
+						<span className='text-[10px] text-[#625a51] lowercase font-baron'>
+							загрузка…
+						</span>
+					)}
 				</div>
 			)}
 		</section>

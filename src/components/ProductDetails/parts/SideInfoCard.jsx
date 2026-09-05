@@ -110,15 +110,17 @@ function SideInfoCard({ product, img }) {
 					</div>
 				)}
 
-				<div
-					className={[
-						'max-[680px]:w-full max-[680px]:min-w-0',
+				{inStock > 0 && (
+					<div
+						className={[
+							'max-[680px]:w-full max-[680px]:min-w-0',
 
-						'min-[681px]:w-[200px] min-[681px]:-ml-1.5',
-					].join(' ')}
-				>
-					<PriceQtyButton product={product} unitPrice={unitPrice} />
-				</div>
+							'min-[681px]:w-[200px] min-[681px]:-ml-1.5',
+						].join(' ')}
+					>
+						<PriceQtyButton product={product} unitPrice={unitPrice} />
+					</div>
+				)}
 			</div>
 		</aside>
 	)

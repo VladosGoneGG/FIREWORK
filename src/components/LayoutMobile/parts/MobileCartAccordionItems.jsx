@@ -51,6 +51,7 @@ function MobileCartAccordionItems({ height = 360, onClose }) {
 	const formRef = useRef(null)
 	const [sheetOpen, setSheetOpen] = useState(false)
 	const [success, setSuccess] = useState(false)
+	const [submitError, setSubmitError] = useState(false)
 
 	// якорь — чтобы при открытии формы прокрутить контейнер к ней (если нужно)
 	const formAnchorRef = useRef(null)
@@ -79,8 +80,14 @@ function MobileCartAccordionItems({ height = 360, onClose }) {
 
 	const handleOrderSubmitted = async formData => {
 		const payload = buildOrderPayload(formData, { items, total })
-		await sendOrder(payload)
+		const result = await sendOrder(payload)
 
+		if (!result.ok) {
+			setSubmitError(true)
+			return
+		}
+
+		setSubmitError(false)
 		setSuccess(true)
 		setSheetOpen(false)
 
@@ -176,6 +183,11 @@ function MobileCartAccordionItems({ height = 360, onClose }) {
 									ref={formRef}
 									onSubmitted={handleOrderSubmitted}
 								/>
+								{submitError && (
+									<div className='mt-2 mb-2 text-[11px] text-red-500 font-baron text-center'>
+										не удалось отправить заказ, попробуйте ещё раз
+									</div>
+								)}
 							</div>
 						</div>
 					</motion.div>

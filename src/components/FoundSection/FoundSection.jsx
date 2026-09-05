@@ -1,5 +1,6 @@
 import { motion } from 'motion/react'
 import { memo, useMemo } from 'react'
+import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import ProductCardMiniMobile from '../LayoutMobile/parts/ProductCardMiniMobile'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 
@@ -7,12 +8,26 @@ import ProductCardMini from '../ProductCardMini/ProductCardMini'
  * Props:
  * - products: array
  * - onSelectProduct: (product) => void
+ * - onLoadMore?: () => void   // подгрузить следующую страницу каталога
+ * - canLoadMore?: boolean     // ещё не все товары загружены — есть что искать дальше
+ * - loadingMore?: boolean
  */
-const FoundSection = ({ products = [], onSelectProduct }) => {
+const FoundSection = ({
+	products = [],
+	onSelectProduct,
+	onLoadMore,
+	canLoadMore = false,
+	loadingMore = false,
+}) => {
 	const items = useMemo(
 		() => (Array.isArray(products) ? products : []),
 		[products]
 	)
+
+	const sentinelRef = useInfiniteScroll(onLoadMore || (() => {}), {
+		enabled: canLoadMore && !loadingMore,
+		deps: [items.length],
+	})
 
 	if (!items.length) {
 		return (
@@ -20,6 +35,7 @@ const FoundSection = ({ products = [], onSelectProduct }) => {
 				<div className='text-center text-[#625a51] text-sm font-baron'>
 					ничего не найдено
 				</div>
+				{canLoadMore && <div ref={sentinelRef} className='h-2' />}
 			</div>
 		)
 	}
@@ -70,6 +86,8 @@ const FoundSection = ({ products = [], onSelectProduct }) => {
 					))}
 				</motion.div>
 			</div>
+
+			{canLoadMore && <div ref={sentinelRef} className='h-2' />}
 		</section>
 	)
 }

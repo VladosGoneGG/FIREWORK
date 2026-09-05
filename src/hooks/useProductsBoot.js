@@ -2,7 +2,7 @@
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchCategories } from '../store/slices/categoriesSlice'
-import { fetchProducts } from '../store/slices/productsSlice'
+import { fetchProductsPage } from '../store/slices/productsSlice'
 
 export default function useProductsBoot() {
 	const dispatch = useDispatch()
@@ -10,7 +10,7 @@ export default function useProductsBoot() {
 	const categoriesStatus = useSelector(s => s.categories.status)
 
 	useEffect(() => {
-		if (productsStatus === 'idle') dispatch(fetchProducts())
+		if (productsStatus === 'idle') dispatch(fetchProductsPage({ page: 1 }))
 	}, [productsStatus, dispatch])
 
 	useEffect(() => {

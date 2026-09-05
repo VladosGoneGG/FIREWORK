@@ -3,7 +3,9 @@ import { memo } from 'react'
 import overlaySvg from '../../../assets/SVG/overlay.svg'
 import BackButton from '../../ui/BackButton'
 
-const MediaBlock = ({ img, name, onBack }) => {
+const MediaBlock = ({ img, video, name, onBack }) => {
+	const videoUrl = video?.url
+
 	return (
 		<div
 			className={[
@@ -21,7 +23,17 @@ const MediaBlock = ({ img, name, onBack }) => {
 		>
 			<BackButton onClick={onBack} className='absolute cursor-pointer z-10' />
 
-			{img ? (
+			{videoUrl ? (
+				<video
+					key={videoUrl}
+					src={videoUrl}
+					controls
+					playsInline
+					className='w-full h-full object-cover rounded-[12px] bg-black outline-none focus:outline-none focus-visible:outline-none'
+				>
+					Ваш браузер не поддерживает воспроизведение видео.
+				</video>
+			) : img ? (
 				<img
 					src={img}
 					alt={name}
@@ -33,11 +45,15 @@ const MediaBlock = ({ img, name, onBack }) => {
 				</div>
 			)}
 
-			<div className='absolute inset-0 pointer-events-none grid place-items-center'>
-				<div className='rounded-[10px] grid place-items-center px-3 py-2 shadow-lg'>
-					<img src={overlaySvg} alt='overlay' />
+			{/* декоративная иконка воспроизведения — только пока нет настоящего видео,
+			    иначе у видео уже есть свои нативные controls */}
+			{!videoUrl && (
+				<div className='absolute inset-0 pointer-events-none grid place-items-center'>
+					<div className='rounded-[10px] grid place-items-center px-3 py-2 shadow-lg'>
+						<img src={overlaySvg} alt='overlay' />
+					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	)
 }

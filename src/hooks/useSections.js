@@ -15,9 +15,11 @@ export default function useSections(discounted, nonDiscounted, selected) {
 			return res
 		}
 
-		// "Все" — разбивка по категориям
+		// "Все" — разбивка по категориям (по всем товарам, а не только
+		// не-акционным, иначе категория, где всё сейчас со скидкой,
+		// вообще не получает своей секции и "теряется" при скролле).
 		const map = new Map()
-		for (const p of nonDiscounted) {
+		for (const p of [...discounted, ...nonDiscounted]) {
 			const key = p.category || 'Без категории'
 			if (!map.has(key)) map.set(key, [])
 			map.get(key).push(p)

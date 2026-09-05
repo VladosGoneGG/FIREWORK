@@ -95,12 +95,13 @@ function ProductCardMiniMobile({ product, onSelect }) {
 			].join(' ')}
 		>
 			{/* превью */}
-			<div className='w-[100px] h-[100px] rounded-[10px] overflow-hidden shrink-0'>
+			<div className='relative w-[100px] h-[100px] rounded-[10px] overflow-hidden shrink-0'>
 				{img ? (
 					<ProductThumb
 						src={typeof img === 'string' ? img : img?.url || img?.src}
 						alt={name || 'product'}
-						className='w-full h-full object-cover'
+						outOfStock={outOfStock}
+						badgeText='Нет в наличии'
 					/>
 				) : (
 					<img
@@ -109,9 +110,8 @@ function ProductCardMiniMobile({ product, onSelect }) {
 						className='w-full h-full object-cover'
 					/>
 				)}
-
-				{outOfStock && (
-					<div className=' inset-0 bg-white/70 flex items-center justify-center text-[12px] font-medium rounded-[10px]'>
+				{!img && outOfStock && (
+					<div className='absolute left-1 top-1 px-1.5 py-[1px] rounded-[6px] text-[9px] bg-black/60 text-white'>
 						Нет в наличии
 					</div>
 				)}
@@ -176,32 +176,34 @@ function ProductCardMiniMobile({ product, onSelect }) {
 								{fmtPrice(price)}
 							</div>
 						)}
-						<button
-							onClick={handleAddClick}
-							disabled={outOfStock || !currentPrice}
-							aria-pressed={pressed}
-							className={[
-								'group w-[79px] h-[27px] pb-[1px] rounded-2xl inline-flex justify-center items-center gap-[5px] cursor-pointer',
-								'shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]',
-								// базовые цвета
-								'transition-colors duration-150',
-								// было: 'text-white bg-[#bd52e9] active:bg-[#EFEBE6] active:text-[#625A51]'
-								// стало: те же цвета, но включаем на клик через state
-								pressed
-									? 'bg-[#EFEBE6] text-[#625A51]'
-									: 'bg-[#bd52e9] text-white',
-							].join(' ')}
-							aria-label='Добавить в корзину'
-							title={outOfStock ? 'Нет в наличии' : 'Добавить в корзину'}
-						>
-							<span className='inline-flex font-baron text-[15px] items-center leading-none'>
-								{fmtPrice(currentPrice)}
-							</span>
-							<PlusMobileSvg
-								className='w-2.5 h-2.5 mt-[3px] block shrink-0'
-								aria-hidden='true'
-							/>
-						</button>
+						{!outOfStock && (
+							<button
+								onClick={handleAddClick}
+								disabled={!currentPrice}
+								aria-pressed={pressed}
+								className={[
+									'group w-[79px] h-[27px] pb-[1px] rounded-2xl inline-flex justify-center items-center gap-[5px] cursor-pointer',
+									'shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]',
+									// базовые цвета
+									'transition-colors duration-150',
+									// было: 'text-white bg-[#bd52e9] active:bg-[#EFEBE6] active:text-[#625A51]'
+									// стало: те же цвета, но включаем на клик через state
+									pressed
+										? 'bg-[#EFEBE6] text-[#625A51]'
+										: 'bg-[#bd52e9] text-white',
+								].join(' ')}
+								aria-label='Добавить в корзину'
+								title='Добавить в корзину'
+							>
+								<span className='inline-flex font-baron text-[15px] items-center leading-none'>
+									{fmtPrice(currentPrice)}
+								</span>
+								<PlusMobileSvg
+									className='w-2.5 h-2.5 mt-[3px] block shrink-0'
+									aria-hidden='true'
+								/>
+							</button>
+						)}
 					</div>
 				</div>
 			</div>
