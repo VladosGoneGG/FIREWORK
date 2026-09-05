@@ -32,7 +32,7 @@ export default function WholesalePage() {
 						<button
 							type='button'
 							onClick={() => {
-								/* ... */
+								window.location.href = '/downloads/price-list'
 							}}
 							className={[
 								'btn-firework inline-flex items-center justify-center',
