@@ -31,7 +31,7 @@ export function buildOrderPayload(formData, cartState) {
 			? `доставка, ${formData.address}`
 			: 'самовывоз'
 
-	return {
+	const orderData = {
 		Nomenclatura,
 		userInfo: {
 			name: `${formData.firstName} ${formData.lastName}`.trim(),
@@ -40,6 +40,8 @@ export function buildOrderPayload(formData, cartState) {
 			email: formData.email || '',
 		},
 	}
+
+	return { [`${crypto.randomUUID()}-site`]: orderData }
 }
 
 // =============================
@@ -91,7 +93,8 @@ export async function sendOrder(payload) {
 		const result = await postOrder(payload)
 
 		try {
-			await sendToBot(formatTelegramMessage(payload))
+			const orderData = Object.values(payload)[0]
+			await sendToBot(formatTelegramMessage(orderData))
 		} catch (err) {
 			console.error('Не удалось отправить уведомление в Telegram:', err)
 		}
