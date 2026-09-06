@@ -16,10 +16,11 @@ services:
       # Named volume seeded from the image's ./data on first run, then
       # persists products.json across deploys.
       - backend_data:/app/data
-      # Read-only view of the vsftpd dropbox (local user "exchange",
-      # chrooted to /var/ftp) — the backend only ever reads the retail CSV
-      # and wholesale XLSX from here, never writes/renames/deletes.
-      - /var/ftp/data:/var/ftp/data:ro
+      # vsftpd dropbox (local user "exchange", chrooted to /var/ftp). The
+      # backend reads the retail CSV/wholesale XLSX from here, and also
+      # writes one JSON file per order (POST /api/orders) — read-write,
+      # not read-only.
+      - /var/ftp/data:/var/ftp/data
     restart: unless-stopped
 
   web:
