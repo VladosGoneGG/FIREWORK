@@ -19,10 +19,9 @@ import {
 	fetchProductsPage,
 	isDiscountedProduct,
 	selectDiscountedProducts,
-	selectFilteredProducts,
 } from '../../store/slices/productsSlice'
 
-import { applyAdvancedFilter as applyFilters } from '../../utils/filters'
+import { getCatalogLoadingState } from '../../utils/catalogLoadingState'
 import { applySort, SORT_KEYS } from '../../utils/sort'
 
 import FoundSection from '../FoundSection/FoundSection'
@@ -34,7 +33,7 @@ import SortDropdown from '../ui/SortDropdown'
 
 import {
 	clearApplied,
-	selectFoundItems,
+	selectAppliedFilters,
 	selectPreviewCount,
 	selectShowFound,
 	setShowFound,
@@ -84,12 +83,11 @@ const ProductsPage = ({
 	const pagination = useSelector(s => s.products.pagination)
 	const selected = useSelector(s => s.categories.selectedCategory || 'all')
 	const allItems = useSelector(s => s.products.items)
-	const filtered = useSelector(selectFilteredProducts)
 	const discountedAll = useSelector(selectDiscountedProducts)
 	const search = useSelector(s => s.products.searchQuery || '')
 
 	const showFound = useSelector(selectShowFound)
-	const foundItems = useSelector(selectFoundItems)
+	const appliedFilters = useSelector(selectAppliedFilters)
 	const previewCount = useSelector(selectPreviewCount)
 
 	const [selectedProduct, setSelectedProduct] = useState(null)
@@ -175,8 +173,6 @@ const ProductsPage = ({
 		!String(search).trim() &&
 		!showFound
 
-	const homeFiltered = useMemo(() => applyFilters(filtered, {}), [filtered])
-
 	const hasStaticPage = !!pageKey
 
 	const discountedSet = useMemo(
@@ -185,28 +181,38 @@ const ProductsPage = ({
 	)
 
 	const homeDiscounted = useMemo(
-		() => homeFiltered.filter(p => discountedSet.has(p.id)),
-		[homeFiltered, discountedSet]
+		() => allItems.filter(p => discountedSet.has(p.id)),
+		[allItems, discountedSet]
 	)
 	const homeNonDiscounted = useMemo(
-		() => homeFiltered.filter(p => !discountedSet.has(p.id)),
-		[homeFiltered, discountedSet]
+		() => allItems.filter(p => !discountedSet.has(p.id)),
+		[allItems, discountedSet]
 	)
 
 	const homeSections = useSections(homeDiscounted, homeNonDiscounted, selected)
 	const showHeaderFor = title =>
 		normalizeString(title) !== PROMO_KEY || shouldShowSlider || hasStaticPage
 
-	// Категория/поиск больше не докачивают весь каталог — берём только то,
-	// что сервер уже отфильтровал по выбранной категории (см.
-	// useCatalogFilterQuery / fetchQueryPage). Активен только для 'home'
-	// вида: подкатегория/акции ("посмотреть ещё") используют свой снимок
-	// activeSub.products и сюда не попадают (view === 'sub').
+	// Категория/поиск/применённые advanced-фильтры (модалка "фильтр") больше
+	// не докачивают весь каталог — берём только то, что сервер уже
+	// отфильтровал (см. useCatalogFilterQuery / fetchQueryPage). Это
+	// единственный источник отфильтрованных товаров — appliedFilters здесь
+	// же и решает, показывать ли "найдено" вместо обычной сетки по категориям
+	// (см. showFound ниже). Активен только для 'home' вида: подкатегория/
+	// акции ("посмотреть ещё") используют свой снимок activeSub.products и
+	// сюда не попадают (view === 'sub').
 	const catalogQuery = useCatalogFilterQuery({
 		category: selected,
 		search,
+		filters: appliedFilters,
 		active: view === 'home',
 	})
+
+	// showFound (поиск ИЛИ применённые фильтры) отображает плоский список —
+	// его данные теперь всегда catalogQuery.items: сервер уже применил
+	// category+search+filters вместе, никакой повторной клиентской
+	// фильтрации поверх уже загруженных страниц.
+	const foundItems = catalogQuery.items
 
 	const sections = useMemo(() => {
 		if (selected === 'all') return homeSections
@@ -353,6 +359,16 @@ const ProductsPage = ({
 		enabled: effectiveCanLoadMore && effectiveStatus !== 'loading' && view === 'home',
 		deps: [isFiltering ? catalogQuery.items.length : allItems.length],
 	})
+
+	// Различаем "ещё вообще нет товаров для текущего запроса" (полноэкранный
+	// скелетон) от "уже что-то показано, докачивается следующая страница"
+	// (мелкий индикатор рядом со sentinel) — единый status==='loading' не
+	// различал эти случаи и на каждой подгрузке страницы infinite-scroll
+	// подменял уже отрисованные карточки скелетонами.
+	const { showInitialSkeleton, showLoadingMore } = getCatalogLoadingState(
+		effectiveStatus,
+		sectionsSorted
+	)
 
 	const FilterBar = (
 		<div className='relative'>
@@ -535,7 +551,7 @@ const ProductsPage = ({
 												exit='exit'
 												className='space-y-6'
 											>
-												{isFiltering && effectiveStatus === 'loading' && !sectionsSorted.length && (
+												{showInitialSkeleton && !sectionsSorted.length && (
 													<div className='py-8 text-center text-[10px] text-[#625a51] lowercase font-baron'>
 														загрузка…
 													</div>
@@ -547,14 +563,23 @@ const ProductsPage = ({
 															products={sec.items}
 															onSelectProduct={openDetails}
 															onOpenSubcategory={openSubcategory}
-															loading={effectiveStatus === 'loading'}
+															loading={showInitialSkeleton}
 															showHeader={showHeaderFor(sec.title)}
 															uncapped={selected !== 'all'}
 														/>
 													</div>
 												))}
 												{effectiveCanLoadMore && (
-													<div ref={homeSentinelRef} className='h-2' />
+													<div
+														ref={homeSentinelRef}
+														className='h-2 flex justify-center items-center'
+													>
+														{showLoadingMore && (
+															<span className='text-[10px] text-[#625a51] lowercase font-baron'>
+																загрузка…
+															</span>
+														)}
+													</div>
 												)}
 											</motion.div>
 										) : (

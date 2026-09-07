@@ -30,11 +30,24 @@ function cleanForm(form) {
 	for (const k of arrFields) {
 		if (!Array.isArray(f[k]) || f[k].length === 0) delete f[k]
 	}
+	// Отрицательное/нечисловое значение отбрасывается, а не сохраняется как
+	// "настоящая" граница — иначе, например, priceMin=-50 у нас на клиенте
+	// считался бы заданной границей (и лишал бы результата товары без цены),
+	// а бэкенд (parseFiniteNonNegative в catalog.service.js) её же тихо
+	// отбрасывает как невалидную — превью и финальный результат расходились
+	// бы именно из-за этого, а не из-за разницы в подгруженных данных.
+	const bound = v => {
+		if (v == null || v === '') return undefined
+		const n = Number(v)
+		return Number.isFinite(n) && n >= 0 ? n : undefined
+	}
 	const range = o => {
-		if (!o || (o.min == null && o.max == null)) return null
+		if (!o) return null
 		const r = {}
-		if (o.min != null && o.min !== '') r.min = Number(o.min)
-		if (o.max != null && o.max !== '') r.max = Number(o.max)
+		const min = bound(o.min)
+		const max = bound(o.max)
+		if (min !== undefined) r.min = min
+		if (max !== undefined) r.max = max
 		return r.min == null && r.max == null ? null : r
 	}
 	const p = range(f.price)
@@ -93,54 +106,24 @@ export default filtersSlice.reducer
 
 // ---------- Базовые селекторы ----------
 const selectProductsItems = s => s.products?.items || []
-const selectQueryItems = s => s.products?.query?.items || []
-const selectSearchRaw = s => s.products?.searchQuery || ''
 export const selectFiltersForm = s => s.filters.form
 export const selectAppliedFilters = s => s.filters.applied
 export const selectShowFound = s => s.filters.showFound
 
-// ---------- Утилы для поиска ----------
-const norm = v =>
-	String(v ?? '')
-		.toLowerCase()
-		.replaceAll('ё', 'е')
-		.trim()
-
 // ---------- Мемоизированные селекторы ----------
 
-// Превью-количество (по текущей форме) — можно оставить немемоизированным,
-// но сделаем мемо для стабильности UI.
+// Превью-количество (по текущей, ещё не применённой форме) — показывается
+// в модалке до нажатия "показать"/"применить". ПРИБЛИЖЁННОЕ значение: оно
+// считается только по уже подгруженным на клиенте товарам
+// (products.items), а не по всему каталогу на сервере — точный подсчёт по
+// всему каталогу на каждое движение чекбокса означал бы запрос на сервер
+// при каждом изменении формы. Итоговый результат после нажатия "показать"
+// идёт через fetchQueryPage/useCatalogFilterQuery и всегда точен (см.
+// productsSlice.js) — расхождение возможно только в этом превью-счётчике.
 export const selectPreviewCount = createSelector(
 	[selectProductsItems, selectFiltersForm],
 	(items, form) => {
 		const cleaned = cleanForm(form)
 		return applyAdvancedFilter(items, cleaned).length
-	}
-)
-
-// FoundSection = поиск ∩ applied-фильтры. Возвращаем:
-// - null — если нет ни поиска, ни applied (чтобы секция скрывалась);
-// - массив (тот же самый экземпляр при одинаковых входах) — иначе.
-//
-// Текстовый поиск теперь фильтруется на сервере (см. fetchQueryPage /
-// useCatalogFilterQuery) — поэтому при активном поиске базой служит
-// products.query.items (уже отфильтрованный сервером набор), а не весь
-// накопленный каталог. matchesSearch больше не нужен для этого случая:
-// повторная фильтрация по searchRaw на клиенте могла бы на секунду
-// показать пустой результат, пока debounce ещё не долетел до сервера.
-// Если поиска нет, а есть только "продвинутые" фильтры (модалка "фильтр"),
-// поведение не меняется — они по-прежнему применяются к всему каталогу.
-export const selectFoundItems = createSelector(
-	[selectProductsItems, selectQueryItems, selectAppliedFilters, selectSearchRaw],
-	(items, queryItems, applied, searchRaw) => {
-		const hasSearch = norm(searchRaw).length > 0
-		const hasApplied = !!applied
-
-		if (!hasSearch && !hasApplied) return null
-
-		let base = hasSearch ? queryItems : items
-		if (hasApplied) base = applyAdvancedFilter(base, applied)
-
-		return base
 	}
 )

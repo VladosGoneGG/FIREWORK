@@ -1,6 +1,7 @@
 // src/store/slices/productsSlice.js
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 import {
+	getCatalogFacets,
 	getCatalogPage,
 	getProductById as apiGetProductById,
 } from '../../api/productsApi'
@@ -138,15 +139,16 @@ export const fetchProductDetail = createAsyncThunk(
 	}
 )
 
-// Одна страница каталога, отфильтрованная сервером по category/search —
-// используется вместо докачки всего каталога при выборе категории или
-// поиске (см. useCatalogFilterQuery). thunkAPI.signal передаётся в axios,
-// поэтому dispatch(...).abort() реально отменяет сетевой запрос.
+// Одна страница каталога, отфильтрованная сервером по category/search/
+// advanced-фильтрам ("фильтр" модалка) — используется вместо докачки всего
+// каталога при выборе категории, поиске или применении фильтров (см.
+// useCatalogFilterQuery). thunkAPI.signal передаётся в axios, поэтому
+// dispatch(...).abort() реально отменяет сетевой запрос.
 export const fetchQueryPage = createAsyncThunk(
 	'products/fetchQueryPage',
-	async ({ category, search, page = 1, limit = 48 } = {}, { signal, rejectWithValue }) => {
+	async ({ category, search, filters, page = 1, limit = 48 } = {}, { signal, rejectWithValue }) => {
 		try {
-			const data = await getCatalogPage({ page, limit, category, search, signal })
+			const data = await getCatalogPage({ page, limit, category, search, filters, signal })
 			return {
 				items: (data?.items || []).map(normalizeCatalogItem),
 				pagination: data?.pagination || null,
@@ -159,24 +161,84 @@ export const fetchQueryPage = createAsyncThunk(
 	}
 )
 
+// Каталожные значения фильтров (тип товара/производитель/мощность) — по
+// всему каталогу, а не по state.products.items (см. useFilterOptions).
+// Фетчится один раз при загрузке приложения (см. useProductsBoot), как и
+// fetchCategories — это статичные-в-рамках-сессии метаданные каталога, а
+// не постранично подгружаемые товары, поэтому им не нужна ни пагинация,
+// ни query-кэш выше.
+export const fetchCatalogFacets = createAsyncThunk(
+	'products/fetchCatalogFacets',
+	async (_, { rejectWithValue }) => {
+		try {
+			const data = await getCatalogFacets()
+			return {
+				types: Array.isArray(data?.types) ? data.types : [],
+				manufacturers: Array.isArray(data?.manufacturers) ? data.manufacturers : [],
+				power: Array.isArray(data?.power) ? data.power : [],
+			}
+		} catch (err) {
+			return rejectWithValue(
+				err?.response?.data?.error || err?.message || 'Ошибка загрузки фильтров'
+			)
+		}
+	}
+)
+
 const QUERY_CACHE_TTL_MS = 2 * 60 * 1000
 const QUERY_CACHE_MAX_ENTRIES = 8
 
-export function makeQueryKey(category, search) {
+// Стабильная (сортированная) сериализация формы фильтров — порядок, в
+// котором пользователь щёлкал чекбоксы, не должен создавать "новый" ключ
+// кэша/запроса для того же самого набора значений. Пустые поля опускаются:
+// {} и отсутствие фильтров дают одинаковый ключ.
+export function serializeFilters(filters) {
+	const f = filters || {}
+	const out = {}
+
+	const arr = (v, mapFn = x => x) =>
+		Array.isArray(v) && v.length ? [...v].map(mapFn).sort() : null
+
+	const types = arr(f.types, s => String(s).trim().toLowerCase())
+	const manufacturers = arr(f.manufacturers, s => String(s).trim().toLowerCase())
+	const shots = arr(f.shots, n => Number(n))?.sort((a, b) => a - b)
+	const power = arr(f.power, s => String(s).trim().toLowerCase())
+	const tags = arr(f.tags, s => String(s).trim().toLowerCase())
+
+	if (types) out.types = types
+	if (manufacturers) out.manufacturers = manufacturers
+	if (shots) out.shots = shots
+	if (power) out.power = power
+	if (tags) out.tags = tags
+
+	if (f.price && (f.price.min != null && f.price.min !== '')) out.priceMin = Number(f.price.min)
+	if (f.price && (f.price.max != null && f.price.max !== '')) out.priceMax = Number(f.price.max)
+	if (f.time && (f.time.min != null && f.time.min !== '')) out.timeMin = Number(f.time.min)
+	if (f.time && (f.time.max != null && f.time.max !== '')) out.timeMax = Number(f.time.max)
+
+	return out
+}
+
+export function hasActiveFilters(filters) {
+	return Object.keys(serializeFilters(filters)).length > 0
+}
+
+export function makeQueryKey(category, search, filters) {
 	const c = String(category || '').trim().toLowerCase()
 	const s = String(search || '').trim().toLowerCase()
-	return `${c}|${s}`
+	const f = JSON.stringify(serializeFilters(filters))
+	return `${c}|${s}|${f}`
 }
 
 // Не createAsyncThunk: сначала проверяет лёгкий in-memory кэш (переключение
-// обратно на недавно открытую категорию/запрос — без сети), и только если
-// кэша нет или он устарел — реально идёт в API. Возвращает то, что вернул
-// dispatch(fetchQueryPage(...)) (со свойством .abort()) либо null, если
-// обошлись кэшем — вызывающая сторона может это использовать для отмены
-// предыдущего запроса при быстрой смене категории/поиска.
-export function loadCatalogQuery({ category, search } = {}) {
+// обратно на недавно открытую категорию/запрос/набор фильтров — без сети), и
+// только если кэша нет или он устарел — реально идёт в API. Возвращает то,
+// что вернул dispatch(fetchQueryPage(...)) (со свойством .abort()) либо
+// null, если обошлись кэшем — вызывающая сторона может это использовать для
+// отмены предыдущего запроса при быстрой смене категории/поиска/фильтров.
+export function loadCatalogQuery({ category, search, filters } = {}) {
 	return (dispatch, getState) => {
-		const key = makeQueryKey(category, search)
+		const key = makeQueryKey(category, search, filters)
 		const cached = getState().products.queryCache[key]
 		const isFresh = cached && Date.now() - cached.updatedAt < QUERY_CACHE_TTL_MS
 
@@ -186,69 +248,22 @@ export function loadCatalogQuery({ category, search } = {}) {
 					key,
 					category: category || null,
 					search: search || '',
+					filters: filters || null,
 				})
 			)
 			return null
 		}
 
-		return dispatch(fetchQueryPage({ category, search, page: 1 }))
+		return dispatch(fetchQueryPage({ category, search, filters, page: 1 }))
 	}
-}
-
-// ================== Helpers ==================
-const norm = s =>
-	String(s || '')
-		.trim()
-		.toLowerCase()
-
-const getCurrentPrice = p => {
-	const d = Number(p?.discountPrice)
-	const base = Number(p?.price)
-	if (Number.isFinite(d) && d > 0) return d
-	if (Number.isFinite(base) && base > 0) return base
-	return 0
-}
-
-// Приведение формы price к нормальному виду
-function normalizePriceInput(price, prev) {
-	const prevMin = Number(prev?.min ?? 0)
-	const prevMax = prev?.max ?? null
-
-	const inMin = price?.min
-	const inMax = price?.max
-
-	let min = Number(inMin)
-	if (!Number.isFinite(min) || min < 0) min = Math.max(0, prevMin)
-
-	let max
-	if (inMax === '' || inMax == null) {
-		max = null
-	} else {
-		const parsed = Number(inMax)
-		max = Number.isFinite(parsed) && parsed >= 0 ? parsed : prevMax
-	}
-
-	if (Number.isFinite(min) && Number.isFinite(max) && min > max) {
-		min = max
-	}
-	return { min, max }
 }
 
 // ================== State ==================
-const INITIAL_FILTERS = {
-	price: { min: 0, max: null }, // верхняя граница отсутствует по умолчанию
-	types: [],
-	manufacturers: [],
-	shots: [],
-	power: [], // 'слабый' | 'средний' | 'мощный'
-	inStockOnly: false,
-	hasCertificate: false,
-}
-
 const INITIAL_QUERY = {
 	key: null,
 	category: null,
 	search: '',
+	filters: null,
 	page: 0,
 	limit: 48,
 	items: [],
@@ -266,14 +281,25 @@ const productsSlice = createSlice({
 		error: null,
 		pagination: null, // { page, limit, totalItems, totalPages, hasNext, hasPrev }
 		searchQuery: '',
-		filters: INITIAL_FILTERS,
 
-		// Отдельное состояние для category/search-фильтрованного просмотра —
-		// заполняется через fetchQueryPage/loadCatalogQuery, не смешивается
-		// с items/pagination выше (те остаются для обычного "все товары"
-		// домашнего просмотра с постраничной подгрузкой при скролле).
+		// Отдельное состояние для category/search/advanced-filters-
+		// отфильтрованного просмотра — заполняется через
+		// fetchQueryPage/loadCatalogQuery, не смешивается с items/pagination
+		// выше (те остаются для обычного "все товары" домашнего просмотра с
+		// постраничной подгрузкой при скролле, без фильтров).
 		query: INITIAL_QUERY,
 		queryCache: {}, // key -> { items, page, hasNext, totalItems, limit, updatedAt }
+
+		// Каталожные значения фильтров (тип товара/производитель/мощность) —
+		// по всему каталогу, не зависят от того, сколько страниц уже
+		// подгружено в items (см. useFilterOptions/fetchCatalogFacets).
+		facets: {
+			types: [],
+			manufacturers: [],
+			power: [],
+			status: 'idle',
+			error: null,
+		},
 	},
 	reducers: {
 		setSearchQuery: (state, action) => {
@@ -283,32 +309,9 @@ const productsSlice = createSlice({
 			state.searchQuery = ''
 		},
 
-		setFilters(state, action) {
-			const next = { ...state.filters, ...action.payload }
-			next.price = normalizePriceInput(
-				action.payload?.price,
-				state.filters.price
-			)
-
-			if (!Array.isArray(next.types)) next.types = state.filters.types
-			if (!Array.isArray(next.manufacturers))
-				next.manufacturers = state.filters.manufacturers
-			if (!Array.isArray(next.shots)) next.shots = state.filters.shots
-			if (!Array.isArray(next.power)) next.power = state.filters.power
-
-			next.inStockOnly = !!action.payload?.inStockOnly
-			next.hasCertificate = !!action.payload?.hasCertificate
-
-			state.filters = next
-		},
-
-		resetFilters(state) {
-			state.filters = INITIAL_FILTERS
-		},
-
 		// Мгновенная гидратация query из кэша (см. loadCatalogQuery) — без сети.
 		hydrateQueryFromCache(state, action) {
-			const { key, category, search } = action.payload
+			const { key, category, search, filters } = action.payload
 			const cached = state.queryCache[key]
 			if (!cached) return
 
@@ -316,6 +319,7 @@ const productsSlice = createSlice({
 				key,
 				category,
 				search,
+				filters: filters || null,
 				page: cached.page,
 				limit: cached.limit,
 				items: cached.items,
@@ -329,18 +333,19 @@ const productsSlice = createSlice({
 	extraReducers: builder => {
 		builder
 			.addCase(fetchQueryPage.pending, (state, action) => {
-				const { category, search, page = 1 } = action.meta.arg || {}
-				const key = makeQueryKey(category, search)
+				const { category, search, filters, page = 1 } = action.meta.arg || {}
+				const key = makeQueryKey(category, search, filters)
 
 				if (page <= 1 || state.query.key !== key) {
 					// Новый ключ (или повторная страница 1) — сбрасываем сразу,
-					// чтобы старые результаты предыдущей категории/запроса
-					// никогда не "мигнули" на экране поверх новых.
+					// чтобы старые результаты предыдущей категории/запроса/
+					// набора фильтров никогда не "мигнули" на экране поверх новых.
 					state.query = {
 						...INITIAL_QUERY,
 						key,
 						category: category || null,
 						search: search || '',
+						filters: filters || null,
 						status: 'loading',
 					}
 				} else {
@@ -348,8 +353,8 @@ const productsSlice = createSlice({
 				}
 			})
 			.addCase(fetchQueryPage.fulfilled, (state, action) => {
-				const { category, search, page = 1 } = action.meta.arg || {}
-				const key = makeQueryKey(category, search)
+				const { category, search, filters, page = 1 } = action.meta.arg || {}
+				const key = makeQueryKey(category, search, filters)
 
 				// Guard от гонки: пока этот запрос летел, пользователь мог
 				// переключиться на другую категорию/запрос — тогда результат
@@ -402,8 +407,8 @@ const productsSlice = createSlice({
 				// его результат больше никому не нужен.
 				if (action.meta.aborted) return
 
-				const { category, search } = action.meta.arg || {}
-				const key = makeQueryKey(category, search)
+				const { category, search, filters } = action.meta.arg || {}
+				const key = makeQueryKey(category, search, filters)
 				if (state.query.key !== key) return // тоже устарело — игнор
 
 				state.query.status = 'failed'
@@ -437,15 +442,31 @@ const productsSlice = createSlice({
 				if (index === -1) state.items.push(action.payload)
 				else state.items[index] = { ...state.items[index], ...action.payload }
 			})
+			.addCase(fetchCatalogFacets.pending, state => {
+				state.facets.status = 'loading'
+				state.facets.error = null
+			})
+			.addCase(fetchCatalogFacets.fulfilled, (state, action) => {
+				state.facets.status = 'succeeded'
+				state.facets.types = action.payload.types
+				state.facets.manufacturers = action.payload.manufacturers
+				state.facets.power = action.payload.power
+			})
+			.addCase(fetchCatalogFacets.rejected, (state, action) => {
+				// Не блокирует обычный просмотр каталога — просто чекбоксы
+				// "тип товара"/"производитель"/"мощность" останутся пустыми
+				// до следующей попытки; items/query это никак не затрагивает.
+				state.facets.status = 'failed'
+				state.facets.error = action.payload || action.error?.message || 'Ошибка'
+			})
 	},
 })
 
-export const { setSearchQuery, clearSearchQuery, setFilters, resetFilters } =
-	productsSlice.actions
+export const { setSearchQuery, clearSearchQuery } = productsSlice.actions
 
 /* ===================== Селекторы ===================== */
-export const selectFilters = s => s.products.filters
 export const selectQueryState = s => s.products.query
+export const selectCatalogFacets = s => s.products.facets
 
 export function isDiscountedProduct(p) {
 	const d = Number(p?.discountPrice)
@@ -456,88 +477,6 @@ export function isDiscountedProduct(p) {
 export const selectDiscountedProducts = createSelector(
 	[s => s.products.items],
 	items => items.filter(isDiscountedProduct)
-)
-
-// Главный селектор (правка: корректная проверка price.max)
-export const selectFilteredProducts = createSelector(
-	[
-		s => s.products.items,
-		s => s.products.searchQuery,
-		s => s.categories?.selectedCategory || 'all',
-		selectFilters,
-	],
-	(items = [], searchQuery = '', selectedCategory = 'all', filters) => {
-		const q = norm(searchQuery)
-		const sel = norm(selectedCategory)
-
-		const typesSet = new Set((filters?.types || []).map(norm))
-		const manufacturersSet = new Set((filters?.manufacturers || []).map(norm))
-		const shotsSet = new Set((filters?.shots || []).map(n => Number(n)))
-		const powerSet = new Set((filters?.power || []).map(norm))
-
-		const priceMin = Number(filters?.price?.min ?? 0)
-		const priceMaxRaw = filters?.price?.max
-		const hasPriceMax =
-			priceMaxRaw !== null && priceMaxRaw !== undefined && priceMaxRaw !== ''
-		const priceMax = hasPriceMax ? Number(filters.price.max) : null
-
-		const wantStock = !!filters?.inStockOnly
-		const wantCert = !!filters?.hasCertificate
-
-		return items.filter(p => {
-			const matchesSearch =
-				!q ||
-				norm(p.name).includes(q) ||
-				norm(p.description).includes(q) ||
-				norm(p.category).includes(q) ||
-				norm(p.subcategory).includes(q) ||
-				norm(p.manufacturer).includes(q)
-			if (!matchesSearch) return false
-
-			if (sel && sel !== 'all') {
-				const productCat = norm(p.category)
-				const productSub = norm(p.subcategory)
-				if (!(sel === productSub || sel === productCat)) return false
-			}
-
-			const curPrice = getCurrentPrice(p)
-			if (Number.isFinite(priceMin) && curPrice < priceMin) return false
-			if (hasPriceMax && Number.isFinite(priceMax) && curPrice > priceMax)
-				return false
-
-			if (wantStock) {
-				const sc = Number(p?.stock)
-				if (Number.isFinite(sc) && sc <= 0) return false
-			}
-
-			// ВАЖНО: теперь проверяем наличие certificateNumber (а не certificateUrl)
-			if (wantCert) {
-				const hasNum = !!String(p?.certificateNumber || '').trim()
-				if (!hasNum) return false
-			}
-
-			if (typesSet.size) {
-				const t = norm(p?.subcategory) || norm(p?.category)
-				if (!typesSet.has(t)) return false
-			}
-
-			if (manufacturersSet.size) {
-				const m = norm(p?.manufacturer)
-				if (!manufacturersSet.has(m)) return false
-			}
-
-			if (shotsSet.size) {
-				const sh = Number(p?.shots)
-				if (!shotsSet.has(sh)) return false
-			}
-
-			if (powerSet.size) {
-				if (!p?.power || !powerSet.has(p.power)) return false
-			}
-
-			return true
-		})
-	}
 )
 
 export default productsSlice.reducer

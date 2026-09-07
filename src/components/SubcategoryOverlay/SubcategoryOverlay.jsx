@@ -26,9 +26,8 @@ export default function SubcategoryOverlay({
 }) {
 	const form = useSelector(selectFiltersForm)
 	const previewCount = useSelector(selectPreviewCount)
-	const items = useSelector(s => s.products.items || [])
 
-	const filterOptions = useFilterOptions(items)
+	const filterOptions = useFilterOptions()
 
 	const [visible, setVisible] = useState(isOpen)
 	useEffect(() => {

@@ -14,14 +14,12 @@ import {
 	fetchProductDetail,
 	fetchProductsPage,
 	selectDiscountedProducts,
-	selectFilteredProducts,
-	selectFilters,
 } from '../../../store/slices/productsSlice'
-import { applyAdvancedFilter as applyProductFilters } from '../../../utils/filters'
+import { getCatalogLoadingState } from '../../../utils/catalogLoadingState'
 
 import {
 	clearApplied,
-	selectFoundItems,
+	selectAppliedFilters,
 	selectShowFound,
 	setShowFound,
 } from '../../../store/slices/filtersSlice'
@@ -69,13 +67,10 @@ const ProductPageMobile = () => {
 	)
 	const selectedSub = useSelector(s => s.categories.selectedSub || '')
 	const allItems = useSelector(s => s.products.items)
-	const filtered = useSelector(selectFilteredProducts)
 	const discountedAll = useSelector(selectDiscountedProducts)
 	const search = useSelector(s => s.products.searchQuery || '')
 	const showFoundFlag = useSelector(selectShowFound)
-	const foundItems = useSelector(selectFoundItems)
-
-	const productsFilters = useSelector(selectFilters)
+	const appliedFilters = useSelector(selectAppliedFilters)
 
 	// ===== local =====
 	const isSearching = !!String(search).trim()
@@ -83,27 +78,32 @@ const ProductPageMobile = () => {
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
 	const [activeSub, setActiveSub] = useState(null)
 
-	// Категория/поиск больше не докачивают весь каталог — берём только то,
-	// что сервер уже отфильтровал (см. desktop-версию/useCatalogFilterQuery).
-	// Неактивен, пока открыта подкатегория/акции (activeSub) — там свой
-	// снимок товаров, серверная category/search фильтрация туда не лезет.
+	// Категория/поиск/применённые advanced-фильтры больше не докачивают весь
+	// каталог — берём только то, что сервер уже отфильтровал (см.
+	// desktop-версию/useCatalogFilterQuery). Неактивен, пока открыта
+	// подкатегория/акции (activeSub) — там свой снимок товаров, серверная
+	// category/search/filters фильтрация туда не лезет.
 	const catalogQuery = useCatalogFilterQuery({
 		category: selectedCategory,
 		search,
+		filters: appliedFilters,
 		active: !activeSub,
 	})
+
+	// showFound (поиск ИЛИ применённые фильтры) — всегда catalogQuery.items,
+	// тот же единственный источник, что и на десктопе.
+	const foundItems = catalogQuery.items
 
 	// ===== data prep =====
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
 		[discountedAll]
 	)
-	// "Живые" фильтры (модалка в BurgerMobile) применяются поверх
-	// отфильтрованных сервером товаров, когда выбрана категория/поиск —
-	// иначе как раньше, поверх обычного накопленного каталога.
-	const baseFiltered = catalogQuery.isFiltering
-		? applyProductFilters(catalogQuery.items, productsFilters)
-		: filtered
+	// Модалка фильтров (BurgerMobile/SubcategoryOverlay) уже применена
+	// сервером внутри catalogQuery — здесь просто выбираем: отфильтрованный
+	// сервером набор (категория/поиск/фильтры активны) или обычный
+	// накопленный домашний каталог.
+	const baseFiltered = catalogQuery.isFiltering ? catalogQuery.items : allItems
 	const homeDiscounted = useMemo(
 		() => baseFiltered.filter(p => discountedSet.has(p.id)),
 		[baseFiltered, discountedSet]
@@ -227,6 +227,14 @@ const ProductPageMobile = () => {
 		deps: [isFiltering ? catalogQuery.items.length : allItems.length],
 	})
 
+	// Различаем "ещё нет товаров для текущего запроса" (полноэкранный
+	// скелетон) от "уже что-то показано, докачивается следующая страница"
+	// (мелкий индикатор) — см. desktop-версию/utils/catalogLoadingState.
+	const { showInitialSkeleton, showLoadingMore } = getCatalogLoadingState(
+		effectiveStatus,
+		sectionsSorted
+	)
+
 	// ====== Реакция на поиск ======
 	useEffect(() => {
 		if (isSearching) {
@@ -349,7 +357,7 @@ const ProductPageMobile = () => {
 			exit='exit'
 			className='space-y-6'
 		>
-			{isFiltering && effectiveStatus === 'loading' && !sectionsSorted.length && (
+			{showInitialSkeleton && !sectionsSorted.length && (
 				<div className='py-8 text-center text-[10px] text-[#625a51] lowercase font-baron'>
 					загрузка…
 				</div>
@@ -368,13 +376,21 @@ const ProductPageMobile = () => {
 						products={sec.items}
 						onSelectProduct={openDetailsRedux}
 						onOpenSubcategory={openSubcategory}
-						loading={effectiveStatus === 'loading'}
+						loading={showInitialSkeleton}
 						showHeader
 						uncapped={norm(selectedCategory) !== 'all'}
 					/>
 				</motion.div>
 			))}
-			{effectiveCanLoadMore && <div ref={homeSentinelRef} className='h-2' />}
+			{effectiveCanLoadMore && (
+				<div ref={homeSentinelRef} className='h-2 flex justify-center items-center'>
+					{showLoadingMore && (
+						<span className='text-[10px] text-[#625a51] lowercase font-baron'>
+							загрузка…
+						</span>
+					)}
+				</div>
+			)}
 		</motion.div>
 	)
 

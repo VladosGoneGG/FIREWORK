@@ -8,12 +8,6 @@ import useBodyScrollLock from '../../../hooks/useBodyScrollLock'
 import useEscapeToClose from '../../../hooks/useEscapeToClose'
 import { setCategorySmart } from '../../../store/slices/categoriesSlice'
 import { clearApplied } from '../../../store/slices/filtersSlice'
-import {
-	resetFilters,
-	selectFilteredProducts,
-	selectFilters,
-	setFilters,
-} from '../../../store/slices/productsSlice'
 
 import BurgerCloseSvg from '../../BurgerCloseSvg/BurgerCloseSvg'
 import BurgerSvg from '../../BurgerSvg/BurgerSvg'
@@ -73,29 +67,6 @@ const BurgerMobile = () => {
 		}
 		if (selCat === 'all') setExpandedId(null)
 	}, [selectedSub, selectedCategory, categoriesList])
-
-	const resultsCount = useSelector(selectFilteredProducts).length
-	const storeFilters = useSelector(selectFilters)
-	const [form, setForm] = useState(storeFilters)
-	useEffect(() => setForm(storeFilters), [storeFilters])
-
-	const setField = useCallback((path, value) => {
-		setForm(prev => {
-			const parts = String(path).split('.')
-			const next =
-				typeof structuredClone === 'function'
-					? structuredClone(prev)
-					: JSON.parse(JSON.stringify(prev))
-			let cur = next
-			for (let i = 0; i < parts.length - 1; i++) {
-				const k = parts[i]
-				if (typeof cur[k] !== 'object' || cur[k] == null) cur[k] = {}
-				cur = cur[k]
-			}
-			cur[parts[parts.length - 1]] = value
-			return next
-		})
-	}, [])
 
 	const handleOpen = useCallback(() => setOpen(true), [])
 
@@ -171,15 +142,15 @@ const BurgerMobile = () => {
 	useBodyScrollLock(open)
 	useEscapeToClose(open, handleClose)
 
+	// Реальное применение/сброс фильтров (dispatch applyNow()/resetForm())
+	// происходит внутри FilterFooter — сюда прилетает только колбэк для
+	// закрытия шторки после клика, как и на десктопе (см. App.jsx).
 	const onApplyFilters = useCallback(() => {
-		dispatch(setFilters(form))
 		setFiltersOpen(false)
 		setOpen(false)
-	}, [dispatch, form])
+	}, [])
 
-	const onResetFilters = useCallback(() => {
-		dispatch(resetFilters())
-	}, [dispatch])
+	const onResetFilters = useCallback(() => {}, [])
 
 	const renderAccordionDesktopLike = () => {
 		const selCatKey = norm(selectedCategory || 'all')
@@ -336,9 +307,6 @@ const BurgerMobile = () => {
 														variant='mobile'
 														embed
 														isOpen={filtersOpen}
-														form={form}
-														setField={setField}
-														resultsCount={resultsCount}
 														onApply={onApplyFilters}
 														onReset={onResetFilters}
 														onClose={() => setFiltersOpen(false)}
