@@ -4,6 +4,9 @@ import { applyNow, resetForm } from '../../../store/slices/filtersSlice'
 
 const FilterFooter = ({ previewCount, onApply, onReset, variant = 'standalone' }) => {
 	const dispatch = useDispatch()
+	// null пока первый запрос точного счётчика ещё не ответил (см.
+	// useFilterPreviewCount) — не рендерим буквально "найдено null".
+	const countText = previewCount == null ? '…' : previewCount
 
 	const handleReset = () => {
 		dispatch(resetForm())
@@ -19,7 +22,7 @@ const FilterFooter = ({ previewCount, onApply, onReset, variant = 'standalone' }
 		return (
 			<div className='self-stretch flex flex-col items-center gap-2.5 px-2.5'>
 				<div className='text-center text-zinc-300 text-[12px] font-baron'>
-					найдено {previewCount} товар(ов)
+					найдено {countText} товар(ов)
 				</div>
 
 				<div className='w-[272px] inline-flex items-start gap-2.5'>
@@ -47,7 +50,7 @@ const FilterFooter = ({ previewCount, onApply, onReset, variant = 'standalone' }
 	return (
 		<div className='px-2.5 pb-3 pt-2'>
 			<div className='text-center text-zinc-300 text-[12px] font-baron'>
-				найден {previewCount} товар
+				найден {countText} товар
 			</div>
 			<div className='flex gap-2 mt-2'>
 				<button

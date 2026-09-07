@@ -1,15 +1,13 @@
 // src/components/SubcategoryOverlay/SubcategoryOverlay.jsx
 import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 
 import useEscapeToClose from '../../hooks/useEscapeToClose'
-import {
-	selectFiltersForm,
-	selectPreviewCount,
-} from '../../store/slices/filtersSlice'
+import { cleanForm, selectFiltersForm } from '../../store/slices/filtersSlice'
 
 import useFilterOptions from './hooks/useFilterOptions'
+import useFilterPreviewCount from './hooks/useFilterPreviewCount'
 import FilterContent from './parts/FilterContent'
 import FilterFooter from './parts/FilterFooter'
 
@@ -25,7 +23,19 @@ export default function SubcategoryOverlay({
 	embed = false, // для аккордеона
 }) {
 	const form = useSelector(selectFiltersForm)
-	const previewCount = useSelector(selectPreviewCount)
+	const selectedCategory = useSelector(s => s.categories.selectedCategory || 'all')
+	const search = useSelector(s => s.products.searchQuery || '')
+
+	// Точный (не приближённый) счётчик — тот же category/search/filters,
+	// что и у настоящих результатов после "показать" (см.
+	// useCatalogFilterQuery), просто с limit=1 ради pagination.totalItems.
+	const cleanedForm = useMemo(() => cleanForm(form), [form])
+	const { count: previewCount } = useFilterPreviewCount({
+		category: selectedCategory,
+		search,
+		filters: cleanedForm,
+		active: isOpen,
+	})
 
 	const filterOptions = useFilterOptions()
 

@@ -1,6 +1,5 @@
 // src/store/slices/filtersSlice.js
-import { createSelector, createSlice } from '@reduxjs/toolkit'
-import { applyAdvancedFilter } from '../../utils/filters'
+import { createSlice } from '@reduxjs/toolkit'
 
 // ---------- Формы ----------
 const initialForm = {
@@ -24,7 +23,11 @@ function setByPath(obj, path, value) {
 	cur[last] = value
 }
 
-function cleanForm(form) {
+// Экспортируется: тот же нормализованный вид формы нужен и для applyNow
+// (state.applied), и для запроса точного превью-счётчика на сервере (см.
+// useFilterPreviewCount) — единая функция, а не два по-разному написанных
+// подобия друг друга.
+export function cleanForm(form) {
 	const f = JSON.parse(JSON.stringify(form || {}))
 	const arrFields = ['tags', 'types', 'manufacturers', 'shots', 'power']
 	for (const k of arrFields) {
@@ -105,25 +108,13 @@ export const {
 export default filtersSlice.reducer
 
 // ---------- Базовые селекторы ----------
-const selectProductsItems = s => s.products?.items || []
 export const selectFiltersForm = s => s.filters.form
 export const selectAppliedFilters = s => s.filters.applied
 export const selectShowFound = s => s.filters.showFound
 
-// ---------- Мемоизированные селекторы ----------
-
-// Превью-количество (по текущей, ещё не применённой форме) — показывается
-// в модалке до нажатия "показать"/"применить". ПРИБЛИЖЁННОЕ значение: оно
-// считается только по уже подгруженным на клиенте товарам
-// (products.items), а не по всему каталогу на сервере — точный подсчёт по
-// всему каталогу на каждое движение чекбокса означал бы запрос на сервер
-// при каждом изменении формы. Итоговый результат после нажатия "показать"
-// идёт через fetchQueryPage/useCatalogFilterQuery и всегда точен (см.
-// productsSlice.js) — расхождение возможно только в этом превью-счётчике.
-export const selectPreviewCount = createSelector(
-	[selectProductsItems, selectFiltersForm],
-	(items, form) => {
-		const cleaned = cleanForm(form)
-		return applyAdvancedFilter(items, cleaned).length
-	}
-)
+// Точное количество товаров для текущего (ещё не применённого) черновика
+// формы теперь считается на сервере — см. useFilterPreviewCount. Раньше
+// здесь был чисто клиентский подсчёт по state.products.items, из-за чего
+// открыв фильтр сразу после первой страницы каталога показывалось "48"
+// вместо реального размера каталога/категории — тот же класс проблемы, что
+// и с самими результатами фильтра (см. Fix 1), только в счётчике превью.

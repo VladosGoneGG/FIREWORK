@@ -34,7 +34,6 @@ import SortDropdown from '../ui/SortDropdown'
 import {
 	clearApplied,
 	selectAppliedFilters,
-	selectPreviewCount,
 	selectShowFound,
 	setShowFound,
 } from '../../store/slices/filtersSlice'
@@ -65,7 +64,6 @@ const LAYOUT_T = { layout: { duration: DURATION, ease: EASE } }
 const ProductsPage = ({
 	onToggleFilters,
 	filtersOpen,
-	onFiltersCountChange = () => {},
 	onDetailsModeChange,
 	externalSelectedProduct,
 	onConsumeExternalSelected,
@@ -88,7 +86,6 @@ const ProductsPage = ({
 
 	const showFound = useSelector(selectShowFound)
 	const appliedFilters = useSelector(selectAppliedFilters)
-	const previewCount = useSelector(selectPreviewCount)
 
 	const [selectedProduct, setSelectedProduct] = useState(null)
 	const [activeSub, setActiveSub] = useState(null)
@@ -159,10 +156,6 @@ const ProductsPage = ({
 			dispatch(setShowFound(false))
 		}
 	}, [search, dispatch])
-
-	useEffect(() => {
-		onFiltersCountChange(previewCount)
-	}, [previewCount, onFiltersCountChange])
 
 	const related = useRelated(allItems, selectedProduct, 10)
 
