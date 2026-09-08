@@ -3,6 +3,7 @@ import { memo, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import { addItem } from '../../store/slices/cartSlice'
 import { fmtPrice, fmtSecFull, renderSec } from '../../utils/format'
+import { getPriceDisplay } from '../../utils/price'
 import AddToCartButton from './parts/AddToCartButton'
 import PriceBlock from './parts/PriceBlock'
 import ProductMeta from './parts/ProductMeta'
@@ -41,13 +42,7 @@ function ProductCardMini({ product, onSelect }) {
 		[onSelect, product]
 	)
 
-	// --- НОРМАЛИЗАЦИЯ ЦЕН ---
-	const p = Number(price)
-	const dp = Number(discountPrice)
-	const hasValidDiscount =
-		Number.isFinite(p) && p > 0 && Number.isFinite(dp) && dp > 0 && dp < p
-
-	const unitPrice = hasValidDiscount ? dp : Number.isFinite(p) ? p : 0
+	const { current: unitPrice } = getPriceDisplay({ price, discountPrice })
 
 	const add = useCallback(
 		e => {
@@ -109,7 +104,7 @@ function ProductCardMini({ product, onSelect }) {
 				<div className='flex items-end justify-between mt-auto '>
 					<PriceBlock
 						price={price}
-						discountPrice={hasValidDiscount ? discountPrice : null}
+						discountPrice={discountPrice}
 						fmtPrice={fmtPrice}
 					/>
 					<AddToCartButton disabled={outOfStock} onClick={add} />

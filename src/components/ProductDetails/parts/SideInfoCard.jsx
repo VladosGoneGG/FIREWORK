@@ -9,6 +9,8 @@ import effectsImg from '../../../assets/SVG/star.svg'
 import timeImg from '../../../assets/SVG/time.svg'
 
 import { fmtNum, fmtSecCompact, fmtSecFull } from '../../../utils/format'
+import { getPriceDisplay } from '../../../utils/price'
+import NoPhoto from '../../ui/NoPhoto'
 
 function SideInfoCard({ product, img }) {
 	const {
@@ -24,9 +26,11 @@ function SideInfoCard({ product, img }) {
 	} = product
 
 	const inStock = Number.isFinite(stock) ? stock : 15
-	const unitPrice = typeof discountPrice === 'number' ? discountPrice : price
-	const hasOldPrice =
-		typeof discountPrice === 'number' && typeof price === 'number'
+	const {
+		hasDiscount: hasOldPrice,
+		original,
+		current: unitPrice,
+	} = getPriceDisplay({ price, discountPrice })
 
 	return (
 		<aside
@@ -45,7 +49,7 @@ function SideInfoCard({ product, img }) {
 				{img ? (
 					<img src={img} alt={name} className='w-full h-full object-contain' />
 				) : (
-					<span className='text-xs opacity-60'>Нет фото</span>
+					<NoPhoto />
 				)}
 			</div>
 
@@ -101,26 +105,29 @@ function SideInfoCard({ product, img }) {
 				{/* старая цена (если есть скидка) */}
 				{hasOldPrice && (
 					<div
-						className='relative bottom-1.5 right-1.5 text-[14px] line-through decoration-1 text-[#BD52E9]
+						className='relative bottom-1.5 left-1 text-[14px] line-through decoration-1 text-[#BD52E9]
 						max-[1040px]:text-[#b4b4b4] max-[680px]:pt-[8px]
 						pointer-events-none font-baron lowercase'
 						title='Старая цена'
 					>
-						{fmtNum(price)}
+						{fmtNum(original)}{' '}
+						<span className='inline-block text-[10px] no-underline'>руб.</span>
 					</div>
 				)}
 
-				{inStock > 0 && (
-					<div
-						className={[
-							'max-[680px]:w-full max-[680px]:min-w-0',
+				<div
+					className={[
+						'max-[680px]:w-full max-[680px]:min-w-0',
 
-							'min-[681px]:w-[200px] min-[681px]:-ml-1.5',
-						].join(' ')}
-					>
-						<PriceQtyButton product={product} unitPrice={unitPrice} />
-					</div>
-				)}
+						'min-[681px]:w-[200px] min-[681px]:-ml-1.5',
+					].join(' ')}
+				>
+					<PriceQtyButton
+						product={product}
+						unitPrice={unitPrice}
+						readOnly={inStock <= 0}
+					/>
+				</div>
 			</div>
 		</aside>
 	)

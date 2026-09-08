@@ -40,6 +40,7 @@ const BackButton = ({
 					'bg-transparent', // фон управляется overlay-спаном ниже
 					'leading-none select-none antialiased',
 					'focus:outline-none',
+					'[-webkit-tap-highlight-color:transparent]', // без серой "вспышки" при тапе на мобильных
 					'group', // для hover/active на потомках
 				].join(' ')}
 			>
@@ -52,7 +53,7 @@ const BackButton = ({
 				/>
 
 				{/* Контент поверх */}
-				<span className='relative z-10 inline-flex items-center gap-2.5'>
+				<span className='relative z-10 inline-flex items-center  gap-2.5'>
 					{/* Левая зона со стрелкой */}
 					<span className='w-6 h-6 px-[5px] py-1.5 flex items-center justify-center shrink-0'>
 						{/* Стрелка 1:1 из фигмы: треугольник ← через clip-path */}
@@ -71,7 +72,7 @@ const BackButton = ({
 					{/* Текст: центр по вертикали; при необходимости подними/опусти на 0.5px */}
 					<span
 						className={[
-							'w-[35px] h-6 flex items-center text-xs font-baron leading-none',
+							'w-[35px] h-auto flex items-center  text-xs font-baron leading-none pb-[4px]',
 							textClr,
 							'-translate-y-[0.5px]',
 						].join(' ')}

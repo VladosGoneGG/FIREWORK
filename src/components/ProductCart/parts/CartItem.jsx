@@ -2,6 +2,7 @@
 import { memo } from 'react'
 import { fmtPriceRub } from '../../../utils/format'
 import { getUnitPrice } from '../../../utils/price'
+import NoPhoto from '../../ui/NoPhoto'
 import Qty from './Qty'
 
 const CartItem = ({ item, onDec, onInc }) => {
@@ -17,14 +18,16 @@ const CartItem = ({ item, onDec, onInc }) => {
 
 	return (
 		<div className='flex items-center gap-3 max-[1040px]:mt-2.5'>
-			<div className='w-[70px] h-[70px] rounded-[10px] overflow-hidden bg-[#f6f4f2] shrink-0'>
+			<div className='w-[70px] h-[70px] rounded-[10px] overflow-hidden bg-[#f6f4f2] shrink-0 grid place-items-center'>
 				{item.images?.[0] ? (
 					<img
 						src={item.images[0]}
 						alt={item.name}
 						className='w-full h-full object-cover'
 					/>
-				) : null}
+				) : (
+					<NoPhoto />
+				)}
 			</div>
 
 			{/* две зоны: верх (фиксированная высота) + низ */}

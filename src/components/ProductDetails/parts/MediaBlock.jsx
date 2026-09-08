@@ -1,5 +1,6 @@
 // src/components/ProductDetails/parts/MediaBlock.jsx
 import { memo } from 'react'
+import fireworksSvg from '../../../assets/SVG/fireworksSvg.svg'
 import overlaySvg from '../../../assets/SVG/overlay.svg'
 import BackButton from '../../ui/BackButton'
 
@@ -21,7 +22,10 @@ const MediaBlock = ({ img, video, name, onBack }) => {
 				'[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
 			].join(' ')}
 		>
-			<BackButton onClick={onBack} className='absolute cursor-pointer z-10' />
+			<BackButton
+				onClick={onBack}
+				className='absolute top-0 left-0 cursor-pointer z-10'
+			/>
 
 			{videoUrl ? (
 				<video
@@ -33,16 +37,12 @@ const MediaBlock = ({ img, video, name, onBack }) => {
 				>
 					Ваш браузер не поддерживает воспроизведение видео.
 				</video>
-			) : img ? (
+			) : (
 				<img
-					src={img}
+					src={img || fireworksSvg}
 					alt={name}
 					className='w-full h-full object-cover rounded-[12px]'
 				/>
-			) : (
-				<div className='grid place-items-center w-full h-full opacity-60'>
-					Нет изображения
-				</div>
 			)}
 
 			{/* декоративная иконка воспроизведения — только пока нет настоящего видео,

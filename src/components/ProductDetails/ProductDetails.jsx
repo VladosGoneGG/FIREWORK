@@ -1,6 +1,5 @@
 // src/components/ProductDetails/ProductDetails.jsx
 import { memo, useEffect } from 'react'
-import fireworksSvg from '../../assets/SVG/fireworksSvg.svg'
 import DescriptionBlock from './parts/DescriptionBlock'
 import MediaBlock from './parts/MediaBlock'
 import RelatedBlock from './parts/RelatedBlock'
@@ -59,7 +58,7 @@ const ProductDetails = ({
 					].join(' ')}
 				>
 					<MediaBlock
-						img={fireworksSvg}
+						img={img}
 						video={product.video}
 						name={product.name}
 						onBack={onBack}

@@ -1,4 +1,5 @@
 // src/components/ProductCardMini/parts/ProductThumb.jsx
+import NoPhoto from '../../ui/NoPhoto'
 
 export default function ProductThumb({
 	src,
@@ -16,8 +17,8 @@ export default function ProductThumb({
 					className='w-full h-full object-cover cursor-pointer'
 				/>
 			) : (
-				<div className='grid place-items-center w-full h-full text-xs opacity-60'>
-					Нет фото
+				<div className='grid place-items-center w-full h-full'>
+					<NoPhoto />
 				</div>
 			)}
 			{outOfStock && (

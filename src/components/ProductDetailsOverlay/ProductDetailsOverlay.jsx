@@ -1,7 +1,7 @@
 // src/components/ProductDetailsOverlay/ProductDetailsOverlay.jsx
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal, flushSync } from 'react-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import ProductDetails from '../../components/ProductDetails/ProductDetails'
 import useBodyScrollLock from '../../hooks/useBodyScrollLock'
@@ -14,6 +14,12 @@ import {
 } from '../../store/slices/detailsSlice'
 import { normalizeString } from '../../utils/normalize'
 
+const OVERLAY = {
+	hidden: { opacity: 0 },
+	show: { opacity: 1, transition: { duration: 0.18 } },
+	exit: { opacity: 0, transition: { duration: 0.15 } },
+}
+
 export default function ProductDetailsOverlay() {
 	const dispatch = useDispatch()
 	const isMobile = useMediaQuery('(max-width: 1040px)')
@@ -23,6 +29,12 @@ export default function ProductDetailsOverlay() {
 	const searchQuery = useSelector(s => s.products.searchQuery || '') // 👈 добавили
 
 	const [stickyProduct, setStickyProduct] = useState(null)
+	// Как и на десктопе: контент показываем только после того, как контейнер
+	// (белый лист) доехал до места — и прячем СРАЗУ (flushSync) при закрытии,
+	// ещё до того как контейнер начнёт уезжать, иначе он мелькает во время
+	// закрытия.
+	const [contentReady, setContentReady] = useState(false)
+	const displayProductRef = useRef(null)
 
 	useEffect(() => {
 		if (product) setStickyProduct(product)
@@ -43,6 +55,10 @@ export default function ProductDetailsOverlay() {
 
 	const displayProduct = isMobile ? product || stickyProduct : null
 
+	useEffect(() => {
+		displayProductRef.current = displayProduct
+	}, [displayProduct])
+
 	useBodyScrollLock(!!displayProduct)
 
 	const related = useMemo(() => {
@@ -54,6 +70,10 @@ export default function ProductDetailsOverlay() {
 	}, [allItems, displayProduct])
 
 	const handleClose = () => {
+		// Прячем контент СИНХРОННО, пока белый лист ещё виден и закрытие не
+		// началось — иначе AnimatePresence захватит для exit кадр с ещё
+		// видимым контентом, и он мелькает прямо во время закрытия.
+		flushSync(() => setContentReady(false))
 		setStickyProduct(null)
 		dispatch(closeDetails())
 	}
@@ -61,6 +81,10 @@ export default function ProductDetailsOverlay() {
 	useEscapeToClose(!!displayProduct, handleClose)
 
 	const handleSelectProduct = p => {
+		// Открываем "с нуля" только если до этого ничего не было открыто —
+		// переход между связанными товарами внутри уже открытой карточки
+		// контент заново не прячет.
+		if (!displayProductRef.current) setContentReady(false)
 		dispatch(openDetails(p)) // или openDetails({ id: p.id }) если у тебя так
 	}
 
@@ -69,17 +93,21 @@ export default function ProductDetailsOverlay() {
 			{displayProduct && (
 				<motion.div
 					key='details-overlay'
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0 }}
+					variants={OVERLAY}
+					initial='hidden'
+					animate='show'
+					exit='exit'
 					className={[
 						'fixed inset-0 z-50 bg-white overflow-y-auto',
 						'[-ms-overflow-style:none]',
 						'[scrollbar-width:none]',
 						'[&::-webkit-scrollbar]:hidden',
 					].join(' ')}
+					onAnimationComplete={definition => {
+						if (definition === 'show') setContentReady(true)
+					}}
 				>
-					<div>
+					{contentReady && (
 						<ProductDetails
 							product={displayProduct}
 							related={related}
@@ -87,7 +115,7 @@ export default function ProductDetailsOverlay() {
 							onOpenSubcategory={handleClose}
 							onSelectProduct={handleSelectProduct}
 						/>
-					</div>
+					)}
 				</motion.div>
 			)}
 		</AnimatePresence>,

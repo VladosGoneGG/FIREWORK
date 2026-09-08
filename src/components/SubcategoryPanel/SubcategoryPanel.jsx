@@ -1,5 +1,4 @@
 // src/components/SubcategoryPanel/SubcategoryPanel.jsx
-import { AnimatePresence, motion } from 'framer-motion'
 import { memo, useMemo } from 'react'
 import useInfiniteScroll from '../../hooks/useInfiniteScroll'
 import ProductCardMiniMobile from '../LayoutMobile/parts/ProductCardMiniMobile'
@@ -39,23 +38,13 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 }) {
 	const items = useMemo(
 		() => (Array.isArray(products) ? products : []),
-		[products]
+		[products],
 	)
 
 	const sentinelRef = useInfiniteScroll(onLoadMore || (() => {}), {
 		enabled: canLoadMore && !loadingMore,
 		deps: [items.length],
 	})
-
-	const FX = {
-		initial: { opacity: 0, y: -8 },
-		enter: {
-			opacity: 1,
-			y: 0,
-			transition: { duration: 0.14, ease: 'easeOut' },
-		},
-		exit: { opacity: 0, y: -8, transition: { duration: 0.12, ease: 'easeIn' } },
-	}
 
 	// десктоп: если товаров мало — расширяем карточки
 	const fewDesktopItems =
@@ -70,8 +59,8 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 
 	return (
 		<section>
-			{/* Хедер */}
-			<div className='flex items-start justify-between pl-1 '>
+			{/* Хедер — прилипает сверху при скролле списка товаров */}
+			<div className='sticky top-0 z-20 bg-white flex items-start justify-between pl-1 pb-2.5 '>
 				<h3 className='text-[18px] lowercase font-baron '>{title}</h3>
 
 				{/* правый блок: фильтр + сортировка */}
@@ -105,33 +94,23 @@ const SubcategoryPanel = memo(function SubcategoryPanel({
 
 			{/* Контент */}
 			<div className={mobile ? mobileGrid : desktopContainer}>
-				<AnimatePresence initial={false} mode='sync'>
-					{items.map(p => (
-						<motion.div
-							key={p.id ?? `${p.name}-${p.category}-${p.subcategory}`}
-							layout='position'
-							initial={FX.initial}
-							animate={FX.enter}
-							exit={FX.exit}
-							style={{
-								willChange: 'opacity, transform',
-								// на десктопе даём адаптивную ширину карточке
-								...(mobile
-									? {}
-									: {
-											width: fewDesktopItems ? EXPANDED_W : CARD_W,
-									  }),
-							}}
-							className={mobile ? 'w-full ' : undefined}
-						>
-							{mobile ? (
-								<ProductCardMiniMobile product={p} onSelect={onSelectProduct} />
-							) : (
-								<ProductCardMini product={p} onSelect={onSelectProduct} />
-							)}
-						</motion.div>
-					))}
-				</AnimatePresence>
+				{items.map(p => (
+					<div
+						key={p.id ?? `${p.name}-${p.category}-${p.subcategory}`}
+						style={
+							mobile
+								? undefined
+								: { width: fewDesktopItems ? EXPANDED_W : CARD_W }
+						}
+						className={mobile ? 'w-full ' : undefined}
+					>
+						{mobile ? (
+							<ProductCardMiniMobile product={p} onSelect={onSelectProduct} />
+						) : (
+							<ProductCardMini product={p} onSelect={onSelectProduct} />
+						)}
+					</div>
+				))}
 			</div>
 
 			{!items.length && (

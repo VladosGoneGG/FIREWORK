@@ -6,6 +6,14 @@ const NEAR_VIEWPORT_PX = 200 // подгружаем чуть заранее, н
 // Возвращает ref для "сторожевого" элемента: как только он показывается
 // в зоне видимости (скролл вниз), вызывает onLoadMore — классический
 // infinite scroll без кнопки и без номеров страниц.
+//
+// Пересоздаём IntersectionObserver при каждом изменении deps (обычно —
+// количество товаров): наблюдатель шлёт начальное уведомление сразу при
+// observe(), поэтому если сторожевой элемент всё ещё виден после подгрузки
+// (короткая страница не вытолкнула его вниз) — это корректно ловится без
+// самодельных измерений через window.innerHeight, которые игнорировали
+// обрезку скролл-контейнера и вызывали onLoadMore независимо от реальной
+// прокрутки — отсюда и «прыжки»/дрожание контента у нижнего края списка.
 export default function useInfiniteScroll(onLoadMore, { enabled = true, deps = [] } = {}) {
 	const sentinelRef = useRef(null)
 
@@ -23,25 +31,8 @@ export default function useInfiniteScroll(onLoadMore, { enabled = true, deps = [
 
 		observer.observe(node)
 		return () => observer.disconnect()
-	}, [enabled, onLoadMore])
-
-	// Если после подгрузки сторожевой элемент всё ещё виден (короткая страница
-	// не вытолкнула его вниз) — IntersectionObserver повторно не сработает,
-	// т.к. состояние пересечения не изменилось. Дожидаемся кадра отрисовки
-	// и измеряем позицию заново напрямую — без доверия к «протухшему» флагу.
-	useEffect(() => {
-		if (!enabled) return
-		const node = sentinelRef.current
-		if (!node) return
-
-		const id = requestAnimationFrame(() => {
-			const rect = node.getBoundingClientRect()
-			const nearViewport = rect.top < window.innerHeight + NEAR_VIEWPORT_PX
-			if (nearViewport) onLoadMore()
-		})
-		return () => cancelAnimationFrame(id)
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, deps)
+	}, [enabled, onLoadMore, ...deps])
 
 	return sentinelRef
 }

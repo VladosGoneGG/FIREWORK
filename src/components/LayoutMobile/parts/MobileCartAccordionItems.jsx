@@ -8,7 +8,7 @@ import {
 	removeItem,
 	updateQuantity,
 } from '../../../store/slices/cartSlice'
-import { MIN_ORDER_AMOUNT } from '../../../constants/orders'
+import { getMinOrderAmount } from '../../../constants/orders'
 import { buildOrderPayload, sendOrder } from '../../../utils/orderApi'
 import CheckoutForm from '../../ProductCart/CheckoutForm'
 import CartFooter from '../../ProductCart/parts/CartFooter'
@@ -52,6 +52,9 @@ function MobileCartAccordionItems({ height = 360, onClose }) {
 	const [sheetOpen, setSheetOpen] = useState(false)
 	const [success, setSuccess] = useState(false)
 	const [submitError, setSubmitError] = useState(false)
+	// самовывоз по умолчанию — совпадает с CheckoutForm.defaultValues.delivery,
+	// минимальная сумма заказа до выбора способа получения не действует
+	const [delivery, setDelivery] = useState('pickup')
 
 	// якорь — чтобы при открытии формы прокрутить контейнер к ней (если нужно)
 	const formAnchorRef = useRef(null)
@@ -182,6 +185,7 @@ function MobileCartAccordionItems({ height = 360, onClose }) {
 								<CheckoutForm
 									ref={formRef}
 									onSubmitted={handleOrderSubmitted}
+									onDeliveryChange={setDelivery}
 								/>
 								{submitError && (
 									<div className='mt-2 mb-2 text-[11px] text-red-500 font-baron text-center'>
@@ -196,7 +200,7 @@ function MobileCartAccordionItems({ height = 360, onClose }) {
 				{/* Футер — остаётся на месте */}
 				<CartFooter
 					total={total}
-					minOrder={MIN_ORDER_AMOUNT}
+					minOrder={getMinOrderAmount(delivery)}
 					onContinue={handleContinue}
 				/>
 			</div>

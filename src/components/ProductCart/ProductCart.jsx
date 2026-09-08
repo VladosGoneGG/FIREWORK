@@ -7,7 +7,7 @@ import {
 	removeItem,
 	updateQuantity,
 } from '../../store/slices/cartSlice'
-import { MIN_ORDER_AMOUNT } from '../../constants/orders'
+import { getMinOrderAmount } from '../../constants/orders'
 import { buildOrderPayload, sendOrder } from '../../utils/orderApi'
 import CheckoutForm from './CheckoutForm'
 import CartFooter from './parts/CartFooter'
@@ -27,6 +27,9 @@ const ProductCart = ({ loading = false }) => {
 	const [showForm, setShowForm] = useState(false)
 	const [success, setSuccess] = useState(false)
 	const [submitError, setSubmitError] = useState(false)
+	// самовывоз по умолчанию — совпадает с CheckoutForm.defaultValues.delivery,
+	// минимальная сумма заказа до выбора способа получения не действует
+	const [delivery, setDelivery] = useState('pickup')
 	const successTimeoutRef = useRef(null)
 
 	useEffect(() => {
@@ -114,7 +117,7 @@ const ProductCart = ({ loading = false }) => {
 	return (
 		<aside
 			className='
-        bg-white rounded-[20px] w-[295px] h-[834px]
+        bg-white rounded-[20px] w-[295px] h-full
         shadow-[0_0_15px_rgba(0,0,0,0.15)]
         flex flex-col overflow-hidden font-baron lowercase
       '
@@ -145,7 +148,11 @@ const ProductCart = ({ loading = false }) => {
 
 				{showForm && !success && list.length > 0 && (
 					<div ref={formContainerRef} className='mt-3'>
-						<CheckoutForm ref={formRef} onSubmitted={handleOrderSubmitted} />
+						<CheckoutForm
+							ref={formRef}
+							onSubmitted={handleOrderSubmitted}
+							onDeliveryChange={setDelivery}
+						/>
 						{submitError && (
 							<div className='mt-2 text-[11px] text-red-500 font-baron text-center'>
 								не удалось отправить заказ, попробуйте ещё раз
@@ -169,7 +176,7 @@ const ProductCart = ({ loading = false }) => {
 			{!success && (
 				<CartFooter
 					total={total}
-					minOrder={MIN_ORDER_AMOUNT}
+					minOrder={getMinOrderAmount(delivery)}
 					onContinue={handleContinue}
 				/>
 			)}

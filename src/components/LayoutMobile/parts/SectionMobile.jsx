@@ -1,5 +1,4 @@
 // src/components/LayoutMobile/parts/SectionMobile.jsx
-import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import ProductCardMiniMobile from './ProductCardMiniMobile'
 
@@ -32,17 +31,6 @@ const SectionMobile = ({
 		} else {
 			setVisibleCount(c => Math.min(c + STEP, products.length))
 		}
-	}
-
-	const FX_IN = {
-		opacity: 1,
-		x: 0,
-		transition: { duration: 0.14, ease: 'easeOut' },
-	}
-	const FX_OUT = {
-		opacity: 0,
-		x: -12,
-		transition: { duration: 0.12, ease: 'easeIn' },
 	}
 
 	// показываем кнопку ТОЛЬКО если есть невлезшие карточки
@@ -83,24 +71,14 @@ const SectionMobile = ({
 							</div>
 						))
 					) : (
-						<AnimatePresence initial={false} mode='sync'>
-							{visible.map(p => (
-								<motion.div
-									key={p.id || p.sku || p.name}
-									layout='position'
-									initial={{ opacity: 0, x: -8 }}
-									animate={FX_IN}
-									exit={FX_OUT}
-									style={{ willChange: 'opacity, transform' }}
-									className='w-full'
-								>
-									<ProductCardMiniMobile
-										product={p}
-										onSelect={onSelectProduct}
-									/>
-								</motion.div>
-							))}
-						</AnimatePresence>
+						visible.map(p => (
+							<div key={p.id || p.sku || p.name} className='w-full'>
+								<ProductCardMiniMobile
+									product={p}
+									onSelect={onSelectProduct}
+								/>
+							</div>
+						))
 					)}
 				</div>
 			</div>

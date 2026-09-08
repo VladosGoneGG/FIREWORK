@@ -6,6 +6,7 @@ import {
 	MotionConfig,
 } from 'motion/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
 import useCatalogFilterQuery from '../../hooks/useCatalogFilterQuery'
@@ -40,9 +41,9 @@ import {
 
 import { useStaticPageKey } from '../../pages/StaticPageContext'
 import { normalizeString } from '../../utils/normalize'
+import ProductStatusState from './ProductStatusState'
 import StaticContactsBlock from './static/StaticContactsBlock'
 import StaticWholesaleBlock from './static/StaticWholesaleBlock'
-import ProductStatusState from './ProductStatusState'
 
 const PROMO_KEY = 'акции'
 
@@ -58,6 +59,22 @@ const BLOCK = {
 		transition: { ease: EASE, duration: DURATION * 0.8 },
 	},
 }
+
+// Как BLOCK, но без y — чисто opacity, без transform. Нужен там, где внутри
+// есть sticky-заголовок (SubcategoryPanel): Framer Motion пишет на анимируемый
+// по Y контейнер инлайновый style="transform: none" даже в покое, а это
+// ломает position:sticky у потомков (браузер всё равно считает его новым
+// containing block).
+const FADE = {
+	hidden: { opacity: 0 },
+	show: { opacity: 1, transition: { ease: EASE, duration: DURATION } },
+	exit: { opacity: 0, transition: { ease: EASE, duration: DURATION * 0.8 } },
+}
+
+// Высота карточки товара на десктопе — совпадает с фиксированной высотой
+// секции в ProductDetails (min-[1041px]:h-[824px]), чтобы контейнер не
+// "прыгал" по размеру, пока внутри временно только плейсхолдер.
+const DETAILS_PLACEHOLDER_HEIGHT = 824
 
 const LAYOUT_T = { layout: { duration: DURATION, ease: EASE } }
 
@@ -89,6 +106,16 @@ const ProductsPage = ({
 
 	const [selectedProduct, setSelectedProduct] = useState(null)
 	const [activeSub, setActiveSub] = useState(null)
+	// Контент карточки товара показываем только после того, как контейнер
+	// доехал до места (см. onAnimationComplete ниже) — и прячем СРАЗУ при
+	// закрытии, синхронно (flushSync), ещё ДО того как контейнер начнёт
+	// уезжать, иначе AnimatePresence успевает захватить в exit кадр, где
+	// контент ещё виден, и он на закрытии "мелькает"/дёргается.
+	const [detailsReady, setDetailsReady] = useState(false)
+	const selectedProductRef = useRef(null)
+	useEffect(() => {
+		selectedProductRef.current = selectedProduct
+	}, [selectedProduct])
 
 	// Карточка каталога не содержит сертификат/описание — как только
 	// fetchProductDetail подгрузит их, эта запись в products.items станет
@@ -96,10 +123,13 @@ const ProductsPage = ({
 	const selectedProductFromStore = useSelector(s =>
 		selectedProduct
 			? s.products.items.find(p => p.id === selectedProduct.id) || null
-			: null
+			: null,
 	)
 	useEffect(() => {
-		if (selectedProductFromStore && selectedProductFromStore !== selectedProduct) {
+		if (
+			selectedProductFromStore &&
+			selectedProductFromStore !== selectedProduct
+		) {
 			setSelectedProduct(selectedProductFromStore)
 		}
 	}, [selectedProductFromStore, selectedProduct])
@@ -108,8 +138,21 @@ const ProductsPage = ({
 	const anchorRef = useRef(null)
 	const skipNextCategoryEffect = useRef(false)
 
+	// Скролл товаров не сбрасывается сам при переходе на новую секцию
+	// (категория, "посмотреть ещё", сортировка, поиск) — контейнер с
+	// прокруткой общий и не перемонтируется. Из-за этого sticky-хедер новой
+	// секции сразу "прилипает" (скролл уже не 0), а первая карточка внизу
+	// оказывается частично под ним. Явно возвращаем скролл к началу при
+	// каждой такой смене секции.
+	const resetProductsScroll = useCallback(() => {
+		anchorRef.current?.closest('.overflow-y-auto')?.scrollTo({ top: 0 })
+	}, [])
+
 	const view = activeSub ? 'sub' : 'home'
-	const animKey = `${view}-${normalizeString(selected)}-${sortKey}-${
+	// Категория намеренно не входит в animKey: смена категории не должна
+	// пере-анимировать список товаров (см. задачу №9) — animKey перезапускает
+	// анимацию только при смене режима/сортировки/поиска.
+	const animKey = `${view}-${sortKey}-${
 		showFound ? 'found' : 'no-found'
 	}-${String(search).trim() ? 'q' : 'noq'}`
 
@@ -125,7 +168,12 @@ const ProductsPage = ({
 		setSelectedProduct(null)
 		setActiveSub(null)
 		dispatch(clearApplied())
-	}, [selected, dispatch])
+		resetProductsScroll()
+	}, [selected, dispatch, resetProductsScroll])
+
+	useEffect(() => {
+		resetProductsScroll()
+	}, [animKey, resetProductsScroll])
 
 	useEffect(() => {
 		if (!externalSelectedProduct) return
@@ -146,7 +194,7 @@ const ProductsPage = ({
 				window.dispatchEvent(
 					new CustomEvent('nav:category-picked', {
 						detail: { category: 'all' },
-					})
+					}),
 				)
 			} catch {}
 			dispatch(setShowFound(true))
@@ -170,21 +218,19 @@ const ProductsPage = ({
 
 	const discountedSet = useMemo(
 		() => new Set(discountedAll.map(p => p.id)),
-		[discountedAll]
+		[discountedAll],
 	)
 
 	const homeDiscounted = useMemo(
 		() => allItems.filter(p => discountedSet.has(p.id)),
-		[allItems, discountedSet]
+		[allItems, discountedSet],
 	)
 	const homeNonDiscounted = useMemo(
 		() => allItems.filter(p => !discountedSet.has(p.id)),
-		[allItems, discountedSet]
+		[allItems, discountedSet],
 	)
 
 	const homeSections = useSections(homeDiscounted, homeNonDiscounted, selected)
-	const showHeaderFor = title =>
-		normalizeString(title) !== PROMO_KEY || shouldShowSlider || hasStaticPage
 
 	// Категория/поиск/применённые advanced-фильтры (модалка "фильтр") больше
 	// не докачивают весь каталог — берём только то, что сервер уже
@@ -241,14 +287,8 @@ const ProductsPage = ({
 	const sectionsSorted = useMemo(
 		() =>
 			sections.map(sec => ({ ...sec, items: applySort(sec.items, sortKey) })),
-		[sections, sortKey]
+		[sections, sortKey],
 	)
-
-	const promoSec = useMemo(
-		() => sectionsSorted.find(s => normalizeString(s.title) === PROMO_KEY),
-		[sectionsSorted]
-	)
-	const promoHasMore = selected === 'all' && !!promoSec && promoSec.items.length > 5
 
 	const openSubcategory = useCallback(
 		payload => {
@@ -267,7 +307,7 @@ const ProductsPage = ({
 				products = allItems.filter(
 					p =>
 						normalizeString(p.category) === normalizedTitle ||
-						normalizeString(p.subcategory) === normalizedTitle
+						normalizeString(p.subcategory) === normalizedTitle,
 				)
 			}
 
@@ -283,7 +323,7 @@ const ProductsPage = ({
 				products: Array.isArray(products) ? products : [],
 			})
 		},
-		[allItems, dispatch]
+		[allItems, dispatch],
 	)
 
 	useEffect(() => {
@@ -306,29 +346,35 @@ const ProductsPage = ({
 		return () => window.removeEventListener('nav:category-picked', onPicked)
 	}, [])
 
-	const openPromo = useCallback(() => {
-		if (!promoSec) return
-		openSubcategory({ title: promoSec.title, products: promoSec.items })
-	}, [promoSec, openSubcategory])
-
 	const activeList = useMemo(
 		() => (Array.isArray(activeSub?.products) ? activeSub.products : []),
-		[activeSub]
+		[activeSub],
 	)
 
 	const subSorted = useMemo(
 		() => applySort(activeList, sortKey),
-		[activeList, sortKey]
+		[activeList, sortKey],
 	)
 
 	const openDetails = useCallback(
 		p => {
+			// Открываем "с нуля" (плейсхолдер → контент) только когда до этого
+			// карточка была закрыта — переход между связанными товарами внутри
+			// уже открытой карточки (RelatedBlock) контент заново не прячет.
+			if (!selectedProductRef.current) setDetailsReady(false)
 			setSelectedProduct(p)
 			if (p?.id) dispatch(fetchProductDetail(p.id))
 		},
-		[dispatch]
+		[dispatch],
 	)
-	const closeDetails = useCallback(() => setSelectedProduct(null), [])
+	const closeDetails = useCallback(() => {
+		// Прячем контент СИНХРОННО (flushSync), пока контейнер ещё виден и
+		// анимация закрытия не началась — иначе AnimatePresence успевает
+		// захватить для exit кадр, где контент ещё виден, и он мелькает
+		// прямо во время закрытия.
+		flushSync(() => setDetailsReady(false))
+		setSelectedProduct(null)
+	}, [])
 
 	// Догружает следующую страницу каталога (нужна для "загрузить ещё" —
 	// категория могла попасть на грузку частично, если открыта до того,
@@ -345,11 +391,16 @@ const ProductsPage = ({
 	// catalogQuery вместо глобальной домашней пагинации.
 	const isFiltering = catalogQuery.isFiltering
 	const effectiveStatus = isFiltering ? catalogQuery.status : status
-	const effectiveCanLoadMore = isFiltering ? catalogQuery.canLoadMore : canLoadMore
-	const effectiveLoadMore = isFiltering ? catalogQuery.loadMore : loadMoreProducts
+	const effectiveCanLoadMore = isFiltering
+		? catalogQuery.canLoadMore
+		: canLoadMore
+	const effectiveLoadMore = isFiltering
+		? catalogQuery.loadMore
+		: loadMoreProducts
 
 	const homeSentinelRef = useInfiniteScroll(effectiveLoadMore, {
-		enabled: effectiveCanLoadMore && effectiveStatus !== 'loading' && view === 'home',
+		enabled:
+			effectiveCanLoadMore && effectiveStatus !== 'loading' && view === 'home',
 		deps: [isFiltering ? catalogQuery.items.length : allItems.length],
 	})
 
@@ -360,33 +411,18 @@ const ProductsPage = ({
 	// подменял уже отрисованные карточки скелетонами.
 	const { showInitialSkeleton, showLoadingMore } = getCatalogLoadingState(
 		effectiveStatus,
-		sectionsSorted
+		sectionsSorted,
 	)
 
 	const FilterBar = (
-		<div className='relative'>
-			<div className='flex  items-start mb-2.5 gap-2 '>
+		<div className='sticky  top-0 z-20 bg-white'>
+			<div className='flex  items-start pb-1 gap-2 '>
 				<div className='pl-1 flex-1'>
 					{showFound ? (
 						<div className='flex flex-col gap-1'>
 							<h3 className='text-[18px] lowercase font-baron leading-none text-black'>
 								найдено {Array.isArray(foundItems) ? foundItems.length : 0}
 							</h3>
-						</div>
-					) : promoSec ? (
-						<div className='flex flex-col gap-1'>
-							<h3 className='text-[18px] lowercase font-baron leading-none text-black'>
-								{promoSec.title}
-							</h3>
-							{promoHasMore && (
-								<button
-									type='button'
-									onClick={openPromo}
-									className='absolute left-20 bottom-1.5 text-[10px] text-[#625a51] lowercase font-baron hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'
-								>
-									посмотреть ещё
-								</button>
-							)}
 						</div>
 					) : null}
 				</div>
@@ -420,13 +456,30 @@ const ProductsPage = ({
 				<div
 					ref={anchorRef}
 					className={`
-		relative bg-white rounded-[20px] pb-2.5 overflow-hidden mx-auto
+		relative bg-white rounded-[20px] pb-2.5 mx-auto
 		w-full max-w-[1200px] px-4 lg:px-2.5 md:px-2
-		         
+
 	`}
 					style={{ minHeight: 834 }} // базовая высота как по макету
 				>
-					<AnimatePresence initial={false} mode='wait'>
+					{/* FilterBar рендерится ЗДЕСЬ, вне анимированных motion.div ниже —
+					    Framer Motion оставляет на них инлайновый style="transform: none"
+					    даже в состоянии покоя, а это ломает position:sticky у потомков
+					    (браузер всё равно считает такой элемент новым containing block).
+					    Поэтому sticky-хедер живёт снаружи анимируемого поддерева. */}
+					{!selectedProduct &&
+						view === 'home' &&
+						!hasStaticPage &&
+						!shouldShowSlider &&
+						FilterBar}
+
+					{/* popLayout, не wait: у каталога внутри есть своя вложенная
+					    AnimatePresence (mode='wait', см. ниже) — с mode='wait' здесь
+					    же они блокируют друг друга и переключение в карточку зависает
+					    навсегда. popLayout выводит закрывающийся блок из потока сразу,
+					    без такого дедлока, и всё равно не даёт ему пересекаться по
+					    layout с открывающейся карточкой. */}
+					<AnimatePresence initial={false} mode='popLayout'>
 						{selectedProduct ? (
 							// ===== РЕЖИМ ДЕТАЛЕЙ =====
 							<motion.div
@@ -437,18 +490,30 @@ const ProductsPage = ({
 								exit='exit'
 								className='h-auto'
 								style={{ willChange: 'opacity, transform' }}
+								onAnimationComplete={definition => {
+									if (definition === 'show') setDetailsReady(true)
+								}}
 							>
-								<ProductDetails
-									product={selectedProduct}
-									related={related}
-									onBack={closeDetails}
-									onOpenSubcategory={payload => {
-										closeDetails()
-										dispatch(setShowFound(false))
-										openSubcategory(payload?.title || selectedProduct.category)
-									}}
-									onSelectProduct={openDetails}
-								/>
+								{detailsReady ? (
+									<ProductDetails
+										product={selectedProduct}
+										related={related}
+										onBack={closeDetails}
+										onOpenSubcategory={payload => {
+											closeDetails()
+											dispatch(setShowFound(false))
+											openSubcategory(
+												payload?.title || selectedProduct.category,
+											)
+										}}
+										onSelectProduct={openDetails}
+									/>
+								) : (
+									<div
+										style={{ minHeight: DETAILS_PLACEHOLDER_HEIGHT }}
+										aria-hidden='true'
+									/>
+								)}
 							</motion.div>
 						) : (
 							// ===== КАТАЛОГ / СТАТИКА / ПОИСК =====
@@ -461,21 +526,15 @@ const ProductsPage = ({
 								animate='show'
 								exit='exit'
 							>
-								{view === 'home' && (
+								{view === 'home' && shouldShowSlider && !hasStaticPage && (
 									<motion.div
 										key={`top-${animKey}`}
 										variants={BLOCK}
 										initial='hidden'
 										animate='show'
 										exit='exit'
-										layout='position'
-										transition={LAYOUT_T}
 									>
-										{hasStaticPage ? null : shouldShowSlider ? (
-											<PromoSlider active />
-										) : (
-											FilterBar
-										)}
+										<PromoSlider active />
 									</motion.div>
 								)}
 
@@ -503,7 +562,7 @@ const ProductsPage = ({
 												<FoundSection
 													products={applySort(
 														Array.isArray(foundItems) ? foundItems : [],
-														sortKey
+														sortKey,
 													)}
 													onSelectProduct={openDetails}
 													onLoadMore={effectiveLoadMore}
@@ -557,7 +616,6 @@ const ProductsPage = ({
 															onSelectProduct={openDetails}
 															onOpenSubcategory={openSubcategory}
 															loading={showInitialSkeleton}
-															showHeader={showHeaderFor(sec.title)}
 															uncapped={selected !== 'all'}
 														/>
 													</div>
@@ -578,9 +636,7 @@ const ProductsPage = ({
 										) : (
 											<motion.div
 												key={`sub-${animKey}`}
-												layout='position'
-												transition={LAYOUT_T}
-												variants={BLOCK}
+												variants={FADE}
 												initial='hidden'
 												animate='show'
 												exit='exit'

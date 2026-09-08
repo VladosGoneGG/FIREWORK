@@ -78,6 +78,16 @@ const ProductPageMobile = () => {
 	const [sortKey, setSortKey] = useState(SORT_KEYS.CHEAP)
 	const [activeSub, setActiveSub] = useState(null)
 
+	// Скролл общий для всех секций (категория/подкатегория/поиск) и не
+	// сбрасывается сам при переходе на новую — из-за этого sticky-хедер новой
+	// секции сразу "прилипает" (скролл уже не 0), а верх первой карточки
+	// оказывается под ним. Явно возвращаем скролл к началу при каждой смене.
+	const resetProductsScroll = useCallback(() => {
+		document
+			.querySelector('.overflow-y-auto.overscroll-contain')
+			?.scrollTo({ top: 0 })
+	}, [])
+
 	// Категория/поиск/применённые advanced-фильтры больше не докачивают весь
 	// каталог — берём только то, что сервер уже отфильтровал (см.
 	// desktop-версию/useCatalogFilterQuery). Неактивен, пока открыта
@@ -190,8 +200,9 @@ const ProductPageMobile = () => {
 				title: title || 'Категория',
 				products: Array.isArray(products) ? products : [],
 			})
+			resetProductsScroll()
 		},
-		[allItems, discountedAll, dispatch]
+		[allItems, discountedAll, dispatch, resetProductsScroll]
 	)
 
 	const openDetailsRedux = useCallback(
@@ -250,9 +261,19 @@ const ProductPageMobile = () => {
 	}, [isSearching, pageKey, navigate, dispatch])
 
 	// ====== Реакция на выбор подкатегории/категории (через Redux) ======
+	// allItems в зависимостях нужен только чтобы пересчитать products для
+	// подкатегории — но он же растёт при каждой подгрузке страницы infinite
+	// scroll, из-за чего эффект перезапускался на каждый догруз и дёргал
+	// scrollTo(0) прямо во время скролла. Сбрасываем скролл только когда
+	// реально сменилась категория/подкатегория, а не сам allItems.
+	const prevCatSubRef = useRef({ cat: null, sub: null })
 	useEffect(() => {
 		const subKey = norm(selectedSub)
 		const catKey = norm(selectedCategory)
+		const changed =
+			prevCatSubRef.current.cat !== catKey ||
+			prevCatSubRef.current.sub !== subKey
+		prevCatSubRef.current = { cat: catKey, sub: subKey }
 
 		if (subKey) {
 			if (pageKey) navigate('/', { replace: true })
@@ -265,19 +286,30 @@ const ProductPageMobile = () => {
 				products,
 			})
 			dispatch(closeDetails())
+			if (changed) resetProductsScroll()
 			return
 		}
 
 		if (catKey === 'all') {
 			setActiveSub(null)
 			dispatch(closeDetails())
+			if (changed) resetProductsScroll()
 			return
 		}
 
 		// для конкретной категории (в т.ч. "акции" из фильтра) просто закрываем sub-панель:
 		setActiveSub(null)
 		dispatch(closeDetails())
-	}, [selectedCategory, selectedSub, allItems, pageKey, navigate, dispatch])
+		if (changed) resetProductsScroll()
+	}, [
+		selectedCategory,
+		selectedSub,
+		allItems,
+		pageKey,
+		navigate,
+		dispatch,
+		resetProductsScroll,
+	])
 
 	// ====== Если на статике начали показывать товары — уходим на '/' ======
 	// (но не если товары уже были показаны ДО перехода на статику — иначе
@@ -363,14 +395,7 @@ const ProductPageMobile = () => {
 				</div>
 			)}
 			{sectionsSorted.map(sec => (
-				<motion.div
-					key={sec.title}
-					layout='position'
-					variants={FX}
-					initial='initial'
-					animate='enter'
-					exit='exit'
-				>
+				<div key={sec.title}>
 					<SectionMobile
 						title={sec.title}
 						products={sec.items}
@@ -380,7 +405,7 @@ const ProductPageMobile = () => {
 						showHeader
 						uncapped={norm(selectedCategory) !== 'all'}
 					/>
-				</motion.div>
+				</div>
 			))}
 			{effectiveCanLoadMore && (
 				<div ref={homeSentinelRef} className='h-2 flex justify-center items-center'>

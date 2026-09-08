@@ -1,5 +1,5 @@
 // src/components/ProductDetails/parts/RelatedBlock.jsx
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useMediaQuery from '../../../hooks/useMediaQuery'
 import ProductCardMiniMobile from '../../LayoutMobile/parts/ProductCardMiniMobile'
 import ProductCardMini from '../../ProductCardMini/ProductCardMini'
@@ -32,7 +32,11 @@ const RelatedBlock = ({
 	const rowRef = useRef(null)
 	const [visiblePerRow, setVisiblePerRow] = useState(MAX_PER_ROW)
 
-	useEffect(() => {
+	// useLayoutEffect (не useEffect): меряем ширину и выставляем реальное
+	// количество карточек ДО отрисовки кадра — иначе первый кадр рисуется
+	// с угаданным MAX_PER_ROW и тут же дёргается/перекладывается на
+	// правильное значение, что и создаёт "флеш" контента при открытии.
+	useLayoutEffect(() => {
 		if (!rowRef.current) return
 		const el = rowRef.current
 
@@ -68,8 +72,6 @@ const RelatedBlock = ({
 		}
 	}, [])
 
-	if (!related.length) return null
-
 	const itemsDesktop = useMemo(
 		() => related.slice(0, visiblePerRow),
 		[related, visiblePerRow]
@@ -77,6 +79,8 @@ const RelatedBlock = ({
 
 	// мобилка: максимум 6 карточек
 	const itemsMobile = useMemo(() => related.slice(0, MOBILE_LIMIT), [related])
+
+	if (!related.length) return null
 
 	const fewCardsInRow = visiblePerRow <= FEW_PER_ROW
 

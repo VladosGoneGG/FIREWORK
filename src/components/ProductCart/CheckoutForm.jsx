@@ -57,7 +57,10 @@ const formatBirthTyping = raw => {
 	return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`
 }
 
-const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
+const CheckoutForm = forwardRef(function CheckoutForm(
+	{ onSubmitted, onDeliveryChange },
+	ref
+) {
 	const {
 		control,
 		register,
@@ -87,6 +90,12 @@ const CheckoutForm = forwardRef(function CheckoutForm({ onSubmitted }, ref) {
 	useEffect(() => {
 		if (delivery === 'pickup') setValue('address', '')
 	}, [delivery, setValue])
+
+	// сообщаем наверх выбранный способ получения — от него зависит,
+	// применяется ли минимальная сумма заказа (см. задачу №7)
+	useEffect(() => {
+		onDeliveryChange?.(delivery)
+	}, [delivery, onDeliveryChange])
 
 	const onSubmit = data => {
 		const phoneE164 = normalizeRuPhoneE164(data.phone)

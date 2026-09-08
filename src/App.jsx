@@ -68,7 +68,7 @@ function App() {
 							<div className='sticky top-0'>
 								<div
 									className='relative w-[240px]'
-									style={{ height: COLUMN_HEIGHT }}
+									style={{ height: centerHeight }}
 								>
 									{!filtersOpen && (
 										<>
@@ -131,7 +131,7 @@ function App() {
 
 						{/* ПРАВАЯ КОЛОНКА — 295px по макету */}
 						<aside className='sticky top-0'>
-							<div className='w-[295px]' style={{ height: COLUMN_HEIGHT }}>
+							<div className='w-[295px]' style={{ height: centerHeight }}>
 								<ProductCart />
 							</div>
 						</aside>

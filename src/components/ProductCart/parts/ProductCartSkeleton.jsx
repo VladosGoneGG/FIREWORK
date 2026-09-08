@@ -28,7 +28,7 @@ const ItemSkeleton = () => (
 const ProductCartSkeleton = () => (
 	<aside
 		className='
-      bg-white rounded-[20px] w-[295px] h-[834px]
+      bg-white rounded-[20px] w-[295px] h-full
       shadow-[0_0_15px_rgba(0,0,0,0.15)]
       flex flex-col overflow-hidden font-baron lowercase
     '

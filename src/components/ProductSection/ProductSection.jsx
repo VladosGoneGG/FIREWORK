@@ -1,5 +1,4 @@
 // src/components/ProductSection/ProductSection.jsx
-import { motion } from 'motion/react'
 import { useMemo } from 'react'
 import ProductCardMini from '../ProductCardMini/ProductCardMini'
 import ProductCardMiniSkeleton from '../ProductCardMini/parts/ProductCardMiniSkeleton'
@@ -26,17 +25,21 @@ const ProductSection = ({
 	const hasProducts = products && products.length > 0
 	const total = hasProducts ? products.length : 0
 
-	const visibleCount = hasProducts ? (uncapped ? total : getVisibleCount(total)) : 0
+	const visibleCount = hasProducts
+		? uncapped
+			? total
+			: getVisibleCount(total)
+		: 0
 
 	const visibleProducts = useMemo(
 		() =>
 			hasProducts && visibleCount > 0 ? products.slice(0, visibleCount) : [],
-		[hasProducts, products, visibleCount]
+		[hasProducts, products, visibleCount],
 	)
 
 	const skeletonCount = useMemo(
 		() => (hasProducts ? visibleCount || 5 : 5),
-		[hasProducts, visibleCount]
+		[hasProducts, visibleCount],
 	)
 
 	const hasMore =
@@ -47,13 +50,6 @@ const ProductSection = ({
 
 	const handleOpenMore = () => {
 		if (onOpenSubcategory) onOpenSubcategory({ title, products })
-	}
-
-	const EASE = 'easeOut'
-	const DURATION = 0.15
-	const GRID_BLOCK = {
-		hidden: { opacity: 0, y: 14 },
-		show: { opacity: 1, y: 0, transition: { ease: EASE, duration: DURATION } },
 	}
 
 	return (
@@ -76,38 +72,27 @@ const ProductSection = ({
 				</div>
 			)}
 
-			<motion.div
-				key={`${title}|${visibleProducts.length}|${
-					loading ? 'loading' : 'ready'
-				}`}
-				variants={GRID_BLOCK}
-				initial='hidden'
-				animate='show'
-				className={['flex flex-wrap gap-2.5 items-start gap-y-2.5'].join(' ')}
+			<div
+				className='grid gap-2.5'
 				style={{
-					willChange: 'opacity, transform',
+					// Фиксированная ширина колонки (не диапазон до 150px) — иначе
+					// auto-fill считает число колонок по МАКСИМУМУ minmax и влезает
+					// на строку меньше карточек, чем реально помещается по 121px.
+					gridTemplateColumns: `repeat(auto-fill, ${CARD_W}px)`,
 				}}
 			>
 				{loading
 					? Array.from({ length: skeletonCount }).map((_, i) => (
-							<div
-								key={i}
-								className='shrink-0 flex-[1_0_121px] max-w-[150px]'
-								style={{ minWidth: CARD_W }}
-							>
+							<div key={i}>
 								<ProductCardMiniSkeleton />
 							</div>
-					  ))
+						))
 					: visibleProducts.map(p => (
-							<div
-								key={p.id}
-								className='shrink-0 flex-[1_0_121px] max-w-[150px]'
-								style={{ minWidth: CARD_W }}
-							>
+							<div key={p.id}>
 								<ProductCardMini product={p} onSelect={onSelectProduct} />
 							</div>
-					  ))}
-			</motion.div>
+						))}
+			</div>
 		</section>
 	)
 }

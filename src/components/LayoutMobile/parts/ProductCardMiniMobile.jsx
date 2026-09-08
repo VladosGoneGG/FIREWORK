@@ -3,6 +3,7 @@ import { memo, useCallback, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { addItem } from '../../../store/slices/cartSlice'
 import { fmtPrice, fmtSecFull, renderSec } from '../../../utils/format'
+import { getPriceDisplay } from '../../../utils/price'
 import PlusMobileSvg from '../../PlusMobileSvg/PlusMobileSvg'
 import PriceBlock from '../../ProductCardMini/parts/PriceBlock'
 import ProductThumb from '../../ProductCardMini/parts/ProductThumb'
@@ -57,31 +58,26 @@ function ProductCardMiniMobile({ product, onSelect }) {
 		? `${displayQty} шт.`
 		: packLabel || null
 
-	const toNum = v => {
-		const s = String(v ?? '').replace(/[^\d]/g, '') // оставляем только цифры
-		return s ? Number(s) : 0
-	}
-	const calcUnit = p => {
-		// приоритет как и в корзине: скидка -> price
-		const d = toNum(p?.discountPrice)
-		const base = toNum(p?.price)
-		return d || base
-	}
+	const {
+		hasDiscount,
+		original: oldPrice,
+		current: currentPrice,
+	} = getPriceDisplay({
+		price,
+		discountPrice,
+	})
+
 	const handleAdd = useCallback(
 		e => {
 			e.stopPropagation()
 			if (outOfStock) return
-			dispatch(addItem({ ...product, unitPrice: calcUnit(product) }))
+			dispatch(addItem({ ...product, unitPrice: currentPrice }))
 		},
-		[dispatch, product, outOfStock]
+		[dispatch, product, outOfStock, currentPrice]
 	)
 	const handleOpen = useCallback(() => {
 		onSelect?.(product)
 	}, [onSelect, product])
-
-	const currentPrice = Number(discountPrice) || Number(price) || 0
-	const hasDiscount =
-		Number(discountPrice) > 0 && Number(discountPrice) < Number(price)
 
 	return (
 		<div
@@ -96,25 +92,12 @@ function ProductCardMiniMobile({ product, onSelect }) {
 		>
 			{/* превью */}
 			<div className='relative w-[100px] h-[100px] rounded-[10px] overflow-hidden shrink-0'>
-				{img ? (
-					<ProductThumb
-						src={typeof img === 'string' ? img : img?.url || img?.src}
-						alt={name || 'product'}
-						outOfStock={outOfStock}
-						badgeText='Нет в наличии'
-					/>
-				) : (
-					<img
-						src='/SVG/full-block.svg'
-						alt='product'
-						className='w-full h-full object-cover'
-					/>
-				)}
-				{!img && outOfStock && (
-					<div className='absolute left-1 top-1 px-1.5 py-[1px] rounded-[6px] text-[9px] bg-black/60 text-white'>
-						Нет в наличии
-					</div>
-				)}
+				<ProductThumb
+					src={typeof img === 'string' ? img : img?.url || img?.src}
+					alt={name || 'product'}
+					outOfStock={outOfStock}
+					badgeText='Нет в наличии'
+				/>
 			</div>
 
 			<div className='flex flex-col justify-between gap-[9px] flex-1 min-w-0 h-[100px] pl-2'>
@@ -173,7 +156,10 @@ function ProductCardMiniMobile({ product, onSelect }) {
 					<div className='flex flex-col items-end shrink-0'>
 						{hasDiscount && (
 							<div className='mb-[5px] text-[15px] font-baron lowercase line-through text-[#B4B4B4] font-bold'>
-								{fmtPrice(price)}
+								{fmtPrice(oldPrice)}
+								<span className='inline-block text-[8px] font-baron lowercase ml-0.5 no-underline'>
+									руб.
+								</span>
 							</div>
 						)}
 						{!outOfStock && (
@@ -182,7 +168,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 								disabled={!currentPrice}
 								aria-pressed={pressed}
 								className={[
-									'group w-[79px] h-[27px] pb-[1px] rounded-2xl inline-flex justify-center items-center gap-[5px] cursor-pointer',
+									'group w-[94px] h-[27px] pb-[1px] rounded-2xl inline-flex justify-center items-center gap-[4px] cursor-pointer',
 									'shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]',
 									// базовые цвета
 									'transition-colors duration-150',
@@ -195,8 +181,11 @@ function ProductCardMiniMobile({ product, onSelect }) {
 								aria-label='Добавить в корзину'
 								title='Добавить в корзину'
 							>
-								<span className='inline-flex font-baron text-[15px] items-center leading-none'>
+								<span className='inline-flex font-baron text-[15px] items-baseline leading-none'>
 									{fmtPrice(currentPrice)}
+									<span className='text-[8px] font-baron lowercase ml-0.5'>
+										руб.
+									</span>
 								</span>
 								<PlusMobileSvg
 									className='w-2.5 h-2.5 mt-[3px] block shrink-0'
