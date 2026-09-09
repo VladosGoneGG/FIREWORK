@@ -330,9 +330,14 @@ const BurgerMobile = () => {
 											</div>
 										</div>
 										<div className='flex flex-col gap-2.5'>
-											<div className='text-[#625a51] text-sm font-baron lowercase'>
+											<a
+												href='/documents/rekvizity.doc'
+												download
+												onClick={handleClose}
+												className='text-[#625a51] text-sm font-baron lowercase hover:text-[#bd52e9]'
+											>
 												ИП Федяков Иван Владимирович
-											</div>
+											</a>
 											<a
 												href='/documents/litsenziya.pdf'
 												target='_blank'
