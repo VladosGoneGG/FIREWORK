@@ -42,7 +42,7 @@ const Header = ({ rightSlot }) => {
 				<div className='mx-auto my-4 h-[2px] rounded-[20px] bg-[#efebe6] w-[min(1200px,calc(100%-40px))]' />
 
 				{/* Нижняя строка: ЛОГОТИП + ПОИСК В ОДНУ СТРОКУ */}
-				<div className='flex items-center  gap-15 ml-[79px]'>
+				<div className='flex items-center h-[50px]  gap-15 ml-[79px]'>
 					<a href='/' className='shrink-0'>
 						<Logotip />
 					</a>
