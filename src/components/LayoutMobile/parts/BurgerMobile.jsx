@@ -333,9 +333,16 @@ const BurgerMobile = () => {
 											<div className='text-[#625a51] text-sm font-baron lowercase'>
 												ИП Федяков Иван Владимирович
 											</div>
-											<div className='text-[#625a51] text-sm font-baron lowercase'>
+											<a
+												href='/documents/litsenziya.pdf'
+												target='_blank'
+												rel='noopener noreferrer'
+												download
+												onClick={handleClose}
+												className='text-[#625a51] text-sm font-baron lowercase hover:text-[#bd52e9]'
+											>
 												сертификат профессионального пиротехника
-											</div>
+											</a>
 										</div>
 									</div>
 

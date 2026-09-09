@@ -14,8 +14,10 @@ const PromoPanel = () => {
 				</ul>
 
 				<ul className=' flex flex-col leading-tight '>
-					<li className='my-[20px] '>
-						сертификат профессионального пиротехника
+					<li className='my-[20px] hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'>
+						<a href='/documents/litsenziya.pdf' target='_blank' rel='noopener noreferrer' download>
+							сертификат профессионального пиротехника
+						</a>
 					</li>
 					<li>
 						ип федяков иван <br /> владимирович

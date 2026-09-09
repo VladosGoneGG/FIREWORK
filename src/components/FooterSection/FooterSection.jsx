@@ -18,7 +18,11 @@ const FooterSection = () => {
 				<div>
 					<ul className='uppercase flex flex-col gap-[10px]'>
 						<li>ип федяков иван владимирович</li>
-						<li>сертификат профессионального пиротехника</li>
+						<li className='hover:text-[#bd52e9] active:text-[#997DF5] cursor-pointer self-start'>
+							<a href='/documents/litsenziya.pdf' target='_blank' rel='noopener noreferrer' download>
+								сертификат профессионального пиротехника
+							</a>
+						</li>
 						<li className='text-[#d2cecb]'>
 							г. нижний новгород, ул. лоцманская 2а
 						</li>

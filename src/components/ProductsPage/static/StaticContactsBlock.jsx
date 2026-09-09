@@ -51,6 +51,15 @@ const StaticContactsBlock = () => {
 									+7 (905) 194-21-93
 								</a>{' '}
 							</li>
+							<li>
+								<span className='text-[14px] text-[#b4b4b4]'>email:</span>{' '}
+								<a
+									className='text-[16px] text-[#bd52e9]'
+									href='mailto:rapid80@mail.ru'
+								>
+									rapid80@mail.ru
+								</a>
+							</li>
 						</ul>
 
 						<p className='text-[18px] text-[#625a51] mt-[20px]'>адрес:</p>
@@ -99,6 +108,14 @@ const StaticContactsBlock = () => {
 						</p>
 						<ul className='mt-[20px]'>
 							<li className='text-[16px] text-[#625a51]'>
+								<span className='text-[14px] text-[#b4b4b4]'>
+									полное наименование:
+								</span>
+								<br />
+								индивидуальный предприниматель <br /> федяков иван
+								владимирович
+							</li>
+							<li className='text-[16px] text-[#625a51] mt-[15px]'>
 								<span className='text-[14px] text-[#b4b4b4]'>огрнип:</span>{' '}
 								318527500123530
 							</li>
@@ -108,23 +125,31 @@ const StaticContactsBlock = () => {
 							</li>
 							<li className='text-[16px] text-[#625a51]'>
 								<span className='text-[14px] text-[#b4b4b4]'>
-									дата регистрации:
-								</span>{' '}
-								4 октября 2018 г.
+									юридический адрес:
+								</span>
+								<br />
+								603135, нижегородская область, <br /> г. нижний новгород, ул.
+								лоцманская, д. 2а
 							</li>
 							<li className='text-[16px] text-[#625a51]'>
-								<span className='text-[14px] text-[#b4b4b4]'>адрес:</span>
+								<span className='text-[14px] text-[#b4b4b4]'>
+									действует на основании:
+								</span>
 								<br />
-								нижнегородская область, город <br /> нижний новгород, ул.{
-									''
-								}{' '}
-								лоцманская 2а
+								уведомление № 477344362 от 04.10.2018
 							</li>
 						</ul>
-						<p className='text-[14px] text-[#bd52e9] mt-[15px]'>
+
+						<a
+							href='/documents/litsenziya.pdf'
+							target='_blank'
+							rel='noopener noreferrer'
+							download
+							className='block text-[14px] text-[#bd52e9] mt-[15px]'
+						>
 							сертификат профессионального <br />
 							пиротехника
-						</p>
+						</a>
 					</div>
 				</div>
 			</div>

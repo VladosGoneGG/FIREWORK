@@ -1,9 +1,7 @@
+import logo from '../../assets/SVG/logo.svg'
+
 const Logotip = () => {
-	return (
-		<div className='flex justify-center items-center w-[120px] h-[40px] font-baron text-[25px] text-[#bd52e9]'>
-			х-прайм
-		</div>
-	)
+	return <img src={logo} alt='х-прайм' className='w-auto  object-contain' />
 }
 
 export default Logotip
