@@ -42,11 +42,13 @@ const CartFooter = ({ total = 0, minOrder = 0, onContinue }) => {
 						? 'btn-firework isolate text-white' // градиент + ховер/актив из твоего CSS
 						: 'bg-[#efebe7] text-[#bd52e9]', // пассивная кнопка без оверлеев
 				].join(' ')}
-				aria-label={enough ? 'продолжить' : 'добавьте ещё'}
-				title={enough ? 'продолжить' : 'добавьте ещё'}
+				aria-label={enough ? 'продолжить' : total <= 0 ? 'добавьте товар' : 'добавьте ещё'}
+				title={enough ? 'продолжить' : total <= 0 ? 'добавьте товар' : 'добавьте ещё'}
 			>
 				{enough ? (
 					<span className='relative z-[1]'>продолжить</span>
+				) : total <= 0 ? (
+					<span className='relative z-[1]'>добавьте товар</span>
 				) : (
 					<span className='relative z-[1]'>
 						не хватает ещё {fmtPriceRub(missing)}

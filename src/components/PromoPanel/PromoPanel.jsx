@@ -22,9 +22,6 @@ const PromoPanel = () => {
 					<li>
 						ип федяков иван <br /> владимирович
 					</li>
-					<li className='text-[#d2cecb] pt-[10px]'>
-						г. нижний новгород, ул. лоцманская 2а
-					</li>
 				</ul>
 			</div>
 		</div>
