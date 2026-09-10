@@ -127,7 +127,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 						// Цифра центрируется как есть, "шт." — чуть ниже центра (mt-1),
 						// как и было до правки выравнивания.
 						<div className='min-w-[49px] min-h-[22px] px-2 py-1 bg-[#098d00]/70 rounded-full flex items-center justify-center gap-0.5 shrink-0'>
-							<div className='text-white text-[17px] font-baron leading-none whitespace-nowrap'>
+							<div className='text-white text-[17px] font-baron leading-none whitespace-nowrap -mt-0.5'>
 								{Number.isFinite(stockCount) ? stockCount : packCount}
 							</div>
 							<div className='text-white text-[8px] font-baron leading-none whitespace-nowrap mt-1'>
