@@ -124,11 +124,13 @@ function ProductCardMiniMobile({ product, onSelect }) {
 						// молчит об этом в DevTools, где шрифт рендерится как на десктопе).
 						// items-center, не items-baseline — у 17px цифр и 8px "шт." общая
 						// базовая линия визуально прижимает "шт." к низу вместо центра.
+						// Цифра центрируется как есть, "шт." — чуть ниже центра (mt-1),
+						// как и было до правки выравнивания.
 						<div className='min-w-[49px] min-h-[22px] px-2 py-1 bg-[#098d00]/70 rounded-full flex items-center justify-center gap-0.5 shrink-0'>
 							<div className='text-white text-[17px] font-baron leading-none whitespace-nowrap'>
 								{Number.isFinite(stockCount) ? stockCount : packCount}
 							</div>
-							<div className='text-white text-[8px] font-baron leading-none whitespace-nowrap'>
+							<div className='text-white text-[8px] font-baron leading-none whitespace-nowrap mt-1'>
 								шт.
 							</div>
 						</div>
