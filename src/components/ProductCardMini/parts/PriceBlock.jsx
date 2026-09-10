@@ -16,8 +16,14 @@ const ICONS = {
 
 export function Param({ icon, title, children }) {
 	const src = ICONS[icon]
+	// Приглушаем строку, если значения нет — чтобы реальные характеристики
+	// не терялись среди четырёх одинаковых прочерков.
+	const isEmpty = children === '—'
 	return (
-		<div className='flex items-center gap-[7px]' title={title}>
+		<div
+			className={['flex items-center gap-[7px]', isEmpty ? 'opacity-40' : ''].join(' ')}
+			title={title}
+		>
 			{src && <img src={src} alt='' className='w-[21px] h-[21px]' />}
 			<span>{children}</span>
 		</div>

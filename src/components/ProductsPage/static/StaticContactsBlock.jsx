@@ -3,7 +3,7 @@ const StaticContactsBlock = () => {
 		<div
 			className='
 				bg-white my-25
-				flex flex-col justify-start items-center
+				flex flex-col justify-start items-start ml-2.5
 				
 			'
 		>
@@ -15,7 +15,7 @@ const StaticContactsBlock = () => {
 			{/* Контент */}
 			<div
 				className='
-					max-w-[1240px] mx-auto h-full bg-white
+					max-w-[1240px]  h-full bg-white
 					flex flex-col justify-center items-center
 					
 		
@@ -112,8 +112,7 @@ const StaticContactsBlock = () => {
 									полное наименование:
 								</span>
 								<br />
-								индивидуальный предприниматель <br /> федяков иван
-								владимирович
+								индивидуальный предприниматель <br /> федяков иван владимирович
 							</li>
 							<li className='text-[16px] text-[#625a51] mt-[15px]'>
 								<span className='text-[14px] text-[#b4b4b4]'>огрнип:</span>{' '}

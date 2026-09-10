@@ -73,7 +73,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 			if (outOfStock) return
 			dispatch(addItem({ ...product, unitPrice: currentPrice }))
 		},
-		[dispatch, product, outOfStock, currentPrice]
+		[dispatch, product, outOfStock, currentPrice],
 	)
 	const handleOpen = useCallback(() => {
 		onSelect?.(product)
@@ -118,11 +118,11 @@ function ProductCardMiniMobile({ product, onSelect }) {
 					</ul>
 
 					{badgeText && (
-						<div className='w-[49px] h-[22px]  bg-[#098d00]/70 rounded-[10px] flex justify-center items-end overflow-hidden shrink-0'>
-							<div className='text-white text-[17px] font-baron'>
+						<div className='min-w-[49px] h-[22px] px-2  bg-[#098d00]/70 rounded-full flex justify-center items-center gap-0.5 shrink-0'>
+							<div className='text-white text-[17px] pb-1 font-baron leading-none whitespace-nowrap'>
 								{Number.isFinite(stockCount) ? stockCount : packCount}
 							</div>
-							<div className='text-white text-[8px] mb-[2px] font-baron'>
+							<div className='text-white text-[8px]  font-baron whitespace-nowrap mt-1'>
 								шт.
 							</div>
 						</div>
@@ -168,7 +168,7 @@ function ProductCardMiniMobile({ product, onSelect }) {
 								disabled={!currentPrice}
 								aria-pressed={pressed}
 								className={[
-									'group w-[94px] h-[27px] pb-[1px] rounded-2xl inline-flex justify-center items-center gap-[4px] cursor-pointer',
+									'group w-[75px] h-[27px] pb-[1px] rounded-2xl inline-flex justify-center items-center gap-[4px] cursor-pointer',
 									'shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]',
 									// базовые цвета
 									'transition-colors duration-150',

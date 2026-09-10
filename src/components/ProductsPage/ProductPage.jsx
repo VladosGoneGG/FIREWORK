@@ -71,6 +71,55 @@ const FADE = {
 	exit: { opacity: 0, transition: { ease: EASE, duration: DURATION * 0.8 } },
 }
 
+// Карточка товара (details-view) — открытие зеркалит закрытие: обе едут
+// влево с одинаковой скоростью и плавным easeInOut (резкий easeOut на
+// 0.12s ощущался как рывок), и длительность синхронизирована с тем, как
+// в App.jsx едет колонка категорий (transition-[grid-template-columns]
+// duration-300) — иначе карточка и раскладка вокруг неё "разъезжались" по
+// скорости.
+const DETAILS_EASE = 'easeInOut'
+const DETAILS_DURATION = 0.3
+const DETAILS_BLOCK = {
+	hidden: { opacity: 0, x: 24 },
+	show: {
+		opacity: 1,
+		x: 0,
+		transition: { ease: DETAILS_EASE, duration: DETAILS_DURATION },
+	},
+	exit: {
+		opacity: 0,
+		x: -24,
+		transition: { ease: DETAILS_EASE, duration: DETAILS_DURATION },
+	},
+}
+
+// Совпадает с App.jsx duration-300 (колонка категорий едет обратно тем же
+// временем) — см. LIST_BLOCK ниже.
+const SIDEBAR_REGROW_S = 0.3
+
+// Как BLOCK, но с опциональной задержкой перед показом (custom-параметр) —
+// нужна только каталогу/сетке товаров (сама внешняя обёртка 'list-view'):
+// при закрытии карточки колонка категорий в App.jsx ещё 0.3s едет обратно
+// на 240px, и если сетка товаров (repeat(auto-fill, 121px)) уже видна в
+// это время, она у себя внутри реально переносит карточки по мере того как
+// меняется ширина контейнера — выглядит как "разлетающиеся" карточки.
+// Держим сетку невидимой (но уже смонтированной и отрисованной —
+// реальный reflow невидим при opacity:0), пока колонка не доедет, и только
+// потом показываем её уже готовой.
+const LIST_BLOCK = {
+	hidden: { opacity: 0, y: 16 },
+	show: delay => ({
+		opacity: 1,
+		y: 0,
+		transition: { ease: EASE, duration: DURATION, delay: delay || 0 },
+	}),
+	exit: {
+		opacity: 0,
+		y: -8,
+		transition: { ease: EASE, duration: DURATION * 0.8 },
+	},
+}
+
 // Высота карточки товара на десктопе — совпадает с фиксированной высотой
 // секции в ProductDetails (min-[1041px]:h-[824px]), чтобы контейнер не
 // "прыгал" по размеру, пока внутри временно только плейсхолдер.
@@ -116,6 +165,12 @@ const ProductsPage = ({
 	useEffect(() => {
 		selectedProductRef.current = selectedProduct
 	}, [selectedProduct])
+
+	// Задержка показа сетки товаров при закрытии карточки — см. LIST_BLOCK
+	// и closeDetails.
+	const listEnterDelayRef = useRef(0)
+	const listEnterDelayTimeoutRef = useRef(null)
+	useEffect(() => () => clearTimeout(listEnterDelayTimeoutRef.current), [])
 
 	// Карточка каталога не содержит сертификат/описание — как только
 	// fetchProductDetail подгрузит их, эта запись в products.items станет
@@ -373,6 +428,15 @@ const ProductsPage = ({
 		// захватить для exit кадр, где контент ещё виден, и он мелькает
 		// прямо во время закрытия.
 		flushSync(() => setDetailsReady(false))
+		// Колонка категорий в App.jsx начинает ехать обратно прямо сейчас и
+		// едет SIDEBAR_REGROW_S — держим сетку товаров невидимой ровно на
+		// это время (см. LIST_BLOCK), иначе она реально reflow'ится вместе с
+		// шириной контейнера.
+		listEnterDelayRef.current = SIDEBAR_REGROW_S
+		clearTimeout(listEnterDelayTimeoutRef.current)
+		listEnterDelayTimeoutRef.current = setTimeout(() => {
+			listEnterDelayRef.current = 0
+		}, SIDEBAR_REGROW_S * 1000 + 50)
 		setSelectedProduct(null)
 	}, [])
 
@@ -416,7 +480,7 @@ const ProductsPage = ({
 
 	const FilterBar = (
 		<div className='sticky  top-0 z-20 bg-white'>
-			<div className='flex  items-start pb-1 gap-2 '>
+			<div className='flex  items-start pb-2.5 gap-2 '>
 				<div className='pl-1 flex-1'>
 					{showFound ? (
 						<div className='flex flex-col gap-1'>
@@ -484,7 +548,7 @@ const ProductsPage = ({
 							// ===== РЕЖИМ ДЕТАЛЕЙ =====
 							<motion.div
 								key='details-view'
-								variants={BLOCK}
+								variants={DETAILS_BLOCK}
 								initial='hidden'
 								animate='show'
 								exit='exit'
@@ -521,7 +585,8 @@ const ProductsPage = ({
 								key={`list-view-${animKey}`}
 								layout='position'
 								transition={LAYOUT_T}
-								variants={BLOCK}
+								variants={LIST_BLOCK}
+								custom={listEnterDelayRef.current}
 								initial='hidden'
 								animate='show'
 								exit='exit'

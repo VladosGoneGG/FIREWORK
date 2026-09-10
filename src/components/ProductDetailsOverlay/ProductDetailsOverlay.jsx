@@ -14,10 +14,12 @@ import {
 } from '../../store/slices/detailsSlice'
 import { normalizeString } from '../../utils/normalize'
 
+// Открытие зеркалит закрытие: обе едут влево с одинаковой скоростью и
+// плавным easeInOut вместо резкого линейного fade.
 const OVERLAY = {
-	hidden: { opacity: 0 },
-	show: { opacity: 1, transition: { duration: 0.18 } },
-	exit: { opacity: 0, transition: { duration: 0.15 } },
+	hidden: { opacity: 0, x: 24 },
+	show: { opacity: 1, x: 0, transition: { duration: 0.3, ease: 'easeInOut' } },
+	exit: { opacity: 0, x: -24, transition: { duration: 0.3, ease: 'easeInOut' } },
 }
 
 export default function ProductDetailsOverlay() {

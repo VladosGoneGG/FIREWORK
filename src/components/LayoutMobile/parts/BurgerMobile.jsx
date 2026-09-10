@@ -157,7 +157,7 @@ const BurgerMobile = () => {
 		const selSubKey = norm(selectedSub || '')
 
 		return (
-			<div className='self-stretch p-3.5 bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)] flex flex-col gap-[2px]'>
+			<div className='self-stretch p-3.5 bg-white rounded-[20px] shadow-[0_0_10px_0_rgba(0,0,0,0.2)] flex flex-col gap-[2px]'>
 				<ul className='space-y-1'>
 					{categoriesList.map((cat, idx) => {
 						const subs = cat.subcategories || []
@@ -237,9 +237,8 @@ const BurgerMobile = () => {
 								key='drawer'
 								className={[
 									'fixed top-0 left-0 h-full w-96',
-									'bg-[#EFEBE6] px-2 pt-1',
+									'bg-[#EFEBE6]',
 									'shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]',
-									'overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
 									'subpixel-antialiased',
 								].join(' ')}
 								variants={drawerVariants}
@@ -252,18 +251,31 @@ const BurgerMobile = () => {
 									backfaceVisibility: 'hidden',
 								}}
 							>
-								<button
-									type='button'
-									aria-label='Закрыть меню'
-									onClick={handleClose}
+								{/* Скролл и transform (слайд-анимация выше) намеренно разнесены по
+								    разным элементам: тот же узел, что едет transform'ом (motion.aside)
+								    и ЕЩЁ И режет overflow — это создаёт свой composited/GPU-слой,
+								    внутри которого box-shadow карточек рядом с краем слоя иногда
+								    обрезается по X (WebKit/мобильные браузеры) даже когда самого
+								    переполнения нет. Скролл живёт на дочернем div без transform —
+								    тени карточек внутри рендерятся уже вне того слоя. */}
+								<div
+									className={[
+										'h-full overflow-y-auto px-2 pt-1',
+										'[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+									].join(' ')}
 								>
-									<BurgerCloseSvg />
-								</button>
+									<button
+										type='button'
+										aria-label='Закрыть меню'
+										onClick={handleClose}
+									>
+										<BurgerCloseSvg />
+									</button>
 
-								<div className='max-w-[335px] px-2.5 mt-1 space-y-2.5'>
-									{renderAccordionDesktopLike()}
+									<div className='max-w-[335px] px-2.5 mt-1 space-y-2.5'>
+										{renderAccordionDesktopLike()}
 
-									<div className='self-stretch px-2.5 py-3.5 bg-white rounded-[20px] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.15)]'>
+									<div className='self-stretch px-2.5 py-3.5 bg-white rounded-[20px] shadow-[0_0_10px_0_rgba(0,0,0,0.2)]'>
 										<button
 											type='button'
 											onClick={() => setFiltersOpen(v => !v)}
@@ -316,7 +328,7 @@ const BurgerMobile = () => {
 										</AnimatePresence>
 									</div>
 
-									<div className='self-stretch p-2.5 space-y-5'>
+									<div className='self-stretch p-3.5 space-y-5 bg-white rounded-[20px] shadow-[0_0_10px_0_rgba(0,0,0,0.2)]'>
 										<div className='flex flex-col gap-2.5'>
 											<div className='text-[#625a51] text-sm font-baron lowercase cursor-pointer'>
 												<Link to='/contacts' onClick={handleClose}>
@@ -352,6 +364,7 @@ const BurgerMobile = () => {
 									</div>
 
 									<div className='w-5 h-5 bg-[#EFEBE6]' />
+									</div>
 								</div>
 							</motion.aside>
 						</>
