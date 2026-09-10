@@ -122,9 +122,9 @@ function ProductCardMiniMobile({ product, onSelect }) {
 						// (edge-to-edge), на реальном устройстве более крупный рендер
 						// шрифта вылезает за пределы зелёной капсулы (overflow: visible
 						// молчит об этом в DevTools, где шрифт рендерится как на десктопе).
-						// items-baseline вместо ручных pb-1/mt-1 — сам выравнивает цифру и
-						// "шт." по базовой линии при любом размере шрифта.
-						<div className='min-w-[49px] min-h-[22px] px-2 py-1 bg-[#098d00]/70 rounded-full flex items-baseline justify-center gap-0.5 shrink-0'>
+						// items-center, не items-baseline — у 17px цифр и 8px "шт." общая
+						// базовая линия визуально прижимает "шт." к низу вместо центра.
+						<div className='min-w-[49px] min-h-[22px] px-2 py-1 bg-[#098d00]/70 rounded-full flex items-center justify-center gap-0.5 shrink-0'>
 							<div className='text-white text-[17px] font-baron leading-none whitespace-nowrap'>
 								{Number.isFinite(stockCount) ? stockCount : packCount}
 							</div>
