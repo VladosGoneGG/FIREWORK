@@ -3,7 +3,7 @@ const StaticContactsBlock = () => {
 		<div
 			className='
 				bg-white 
-				flex flex-col justify-start items-start 
+				flex flex-col justify-start items-start ml-2.5
 				
 			'
 		>
