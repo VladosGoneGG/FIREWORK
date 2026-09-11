@@ -166,7 +166,10 @@ function App() {
 
 						{/* ПРАВАЯ КОЛОНКА — 295px по макету */}
 						<aside className='sticky top-0'>
-							<div className='w-[295px]' style={{ height: centerHeight }}>
+							<div
+								className='w-[295px] transition-[height] duration-300 ease-in-out'
+								style={{ height: detailsMode ? DETAILS_HEIGHT : centerHeight }}
+							>
 								<ProductCart />
 							</div>
 						</aside>
